@@ -1,0 +1,2 @@
+class NewsData:
+    pass
