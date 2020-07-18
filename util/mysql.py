@@ -42,13 +42,13 @@ class MySQLDB:
             return [r[0] for r in results]
         return None
 
-    def fetch_table_records(self, table, columns=None, condition=None, order_by=None):
+    def fetch_table_records(self, table, column=None, condition=None, order_by=None):
         col = "*"
-        if columns:
-            if isinstance(columns, str):
-                col = columns
-            elif isinstance(columns, list):
-                col = ",".join(columns)
+        if column:
+            if isinstance(column, str):
+                col = column
+            elif isinstance(column, list):
+                col = ",".join(column)
         sql = "SELECT %s FROM %s" % (col, table)
         if condition:
             sql += " WHERE "
@@ -84,10 +84,9 @@ class MySQLDB:
 
 
 class MySQLDBTableAction:
-    def __init__(self, table=None):
+    def __init__(self, table):
         self.db = MySQLDB(user="9999cn", password= "password", host="192.168.1.49", database= "news")
         self.table = table
-        self.record = None
         self._table_schema = None
 
     @property
@@ -96,13 +95,12 @@ class MySQLDBTableAction:
             self._table_schema= self.db.get_table_schema(self.table)
         return self._table_schema
 
-    def create_record(self, **kwargs):
-        self.record = dict()
-        for k in kwargs:
-            self.record[k] = kwargs[k]
+    def insert_db_record(self, record):
+        self.db.insert_table_record(self.table, record)
 
-    def insert_db_record(self):
-        self.db.insert_table_record(self.table, self.record)
+    def fetch_db_record(self, column=None, condition=None, order_by=None):
+        return self.db.fetch_table_records(self.table, column, condition, order_by)
+
 
 class NewsHeadlineTableAction(MySQLDBTableAction):
 
@@ -121,7 +119,7 @@ class TestMySQLDB(unittest.TestCase):
         self.db=MySQLDB()
 
     def test_get_table_records(self):
-        result = self.db.fetch_table_records(table='news_headline', columns=["id", "is_processed", "is_duplicated"])
+        result = self.db.fetch_table_records(table='news_headline', column=["id", "is_processed", "is_duplicated"])
         self.assertIsNotNone(result)
         self.assertEqual(len(result[0]), 3)
         logging.info(result)
@@ -137,14 +135,34 @@ class TestMySQLDB(unittest.TestCase):
     def _test_insert_table_record(self):
         self.db.insert_table_record(table='news_headline', record={"id": 2})
 
-    def test_news_headline_db_action(self):
+    def _test_news_headline_insertion(self):
         self.db_action = NewsHeadlineTableAction()
         self.assertListEqual(self.db_action.table_schema,
                              "id is_duplicated is_processed is_displayed headline datetime " \
                              "source_id link snippet image".split())
-        self.db_action.create_record(headline="aaaa", source_id=1, datetime=datetime(2020, 7, 20, 12, 45, 00))
-        self.db_action.insert_db_record()
-        logging.info(self.db_action.record)
+        record = dict(headline="News headline added", source_id=1, datetime=datetime.now())
+        self.db_action.insert_db_record(record)
+        logging.info(record)
+
+
+    def test_news_headline_retrieve_all_records(self):
+        self.db_action = NewsHeadlineTableAction()
+        columns = ["id", "headline", "datetime", "source_id"]
+        results = self.db_action.fetch_db_record(column=columns)
+        self.assertGreater(len(results), 1)
+        logging.info(results)
+
+    def test_news_headline_retrieve_conditional_records(self):
+        self.db_action = NewsHeadlineTableAction()
+        columns = ["id", "headline", "datetime", "source_id"]
+        conditions = ["id > 10", "source_id = 1"]
+        results_1 = self.db_action.fetch_db_record(column=columns)
+        results_2 = self.db_action.fetch_db_record(column=columns, condition=conditions)
+        self.assertGreater(len(results_1), len(results_2))
+        for r in results_2:
+            self.assertGreater(r[0], 10)
+        logging.info(results_1)
+        logging.info(results_2)
 
 
 if __name__ == '__main__':
