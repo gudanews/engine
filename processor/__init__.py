@@ -5,8 +5,7 @@ class Processor:
     def process(self):
         raise NotImplementedError("Subclass needs to implemente this method.")
 
-
-if __name__ == "__main__":
+def main():
     import os
     from util import find_modules, find_public_classes
     from processor import Processor
@@ -19,3 +18,5 @@ if __name__ == "__main__":
                 obj.process()
 
     
+if __name__ == "__main__":
+    main()

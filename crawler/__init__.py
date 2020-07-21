@@ -14,7 +14,7 @@ class Crawler:
         self.goto_website()
         self.insert_records()
 
-if __name__ == "__main__":
+def main():
     import os
     from util import find_modules, find_public_classes
     from crawler import Crawler
@@ -29,3 +29,6 @@ if __name__ == "__main__":
                 obj.crawl()
     if driver:
         driver.close()
+
+if __name__ == "__main__":
+    main()
