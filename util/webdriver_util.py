@@ -1,7 +1,8 @@
+import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
-
+USE_HEADLESS_CHROME = os.environ.get("BROWSER", "HEADLESS_CHROME") == "HEADLESS_CHROME"
 class MetaClassSingleton(type):
     """
     Meta class implementation
@@ -32,7 +33,8 @@ class Driver(metaclass=MetaClassSingleton):
         """
         if self.connection is None:
             chrome_options = Options()
-            #chrome_options.add_argument("--headless")
+            if USE_HEADLESS_CHROME:
+                chrome_options.add_argument("--headless")
             chrome_options.add_argument("--mute-audio")
             chrome_options.add_argument("--start-maximized")
             self.connection = webdriver.Chrome(options=chrome_options)

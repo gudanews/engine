@@ -1,4 +1,3 @@
-import unittest
 from util.mysql_util import NewsHeadlineTableAction
 from util import datetime_util
 from util import scroll_down
@@ -59,9 +58,9 @@ class ReutersCrawler(BaseCrawler):
 
     def insert_records(self):
         columns = ["heading", "datetime"]
-        conditions = ["datetime BETWEEN '%(yesterday)s' and '%(today)s'" %
-                      {'yesterday': datetime.strftime(datetime.now() - timedelta(hours=36), "%Y-%m-%d %H:%M:%S"),
-                       'today': datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")}]
+        conditions = ["datetime BETWEEN '%(start_time)s' and '%(end_time)s'" %
+                      {'start_time': datetime.strftime(datetime.now() - timedelta(hours=36), "%Y-%m-%d %H:%M:%S"),
+                       'end_time': datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")}]
         db = NewsHeadlineTableAction()
         existing_data = db.fetch_db_record(column=columns, condition=conditions)
         for n in self.page.news:
