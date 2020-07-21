@@ -67,6 +67,5 @@ class ReutersCrawler(BaseCrawler):
         for n in self.page.news:
             if not (n.heading,datetime_util.str2datetime(n.time)) in existing_data:
                 record = dict(heading=n.heading, datetime=datetime_util.str2datetime(n.time), source_id=1, link=n.url,snippet=n.snippet,image=n.image)
-                #db.insert_db_record(record=record)
-                print(record)
+                db.insert_db_record(record=record)
 
