@@ -42,14 +42,14 @@ class Driver(metaclass=MetaClassSingleton):
 
         return self.connection
 
-    def scroll_down(self):
-        j = 0
-        try:
-            #print("Start scrolling down......")
-            while j <= self.connection.execute_script("return document.body.scrollHeight"):
-                j += 250
-                self.connection.execute_script("window.scrollTo(0, " + str(j) + ")")
-                time.sleep(0.05)
-                #print("Finish scrolling down......")
-        except:
-            pass
+def scroll_down(driver):
+    j = 0
+    try:
+        #print("Start scrolling down......")
+        while j <= driver.execute_script("return document.body.scrollHeight"):
+            j += 250
+            driver.execute_script("window.scrollTo(0, " + str(j) + ")")
+            time.sleep(0.05)
+            #print("Finish scrolling down......")
+    except:
+        pass

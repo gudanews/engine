@@ -3,6 +3,7 @@ from util import datetime_util, image_util
 from holmium.core import Element, Locators, Sections
 from holmium.core import Page
 from crawler import Crawler as BaseCrawler
+from util.webdriver_util import scroll_down
 
 class Story(Sections):
     heading = Element(
@@ -52,7 +53,7 @@ class ReutersCrawler(BaseCrawler):
         self.driver.get('https://www.reuters.com/theWire')
         self.page = ReutersPage(self.driver)
         self.story_contents = []
-        self.driver.scroll_down()
+        scroll_down(self.driver)
 
     def insert_records(self):
         db_news_headline = NewsHeadlineTableAction()
