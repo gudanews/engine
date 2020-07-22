@@ -125,7 +125,8 @@ class ImageTableAction(MySQLDBTableAction):
         super(ImageTableAction, self).__init__("image")
 
     def get_image_id_by_url(self, url):
-        return self.fetch_db_record(condition=["url = '%s'" % url])
+        results = self.fetch_db_record(column="id", condition=["url = '%s'" % url])
+        return [r[0] for r in results]
 
 class TestMySQLDB(unittest.TestCase):
 
