@@ -1,10 +1,9 @@
-from util.mysql_util import NewsHeadlineTableAction
-from util import datetime_util
+from util.mysql_util import NewsHeadlineTableAction, ImageTableAction
+from util import datetime_util, image_util
 from util import scroll_down
 from holmium.core import Element, Locators, Sections
 from holmium.core import Page
 from crawler import Crawler as BaseCrawler
-from datetime import datetime, timedelta
 
 class Story(Sections):
     heading = Element(
@@ -57,14 +56,17 @@ class ReutersCrawler(BaseCrawler):
         scroll_down(self.driver)
 
     def insert_records(self):
-        columns = ["heading", "datetime"]
-        conditions = ["datetime BETWEEN '%(start_time)s' and '%(end_time)s'" %
-                      {'start_time': datetime.strftime(datetime.now() - timedelta(hours=36), "%Y-%m-%d %H:%M:%S"),
-                       'end_time': datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")}]
-        db = NewsHeadlineTableAction()
-        existing_data = db.fetch_db_record(column=columns, condition=conditions)
+        db_news_headline = NewsHeadlineTableAction()
+        db_image = ImageTableAction()
+        columns = ["heading", "url"]
+        existing_data = db_news_headline.get_latest_news_headline(column=columns)
         for n in self.page.news:
-            if not (n.heading,datetime_util.str2datetime(n.time)) in existing_data:
-                record = dict(heading=n.heading, datetime=datetime_util.str2datetime(n.time), source_id=1, link=n.url,snippet=n.snippet,image=n.image)
-                db.insert_db_record(record=record)
-
+            if not (n.heading, n.url) in existing_data:
+                image_id = db_image.get_image_id_by_url(n.image)
+                if not image_id:
+                    image_file_path = image_util.save_image_from_url(n.image)
+                    db_image.insert_db_record(record=dict(url=n.image, path=image_file_path))
+                    image_id = db_image.get_image_id_by_url(n.image)
+                record = dict(heading=n.heading, datetime=datetime_util.str2datetime(n.time), source_id=1,
+                              image_id=image_id[0], url=n.url, snippet=n.snippet)
+                db_news_headline.insert_db_record(record=record)
