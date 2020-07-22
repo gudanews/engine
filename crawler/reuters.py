@@ -1,6 +1,5 @@
 from util.mysql_util import NewsHeadlineTableAction, ImageTableAction
 from util import datetime_util, image_util
-from util import scroll_down
 from holmium.core import Element, Locators, Sections
 from holmium.core import Page
 from crawler import Crawler as BaseCrawler
@@ -53,7 +52,7 @@ class ReutersCrawler(BaseCrawler):
         self.driver.get('https://www.reuters.com/theWire')
         self.page = ReutersPage(self.driver)
         self.story_contents = []
-        scroll_down(self.driver)
+        self.driver.scroll_down()
 
     def insert_records(self):
         db_news_headline = NewsHeadlineTableAction()

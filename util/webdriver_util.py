@@ -1,8 +1,9 @@
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import time
 
-USE_HEADLESS_CHROME = os.environ.get("BROWSER", "HEADLESS_CHROME") == "HEADLESS_CHROME"
+USE_HEADLESS_CHROME = os.environ.get("BROWSER", "CHROME") == "HEADLESS_CHROME"
 class MetaClassSingleton(type):
     """
     Meta class implementation
@@ -40,3 +41,15 @@ class Driver(metaclass=MetaClassSingleton):
             self.connection = webdriver.Chrome(options=chrome_options)
 
         return self.connection
+
+    def scroll_down(self):
+        j = 0
+        try:
+            #print("Start scrolling down......")
+            while j <= self.connection.execute_script("return document.body.scrollHeight"):
+                j += 250
+                self.connection.execute_script("window.scrollTo(0, " + str(j) + ")")
+                time.sleep(0.05)
+                #print("Finish scrolling down......")
+        except:
+            pass

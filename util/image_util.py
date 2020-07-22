@@ -6,7 +6,7 @@ from datetime import date
 
 TODAY = date.today()
 
-WEBSITE_BASE_PATH = "/var/www/html"
+WEBSITE_BASE_PATH = "/var/www/html/wordpress"
 IMAGE_BASE_PATH = "/var/www/html/images"
 IMAGE_PATH = os.path.join(IMAGE_BASE_PATH, str(TODAY.year), "%02d-%02d" % (TODAY.month, TODAY.day))
 

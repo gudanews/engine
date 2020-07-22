@@ -4,10 +4,10 @@ import unittest
 
 from datetime import datetime, timedelta
 
-DEFAULT_USER = "9999cn"
-DEFAULT_PASSWORD = "password"
+DEFAULT_USER = "gudaman"
+DEFAULT_PASSWORD = "GudaN3w2"
 DEFAULT_HOST = "192.168.1.49"
-DEFAULT_DATABASE = "news"
+DEFAULT_DATABASE = "gudanews"
 
 class MySQLDB:
     def __init__(self, user=DEFAULT_USER, password=DEFAULT_PASSWORD, host=DEFAULT_HOST, database=DEFAULT_DATABASE):
@@ -85,7 +85,7 @@ class MySQLDB:
 
 class MySQLDBTableAction:
     def __init__(self, table):
-        self.db = MySQLDB(user="9999cn", password= "password", host="192.168.1.49", database= "news")
+        self.db = MySQLDB(user="gudaman", password= "GudaN3w2", host="192.168.1.49", database= "gudanews")
         self.table = table
         self._table_schema = None
 

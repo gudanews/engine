@@ -1,5 +1,4 @@
 import difflib as dl
-import time
 import inspect
 import sys
 from setuptools import find_packages
@@ -55,14 +54,3 @@ def checksimilarity(a, b):
 
     n = float(s) / float(len(wb))
     return n
-def scroll_down(driver):
-    j = 0
-    try:
-        #print("Start scrolling down......")
-        while j <= driver.execute_script("return document.body.scrollHeight"):
-            j += 250
-            driver.execute_script("window.scrollTo(0, " + str(j) + ")")
-            time.sleep(0.05)
-            #print("Finish scrolling down......")
-    except:
-        pass

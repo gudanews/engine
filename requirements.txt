@@ -1,0 +1,11 @@
+holmium.core==0.8.5
+mysql==0.0.2
+mysql-connector==2.2.9
+mysqlclient==2.0.1
+psutil==5.5.1
+pylint==2.2.2
+requests==2.21.0
+requests-oauthlib==1.0.0
+responses==0.9.0
+selenium==3.141.0
+urllib3==1.24.1X
