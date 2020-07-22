@@ -2,7 +2,7 @@ import mysql.connector
 import logging
 import unittest
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 DEFAULT_USER = "9999cn"
 DEFAULT_PASSWORD = "password"
@@ -107,11 +107,25 @@ class NewsHeadlineTableAction(MySQLDBTableAction):
     def __init__(self):
         super(NewsHeadlineTableAction, self).__init__("news_headline")
 
+    def get_latest_news_headline(self, column=None):
+        conditions = ["datetime BETWEEN '%(start_time)s' and '%(end_time)s'" %
+                      {'start_time': datetime.strftime(datetime.now() - timedelta(hours=36), "%Y-%m-%d %H:%M:%S"),
+                       'end_time': datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")}]
+        return self.fetch_db_record(column=column, condition=conditions)
+
+
 class NewsDataTableAction(MySQLDBTableAction):
 
     def __init__(self):
         super(NewsDataTableAction, self).__init__("news_data")
 
+class ImageTableAction(MySQLDBTableAction):
+
+    def __init__(self):
+        super(ImageTableAction, self).__init__("image")
+
+    def get_image_id_by_url(self, url):
+        return self.fetch_db_record(condition=["url = '%s'" % url])
 
 class TestMySQLDB(unittest.TestCase):
 
@@ -139,7 +153,7 @@ class TestMySQLDB(unittest.TestCase):
         self.db_action = NewsHeadlineTableAction()
         self.assertListEqual(self.db_action.table_schema,
                              "id is_duplicated is_processed is_displayed headline datetime " \
-                             "source_id link snippet image".split())
+                             "source_id url snippet image_id".split())
         record = dict(headline="News headline added", source_id=1, datetime=datetime.now())
         self.db_action.insert_db_record(record)
         logging.info(record)
