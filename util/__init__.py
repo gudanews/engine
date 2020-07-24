@@ -4,6 +4,7 @@ import sys
 from setuptools import find_packages
 from pkgutil import iter_modules
 
+
 def find_modules(path):
     modules = set()
     for pkg in find_packages(path):
@@ -54,3 +55,19 @@ def checksimilarity(a, b):
 
     n = float(s) / float(len(wb))
     return n
+
+
+class MetaClassSingleton(type):
+    """
+    Meta class implementation
+    """
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        """
+        Override __call__ special method based on singleton pattern
+        """
+        if cls not in cls._instances:
+            cls._instances[cls] = super(MetaClassSingleton, cls).__call__(*args, **kwargs)
+
+        return cls._instances[cls]
