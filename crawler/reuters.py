@@ -29,7 +29,7 @@ class ReutersCrawler(BaseCrawler):
         headline_db = NewsHeadlineDB()
         image_db = ImageDB()
         columns = ["heading", "url"]
-        existing_data = headline_db.get_latest_news(column=columns, source="Reuters")
+        existing_data = headline_db.get_latest_news(column=columns, source=REUTERS_ID)
         unrecorded_news = 0
         for np in page.news:
             if not (np.heading, np.url) in existing_data:
@@ -40,7 +40,6 @@ class ReutersCrawler(BaseCrawler):
                 record = dict(heading=np.heading, datetime=datetime_util.str2datetime(np.time), source_id=REUTERS_ID,
                               image_id=image_id, url=np.url, snippet=np.snippet)
                 headline_db.insert_db_record(record=record)
-            else:
                 unrecorded_news += 1
         self.complete = True if unrecorded_news < MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING else False
 
