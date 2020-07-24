@@ -9,7 +9,8 @@ class ImageDB(DataBase):
         super(ImageDB, self).__init__("image")
 
     def get_image_id_by_url(self, url):
-        return self.fetch_db_record(column="id", condition=["url = '%s'" % url])
+        result = self.fetch_db_record(column="id", condition=["url = '%s'" % url])
+        return result[0] if result else None
 
     def add_image(self, url=None, path=None):
         self.insert_db_record(record=dict(url=url, path=path))

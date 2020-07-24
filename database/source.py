@@ -9,7 +9,8 @@ class SourceDB(DataBase):
         super(SourceDB, self).__init__("source")
 
     def get_source_id_by_name(self, name):
-        return self.fetch_db_record(column="id", condition=["name = '%s'" % name])
+        result = self.fetch_db_record(column="id", condition=["name = '%s'" % name])
+        return result[0] if result else None
 
 
 class TestSourceData(unittest.TestCase):
