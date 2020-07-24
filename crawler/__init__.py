@@ -1,18 +1,19 @@
 from util import webdriver_util
+
 class Crawler:
     def __init__(self, driver):
         self.driver = driver
         self.page=None
 
-    def goto_website(self):
-        raise NotImplementedError("Missing goto_website")
+    def goto_homepage(self):
+        raise NotImplementedError("Method <goto_homepage> must be defined before initiate.")
 
     def insert_records(self):
-        raise NotImplementedError("Missing goto_website")
+        raise NotImplementedError("Method <insert_records> must be defined before initiate.")
 
     def crawl(self):
-        self.goto_website()
-        self.insert_records()
+        raise NotImplementedError("Method <crawl> must be defined before initiate.")
+
 
 def main():
     import os

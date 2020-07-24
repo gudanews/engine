@@ -1,72 +1,61 @@
-from util.mysql_util import NewsHeadlineTableAction, ImageTableAction
 from util import datetime_util, image_util
-from holmium.core import Element, Locators, Sections
-from holmium.core import Page
 from crawler import Crawler as BaseCrawler
-from util.webdriver_util import scroll_down
+from util.webdriver_util import Driver, scroll_down
+from webpage.reuters import ReutersPage
+from database.news_headline import NewsHeadlineDB
+from database.image import ImageDB
 
-class Story(Sections):
-    heading = Element(
-        Locators.CSS_SELECTOR,
-        "div.story-content h3.story-title",
-        value=lambda el: el.text,
-        timeout=5
-    )
-    time = Element(
-        Locators.CSS_SELECTOR,
-        "div.story-content > time.article-time > span",
-        value=lambda el: el.text,
-        timeout=5
-    )
-    url = Element(
-        Locators.CSS_SELECTOR,
-        "div.story-content > a[href]",
-        value=lambda el: el.get_attribute('href'),
-        timeout=5
-    )
-    snippet = Element(
-        Locators.CSS_SELECTOR,
-        "div.story-content > p",
-        value=lambda el: el.text,
-        timeout=5
-    )
-    image = Element(
-        Locators.CSS_SELECTOR,
-        "div.story-photo img[src]",
-        value=lambda el: el.get_attribute('src'),
-        timeout=5
-    )
 
-class ReutersPage(Page):
-    news = Story(
-        Locators.CSS_SELECTOR,
-        "article.story",
-        timeout=10
-    )
+MAX_CRAWLING_PAGES = 5
+MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING = 3
+REUTERS_ID = 1
 
 class ReutersCrawler(BaseCrawler):
 
     def __init__(self, driver):
+        self.homepage = "https://www.reuters.com/news/archive/us-the-wire?view=page"
         super(ReutersCrawler, self).__init__(driver)
 
-    def goto_website(self):  # goes to reuters
-        self.driver.get('https://www.reuters.com/theWire')
-        self.page = ReutersPage(self.driver)
-        self.story_contents = []
-        scroll_down(self.driver)
+    def goto_homepage(self):  # goes to reuters
+        self.driver.get(self.homepage)
+
+    def goto_nextpage(self):  # goes to next page
+        page = ReutersPage(self.driver)
+        page.next.click()
 
     def insert_records(self):
-        db_news_headline = NewsHeadlineTableAction()
-        db_image = ImageTableAction()
+        page = ReutersPage(self.driver)
+        scroll_down(self.driver)
+        headline_db = NewsHeadlineDB()
+        image_db = ImageDB()
         columns = ["heading", "url"]
-        existing_data = db_news_headline.get_latest_news_headline(column=columns)
-        for n in self.page.news:
-            if not (n.heading, n.url) in existing_data:
-                image_id = db_image.get_image_id_by_url(n.image)
+        existing_data = headline_db.get_latest_news(column=columns, source="Reuters")
+        unrecorded_news = 0
+        for np in page.news:
+            if not (np.heading, np.url) in existing_data:
+                image_id = image_db.get_image_id_by_url(np.image)
                 if not image_id:
-                    image_file_path = image_util.save_image_from_url(n.image)
-                    db_image.insert_db_record(record=dict(url=n.image, path=image_file_path))
-                    image_id = db_image.get_image_id_by_url(n.image)
-                record = dict(heading=n.heading, datetime=datetime_util.str2datetime(n.time), source_id=1,
-                              image_id=image_id[0], url=n.url, snippet=n.snippet)
-                db_news_headline.insert_db_record(record=record)
+                    image_file_path = image_util.save_image_from_url(np.image)
+                    image_id = image_db.add_image(url=np.image, path=image_file_path)
+                record = dict(heading=np.heading, datetime=datetime_util.str2datetime(np.time), source_id=REUTERS_ID,
+                              image_id=image_id, url=np.url, snippet=np.snippet)
+                headline_db.insert_db_record(record=record)
+            else:
+                unrecorded_news += 1
+        self.complete = True if unrecorded_news < MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING else False
+
+    def crawl(self):
+        self.goto_homepage()
+        self.complete = False
+        for i in range(MAX_CRAWLING_PAGES):
+            if not self.complete:
+                self.insert_records()
+                self.goto_nextpage()
+
+
+
+
+if __name__ == "__main__":
+    driver = Driver().connect()
+    crawler = ReutersCrawler(driver)
+    crawler.crawl()
