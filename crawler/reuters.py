@@ -56,3 +56,4 @@ if __name__ == "__main__":
     driver = Driver().connect()
     crawler = ReutersCrawler(driver)
     crawler.crawl()
+    driver.close()
