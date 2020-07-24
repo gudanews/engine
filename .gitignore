@@ -1,0 +1,56 @@
+#dependency caches, such as the contents of /node_modules or /packages
+compiled code, such as .o, .pyc, and .class files
+build output directories, such as /bin, /out, or /target
+files generated at runtime, such as .log, .lock, or .tmp
+hidden system files, such as .DS_Store or Thumbs.db
+personal IDE config files, such as .idea/workspace.xml
+
+#####################
+# Dependency caches #
+#####################
+
+
+######################
+# OS generated files #
+######################
+.DS_Store*
+Thumbs.db
+ehthumbs.db
+
+###################
+# Compiled source #
+###################
+*.class
+*.pyc
+*.o
+
+############
+# IDE Misc #
+############
+# Intelli files
+.idea
+.pydevproject
+
+# Ecipse files
+/.externalToolBuilders/
+/.settings/
+/eclipse-bin/
+.classpath
+.project
+.cache
+
+# Vim files
+.*.sw[a-z]
+*.un~
+Session.vim
+
+# Emacs files
+*~
+semantic.cache
+
+#####################
+# Incorrect logs and out folders which are intellij defaults
+#####################
+logs/
+out/
+
