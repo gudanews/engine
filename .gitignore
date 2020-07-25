@@ -1,7 +1,8 @@
 #####################
 # Dependency caches #
 #####################
-
+venv
+venv/
 
 ######################
 # OS generated files #

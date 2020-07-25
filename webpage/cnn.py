@@ -14,7 +14,6 @@ class Story(Sections):
         value=lambda el: el.get_attribute('href'),
         timeout=5
     )
-
 class CNNPage(Page):
     news = Story(
         Locators.CSS_SELECTOR,
