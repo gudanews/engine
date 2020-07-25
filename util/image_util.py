@@ -4,6 +4,9 @@ import random
 import string
 from datetime import date
 from PIL import Image
+from util import LoggedTestCase
+import unittest
+
 TODAY = date.today()
 
 WEBSITE_BASE_PATH = "/var/www/html/wordpress"
@@ -65,6 +68,11 @@ def save_image_from_url(url):
         urllib.urlretrieve(url, img_file)
     return os.path.relpath(img_file, WEBSITE_BASE_PATH)
 
+class TestCase(LoggedTestCase):
+
+    def test(self):
+        pass
 
 if __name__ == "__main__":
+    unittest.main()
     pass

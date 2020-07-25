@@ -1,6 +1,12 @@
 from datetime import datetime, timedelta
 from datetime import date
 import re
+import logging
+import unittest
+from util import LoggedTestCase
+
+
+logger = logging.getLogger("Util.Datetime")
 
 TODAY = date.today()
 NOW = datetime.now()
@@ -68,12 +74,13 @@ def str2datetime(p_time):
                     adj_minute -= int(d_time.pop("ago_minute"))
                 del d_time["ago"]
             r_time = datetime(**d_time) + timedelta(hours=adj_hour, minutes=adj_minute)
+            logger.debug("Convert [%s] to standardized datetime [%s]" %
+                         (p_time, r_time))
             return r_time
 
 
-import unittest
+class TestDateTime(LoggedTestCase):
 
-class TestDateTime(unittest.TestCase):
     def test_string_to_datetime(self):
         result = str2datetime("2h30m ago")
         self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,NOW.hour,NOW.minute) - timedelta(hours=2, minutes=30)))
