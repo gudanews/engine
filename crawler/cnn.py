@@ -1,9 +1,13 @@
 from util import datetime_util, image_util
 from crawler import Crawler as BaseCrawler
-from util.webdriver_util import Driver, scroll_down
+from util.webdriver_util import ChromeDriver
 from webpage.cnn import CNNPage
 from database.news_headline import NewsHeadlineDB
 from database.image import ImageDB
+import time
+import logging
+from datetime import  datetime
+logger = logging.getLogger("Crawler.CNN")
 
 class _CnnCrawler(BaseCrawler):
 
@@ -15,20 +19,26 @@ class _CnnCrawler(BaseCrawler):
         self.driver.get(self.homepage)
         self.page = CNNPage(self.driver)
         self.story_contents = []
-        scroll_down(self.driver)
 
     def insert_records(self):
         db_news_headline = NewsHeadlineDB()
         columns = ["heading", "url"]
         existing_data = db_news_headline.get_latest_news(column=columns,source=101)
-        for n in self.page.news:
-            if not (n.heading, n.url) in existing_data:
-                record = dict(heading=n.heading, source_id=101, url=n.url)
+        for np in self.page.news:
+            # np.wrapper.scroll_to()
+            time.sleep(0.2)
+            if not (np.heading, np.url) in existing_data:
+                record = dict(heading=np.heading, source_id=101, url=np.url,datetime=datetime.now())
                 db_news_headline.insert_db_record(record=record)
+                #logger.info("Insert the following record into database:\n" +
+                #            "[Headline] :\t%s\n" % np.heading +
+                #            "[URL] :\t<%s>\n" % np.url)
+
     def crawl(self):
         self.goto_homepage()
         self.insert_records()
+
 if __name__ == "__main__":
-    driver = Driver().connect()
+    driver = ChromeDriver()
     crawler = _CnnCrawler(driver)
     crawler.crawl()
