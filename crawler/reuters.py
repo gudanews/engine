@@ -26,6 +26,7 @@ class ReutersCrawler(BaseCrawler):
     def goto_nextpage(self):  # goes to next page
         page = ReutersPage(self.driver)
         page.next.click()
+        logger.info("Click to Next Page on the source News website......")
 
     def insert_records(self):
         page = ReutersPage(self.driver)
