@@ -2,7 +2,11 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
-from util import MetaClassSingleton
+from util import MetaClassSingleton, LoggedTestCase
+import unittest
+import logging
+
+logger = logging.getLogger("Util.WebDriver")
 
 USE_HEADLESS_CHROME = os.environ.get("BROWSER", "CHROME") == "HEADLESS_CHROME"
 
@@ -36,3 +40,16 @@ class ChromeDriver(webdriver.Chrome):
             self.quit()
         except:
             pass
+
+
+class TestWebDriver(LoggedTestCase):
+
+    def setUp(self):
+        self.driver=ChromeDriver()
+
+    def test_chrome_driver(self):
+        self.driver.get('http://www.google.com')
+        self.assertIsNotNone(self.driver.current_url)
+
+if __name__ == '__main__':
+    unittest.main()
