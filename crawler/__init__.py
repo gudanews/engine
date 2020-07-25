@@ -1,4 +1,9 @@
 from util import webdriver_util
+import logging
+
+logging.basicConfig(level=logging.INFO,
+                    format='[%(asctime)s]\t%(name)-12s\t[%(levelname)s]\t%(message)s',
+                    datefmt='%m-%d %H:%M')
 
 class Crawler:
     def __init__(self, driver):
@@ -20,16 +25,14 @@ def main():
     from util import find_modules, find_public_classes
     from crawler import Crawler
     modules = find_modules(os.path.dirname(__file__))
-    driver = None
     for module in modules:
         classes = find_public_classes(module)
         for _,cls in classes.items():
             if issubclass(cls, Crawler) and not issubclass(Crawler, cls):
-                driver = webdriver_util.Driver().connect()
+                driver = webdriver_util.ChromeDriver()
                 obj = cls(driver)
                 obj.crawl()
-    if driver:
-        driver.close()
+
 
 if __name__ == "__main__":
     main()

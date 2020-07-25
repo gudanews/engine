@@ -1,8 +1,9 @@
 import mysql.connector
 import logging
 import unittest
+from util import LoggedTestCase
 
-from datetime import datetime, timedelta
+logger = logging.getLogger("Util.MySQL")
 
 DEFAULT_USER = "gudaman"
 DEFAULT_PASSWORD = "GudaN3w2"
@@ -21,8 +22,8 @@ class MySQLDB:
         self._cursor.execute(sql, val)
         self._connection.commit()
         if msg:
-            logging.info(msg)
-        logging.debug(self._cursor.rowcount, "record affected.")
+            logger.debug(msg)
+        logger.debug("Commit Result: [%d] record affected." % self._cursor.rowcount)
 
     def _fetch(self, sql, size=0, msg=None): # size = 0 stands for fetchall
         if not self._connection.is_connected():
@@ -31,8 +32,8 @@ class MySQLDB:
         self._cursor.execute(sql)
         result = self._cursor.fetchall() if size == 0 else self._cursor.fetchmany(size) if size > 1 else self._cursor.fetchone()
         if msg:
-            logging.info(msg)
-        logging.debug(str(result))
+            logger.debug(msg)
+        logger.debug("Fetch Result:\n" + str(result))
         return result
 
     def get_table_schema(self, table):
@@ -59,10 +60,12 @@ class MySQLDB:
 
     def fetch_table_record(self, table, column=None, condition=None, order_by=None):
         sql = self._build_sql_select_statement(table=table, column=column, condition=condition, order_by=order_by)
+        logger.debug("Fetch table record using SQL query:\n%s" % sql)
         return self._fetch(sql, size=1, msg=sql)
 
     def fetch_table_records(self, table, column=None, condition=None, order_by=None):
         sql = self._build_sql_select_statement(table=table, column=column, condition=condition, order_by=order_by)
+        logger.debug("Fetch table records using query:\n%s" % sql)
         return self._fetch(sql, msg=sql)
 
     def insert_table_record(self, table, record):
@@ -72,6 +75,7 @@ class MySQLDB:
             col.append(k)
             val.append(v)
         sql = "INSERT INTO %s (%s) VALUES (%s)" % (table, ",".join(col), ",".join(["%s"] * len(record)))
+        logger.debug("Insert into table using SQL query:\n%s" % sql)
         self._commit(sql, val=tuple(val), msg=sql)
 
     def update_table_record(self, table, record, condition=None):
@@ -85,10 +89,19 @@ class MySQLDB:
                 sql += condition
             elif isinstance(condition, list):
                 sql += " AND ".join(condition)
+        logger.debug("Update table using SQL query:\n%s" % sql)
         self._commit(sql, val=tuple(val), msg=sql)
 
+    def __exit__(self):
+        self._connection.close()
 
-class TestMySQLDB(unittest.TestCase):
+    def __del__(self):
+        try:
+            self._connection.shutdown()
+        except:
+            pass
+
+class TestMySQLDB(LoggedTestCase):
 
     def setUp(self):
         self.db=MySQLDB()
@@ -97,24 +110,24 @@ class TestMySQLDB(unittest.TestCase):
         results = self.db.fetch_table_records(table='news_headline', column=["id", "is_processed", "is_duplicated"])
         self.assertIsNotNone(results)
         self.assertEqual(len(results[0]), 3)
-        logging.info(results)
+        logger.info(results)
 
     def test_get_table_record(self):
         result = self.db.fetch_table_record(table='news_headline', column=["id", "is_processed", "is_duplicated"])
         self.assertIsNotNone(result)
         self.assertEqual(len(result), 3)
-        logging.info(result)
+        logger.info(result)
 
     def test_get_table_non_exists_record(self):
         result = self.db.fetch_table_record(table='news_headline', column=["id", "is_processed", "is_duplicated"],
                                             condition=["id < 0"])
         self.assertIsNone(result)
-        logging.info(result)
+        logger.info(result)
 
     def test_get_table_schema(self):
         result = self.db.get_table_schema(table='news_headline')
         self.assertIsNotNone(result)
-        logging.info(result)
+        logger.info(result)
 
     def test_get_table_schema_not_exist(self):
         self.assertRaises(Exception, self.db.get_table_schema, 'does_not_exist')

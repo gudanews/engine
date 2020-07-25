@@ -1,6 +1,9 @@
 from database import DataBase
 import unittest
 import logging
+from util import LoggedTestCase
+
+logger = logging.getLogger("DataBase.Image")
 
 
 class ImageDB(DataBase):
@@ -9,14 +12,15 @@ class ImageDB(DataBase):
         super(ImageDB, self).__init__("image")
 
     def get_image_id_by_url(self, url):
-        return self.fetch_db_record(column="id", condition=["url = '%s'" % url])
+        result = self.fetch_db_record(column="id", condition=["url = '%s'" % url])
+        return result[0] if result else None
 
     def add_image(self, url=None, path=None):
         self.insert_db_record(record=dict(url=url, path=path))
         return self.db._cursor.lastrowid
 
 
-class TestImageData(unittest.TestCase):
+class TestImageData(LoggedTestCase):
 
     def setUp(self):
         self.data = ImageDB()
@@ -24,9 +28,8 @@ class TestImageData(unittest.TestCase):
     def test_get_image_id_by_non_exist_url(self):
         id = self.data.get_image_id_by_url('does_not_exist')
         self.assertIsNone(id)
-        logging.info(id)
+        logger.info(id)
 
 
 if __name__ == "__main__":
-
     unittest.main()

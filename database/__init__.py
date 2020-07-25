@@ -1,7 +1,10 @@
 from util.mysql_util import MySQLDB
 import logging
 import unittest
-from datetime import datetime, timedelta
+import sys
+
+logger = logging.getLogger("Database")
+
 
 class DataBase:
     def __init__(self, table):
@@ -29,31 +32,35 @@ class TestBaseData(unittest.TestCase):
 
     def setUp(self):
         self.data = DataBase("news_headline")
+        stream_handler = logging.StreamHandler(sys.stdout)
+        logger.level = logging.INFO
+        logger.addHandler(stream_handler)
 
     def test_retrieve_one_record(self):
         columns = ["id", "heading", "datetime", "source_id"]
         result = self.data.fetch_db_record(column=columns)
         self.assertIsNotNone(result)
         self.assertEqual(len(result), 4)
-        logging.info(result)
+        logger.debug(result)
 
     def test_retrieve_all_records(self):
         columns = ["id", "heading", "datetime", "source_id"]
         results = self.data.fetch_db_records(column=columns)
         self.assertGreater(len(results), 1)
         self.assertEqual(len(results[0]), 4)
-        logging.info(results)
+        logger.debug(results)
 
     def test_retrieve_conditional_records(self):
         columns = ["id", "heading", "datetime", "source_id"]
         conditions = ["id > 10", "source_id = 1"]
-        results_1 = self.data.fetch_db_record(column=columns)
-        results_2 = self.data.fetch_db_record(column=columns, condition=conditions)
+        results_1 = self.data.fetch_db_records(column=columns)
+        results_2 = self.data.fetch_db_records(column=columns, condition=conditions)
         self.assertGreater(len(results_1), len(results_2))
         for r in results_2:
             self.assertGreater(r[0], 10)
-        logging.info(results_1)
-        logging.info(results_2)
+        logger.debug(results_1)
+        logger.debug(results_2)
+
 
 if __name__ == '__main__':
     unittest.main()
