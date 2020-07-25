@@ -1,5 +1,6 @@
 from holmium.core import Element, Locators, Sections
 from holmium.core import Page
+from holmium.core.conditions import VISIBLE
 
 
 class Story(Sections):
@@ -31,8 +32,15 @@ class Story(Sections):
         Locators.CSS_SELECTOR,
         "div.story-photo img[src]",
         value=lambda el: el.get_attribute('src'),
-        timeout=5
+        timeout=5,
     )
+    wrapper = Element(
+        Locators.CSS_SELECTOR,
+        "div.story-content",
+        timeout=5,
+        only_if=VISIBLE()
+    )
+
 
 class ReutersPage(Page):
     news = Story(
@@ -45,4 +53,3 @@ class ReutersPage(Page):
         "div.control-nav a.control-nav-next",
         timeout=10
     )
-
