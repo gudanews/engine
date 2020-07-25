@@ -92,6 +92,14 @@ class MySQLDB:
         logger.debug("Update table using SQL query:\n%s" % sql)
         self._commit(sql, val=tuple(val), msg=sql)
 
+    def __exit__(self):
+        self._connection.close()
+
+    def __del__(self):
+        try:
+            self._connection.shutdown()
+        except:
+            pass
 
 class TestMySQLDB(LoggedTestCase):
 
@@ -102,24 +110,24 @@ class TestMySQLDB(LoggedTestCase):
         results = self.db.fetch_table_records(table='news_headline', column=["id", "is_processed", "is_duplicated"])
         self.assertIsNotNone(results)
         self.assertEqual(len(results[0]), 3)
-        self.logger.warning(results)
+        logger.info(results)
 
     def test_get_table_record(self):
         result = self.db.fetch_table_record(table='news_headline', column=["id", "is_processed", "is_duplicated"])
         self.assertIsNotNone(result)
         self.assertEqual(len(result), 3)
-        self.logger.debug(result)
+        logger.info(result)
 
     def test_get_table_non_exists_record(self):
         result = self.db.fetch_table_record(table='news_headline', column=["id", "is_processed", "is_duplicated"],
                                             condition=["id < 0"])
         self.assertIsNone(result)
-        logger.debug(result)
+        logger.info(result)
 
     def test_get_table_schema(self):
         result = self.db.get_table_schema(table='news_headline')
         self.assertIsNotNone(result)
-        logger.debug(result)
+        logger.info(result)
 
     def test_get_table_schema_not_exist(self):
         self.assertRaises(Exception, self.db.get_table_schema, 'does_not_exist')

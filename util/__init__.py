@@ -83,9 +83,9 @@ class LoggedTestCase(unittest.TestCase):
     def setUpClass(cls):
         loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
         for logger in loggers:
-            logger.setLevel(logging.INFO)
             stream_handler = logging.StreamHandler(sys.stdout)
             stream_handler.setFormatter(logging.Formatter("[%(asctime)s]\t%(name)-12s\t[%(levelname)s]\t%(message)s"))
             logger.setLevel(cls.loggingLevel)
             logger.addHandler(stream_handler)
+            logger.propagate = False
 
