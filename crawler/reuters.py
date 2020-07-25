@@ -5,6 +5,7 @@ from webpage.reuters import ReutersPage
 from database.news_headline import NewsHeadlineDB
 from database.image import ImageDB
 import logging
+import time
 
 
 logger = logging.getLogger("CRAWLERS.Reuters")
@@ -26,6 +27,7 @@ class ReutersCrawler(BaseCrawler):
     def goto_nextpage(self):  # goes to next page
         page = ReutersPage(self.driver)
         page.next.click()
+        logger.info("Click to Next Page on the source News website......")
 
     def insert_records(self):
         page = ReutersPage(self.driver)
@@ -37,6 +39,7 @@ class ReutersCrawler(BaseCrawler):
         for np in page.news:
             if not (np.heading, np.url) in existing_data:
                 np.wrapper.scroll_to()
+                time.sleep(0.2)
                 image_id = image_db.get_image_id_by_url(np.image)
                 if not image_id:
                     image_file_path = image_util.save_image_from_url(np.image)
