@@ -39,7 +39,7 @@ class ReutersCrawler(BaseCrawler):
         for np in page.news:
             if not (np.heading, np.url) in existing_data:
                 np.wrapper.scroll_to()
-                time.sleep(0.2)
+                time.sleep(0.5)
                 image_id = image_db.get_image_id_by_url(np.image)
                 if not image_id:
                     image_file_path = image_util.save_image_from_url(np.image)

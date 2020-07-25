@@ -2,13 +2,17 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
-from util import MetaClassSingleton, LoggedTestCase
+from util.common import LoggedTestCase
+from util.common import MetaClassSingleton
 import unittest
 import logging
+from util.config_util import Configure
 
 logger = logging.getLogger("Util.WebDriver")
 
-USE_HEADLESS_CHROME = os.environ.get("BROWSER", "CHROME") == "HEADLESS_CHROME"
+config = Configure()
+
+USE_HEADLESS_CHROME = os.environ.get("BROWSER", config.setting["browser"]) == "HEADLESS_CHROME"
 
 class ChromeDriver(webdriver.Chrome):
     """

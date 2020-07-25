@@ -3,7 +3,7 @@ from datetime import date
 import re
 import logging
 import unittest
-from util import LoggedTestCase
+from util.common import LoggedTestCase
 
 
 logger = logging.getLogger("Util.Datetime")

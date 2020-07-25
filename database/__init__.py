@@ -2,13 +2,23 @@ from util.mysql_util import MySQLDB
 import logging
 import unittest
 import sys
+from util.config_util import Configure
+
 
 logger = logging.getLogger("Database")
 
 
+config = Configure()
+
+DEFAULT_USER = config.setting["db_user"]
+DEFAULT_PASSWORD = config.setting["db_password"]
+DEFAULT_HOST = config.setting["db_host"]
+DEFAULT_DATABASE = config.setting["db_schema"]
+
+
 class DataBase:
     def __init__(self, table):
-        self.db = MySQLDB(user="gudaman", password= "GudaN3w2", host="192.168.1.49", database= "gudanews")
+        self.db = MySQLDB(user=DEFAULT_USER,password=DEFAULT_PASSWORD,host=DEFAULT_HOST,database=DEFAULT_DATABASE)
         self.table = table
         self._table_schema = None
 

@@ -3,8 +3,16 @@ import inspect
 import sys
 from setuptools import find_packages
 from pkgutil import iter_modules
-import unittest
 import logging
+
+
+from util.config_util import Configure
+
+config = Configure()
+
+logging.basicConfig(level=int(config.setting["logging_level"]),
+                    format='[%(asctime)s]\t%(name)-12s\t[%(levelname)s]\t%(message)s',
+                    datefmt='%m-%d %H:%M')
 
 
 def find_modules(path):
@@ -57,35 +65,3 @@ def checksimilarity(a, b):
 
     n = float(s) / float(len(wb))
     return n
-
-
-class MetaClassSingleton(type):
-    """
-    Meta class implementation
-    """
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        """
-        Override __call__ special method based on singleton pattern
-        """
-        if cls not in cls._instances:
-            cls._instances[cls] = super(MetaClassSingleton, cls).__call__(*args, **kwargs)
-
-        return cls._instances[cls]
-
-
-class LoggedTestCase(unittest.TestCase):
-
-    loggingLevel = logging.INFO
-
-    @classmethod
-    def setUpClass(cls):
-        loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
-        for logger in loggers:
-            stream_handler = logging.StreamHandler(sys.stdout)
-            stream_handler.setFormatter(logging.Formatter("[%(asctime)s]\t%(name)-12s\t[%(levelname)s]\t%(message)s"))
-            logger.setLevel(cls.loggingLevel)
-            logger.addHandler(stream_handler)
-            logger.propagate = False
-

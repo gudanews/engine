@@ -1,17 +1,13 @@
 import mysql.connector
 import logging
 import unittest
-from util import LoggedTestCase
+from util.common import LoggedTestCase
+from util.config_util import Configure
 
 logger = logging.getLogger("Util.MySQL")
 
-DEFAULT_USER = "gudaman"
-DEFAULT_PASSWORD = "GudaN3w2"
-DEFAULT_HOST = "192.168.1.49"
-DEFAULT_DATABASE = "gudanews"
-
 class MySQLDB:
-    def __init__(self, user=DEFAULT_USER, password=DEFAULT_PASSWORD, host=DEFAULT_HOST, database=DEFAULT_DATABASE):
+    def __init__(self, user, password, host, database):
         self._connection = mysql.connector.connect(user=user, password=password, host=host, database=database)
         self._cursor = None
 
@@ -101,10 +97,19 @@ class MySQLDB:
         except:
             pass
 
+
+config = Configure()
+
+DEFAULT_USER = config.setting["db_user"]
+DEFAULT_PASSWORD = config.setting["db_password"]
+DEFAULT_HOST = config.setting["db_host"]
+DEFAULT_DATABASE = config.setting["db_schema"]
+
+
 class TestMySQLDB(LoggedTestCase):
 
     def setUp(self):
-        self.db=MySQLDB()
+        self.db=MySQLDB(user=DEFAULT_USER,password=DEFAULT_PASSWORD,host=DEFAULT_HOST,database=DEFAULT_DATABASE)
 
     def test_get_table_records(self):
         results = self.db.fetch_table_records(table='news_headline', column=["id", "is_processed", "is_duplicated"])

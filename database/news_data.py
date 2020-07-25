@@ -2,7 +2,7 @@ from database import DataBase
 from datetime import datetime, timedelta
 import unittest
 import logging
-from util import LoggedTestCase
+from util.common import LoggedTestCase
 
 logger = logging.getLogger("DataBase.NewsData")
 
