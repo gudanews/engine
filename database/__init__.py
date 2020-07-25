@@ -1,6 +1,7 @@
 from util.mysql_util import MySQLDB
 import logging
 import unittest
+import sys
 
 logger = logging.getLogger("Database")
 
@@ -31,6 +32,9 @@ class TestBaseData(unittest.TestCase):
 
     def setUp(self):
         self.data = DataBase("news_headline")
+        stream_handler = logging.StreamHandler(sys.stdout)
+        logger.level = logging.INFO
+        logger.addHandler(stream_handler)
 
     def test_retrieve_one_record(self):
         columns = ["id", "heading", "datetime", "source_id"]
@@ -49,8 +53,8 @@ class TestBaseData(unittest.TestCase):
     def test_retrieve_conditional_records(self):
         columns = ["id", "heading", "datetime", "source_id"]
         conditions = ["id > 10", "source_id = 1"]
-        results_1 = self.data.fetch_db_record(column=columns)
-        results_2 = self.data.fetch_db_record(column=columns, condition=conditions)
+        results_1 = self.data.fetch_db_records(column=columns)
+        results_2 = self.data.fetch_db_records(column=columns, condition=conditions)
         self.assertGreater(len(results_1), len(results_2))
         for r in results_2:
             self.assertGreater(r[0], 10)

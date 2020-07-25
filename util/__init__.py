@@ -3,6 +3,8 @@ import inspect
 import sys
 from setuptools import find_packages
 from pkgutil import iter_modules
+import unittest
+import logging
 
 
 def find_modules(path):
@@ -71,3 +73,19 @@ class MetaClassSingleton(type):
             cls._instances[cls] = super(MetaClassSingleton, cls).__call__(*args, **kwargs)
 
         return cls._instances[cls]
+
+
+class LoggedTestCase(unittest.TestCase):
+
+    loggingLevel = logging.INFO
+
+    @classmethod
+    def setUpClass(cls):
+        loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+        for logger in loggers:
+            logger.setLevel(logging.INFO)
+            stream_handler = logging.StreamHandler(sys.stdout)
+            stream_handler.setFormatter(logging.Formatter("[%(asctime)s]\t%(name)-12s\t[%(levelname)s]\t%(message)s"))
+            logger.setLevel(cls.loggingLevel)
+            logger.addHandler(stream_handler)
+

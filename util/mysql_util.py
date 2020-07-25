@@ -1,7 +1,7 @@
 import mysql.connector
 import logging
 import unittest
-import sys
+from util import LoggedTestCase
 
 logger = logging.getLogger("Util.MySQL")
 
@@ -93,25 +93,22 @@ class MySQLDB:
         self._commit(sql, val=tuple(val), msg=sql)
 
 
-class TestMySQLDB(unittest.TestCase):
+class TestMySQLDB(LoggedTestCase):
 
     def setUp(self):
         self.db=MySQLDB()
-        stream_handler = logging.StreamHandler(sys.stdout)
-        logger.level = logging.INFO
-        logger.addHandler(stream_handler)
 
     def test_get_table_records(self):
         results = self.db.fetch_table_records(table='news_headline', column=["id", "is_processed", "is_duplicated"])
         self.assertIsNotNone(results)
         self.assertEqual(len(results[0]), 3)
-        logger.debug(results)
+        self.logger.warning(results)
 
     def test_get_table_record(self):
         result = self.db.fetch_table_record(table='news_headline', column=["id", "is_processed", "is_duplicated"])
         self.assertIsNotNone(result)
         self.assertEqual(len(result), 3)
-        logger.debug(result)
+        self.logger.debug(result)
 
     def test_get_table_non_exists_record(self):
         result = self.db.fetch_table_record(table='news_headline', column=["id", "is_processed", "is_duplicated"],

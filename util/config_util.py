@@ -1,7 +1,12 @@
 import os
 from configparser import ConfigParser
 from util import MetaClassSingleton
+import logging
+from util import LoggedTestCase
+import unittest
 
+
+logger = logging.getLogger("Until.Config")
 
 CONFIG_FILE = os.environ.get("CONFIG_FILE", "gudanews.cfg")
 
@@ -18,9 +23,8 @@ def get_configure(section, item):
     pass
 
 
-import unittest
+class TestConfigParser(LoggedTestCase):
 
-class TestConfigParser(unittest.TestCase):
     def test_config(self):
         pass
 

@@ -3,6 +3,10 @@ from datetime import datetime, timedelta
 import unittest
 import logging
 from database.source import SourceDB
+from util import LoggedTestCase
+
+logger = logging.getLogger("Database.Headline")
+
 
 class NewsHeadlineDB(DataBase):
 
@@ -21,7 +25,7 @@ class NewsHeadlineDB(DataBase):
         return self.fetch_db_records(column=column, condition=conditions)
 
 
-class TestNewHeadlineDB(unittest.TestCase):
+class TestNewHeadlineDB(LoggedTestCase):
 
     def setUp(self):
         self.data = NewsHeadlineDB()
@@ -34,14 +38,14 @@ class TestNewHeadlineDB(unittest.TestCase):
         start_date = datetime.now() - timedelta(hours=72)
         end_date = datetime.now()
         self.assertTrue(start_date <= first_news_date <= end_date)
-        logging.info(results)
+        logger.info(results)
 
     def test_get_latest_news_from_source(self):
         results = self.data.get_latest_news(source=1)
         self.assertGreater(len(results), 0)
         results = self.data.get_latest_news(source="Reuters")
         self.assertGreater(len(results), 0)
-        logging.info(results)
+        logger.info(results)
 
 
 if __name__ == "__main__":
