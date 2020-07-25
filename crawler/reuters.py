@@ -16,9 +16,9 @@ REUTERS_ID = 1
 
 class ReutersCrawler(BaseCrawler):
 
-    def __init__(self, driver):
+    def __init__(self, browser):
         self.homepage = "https://www.reuters.com/news/archive/us-the-wire?view=page"
-        super(ReutersCrawler, self).__init__(driver)
+        super(ReutersCrawler, self).__init__(browser)
 
     def goto_homepage(self):  # goes to reuters
         self.driver.get(self.homepage)
@@ -29,7 +29,6 @@ class ReutersCrawler(BaseCrawler):
 
     def insert_records(self):
         page = ReutersPage(self.driver)
-        self.driver.scroll_down()
         headline_db = NewsHeadlineDB()
         image_db = ImageDB()
         columns = ["heading", "url"]
@@ -37,14 +36,18 @@ class ReutersCrawler(BaseCrawler):
         unrecorded_news = 0
         for np in page.news:
             if not (np.heading, np.url) in existing_data:
+                np.wrapper.scroll_to()
                 image_id = image_db.get_image_id_by_url(np.image)
                 if not image_id:
                     image_file_path = image_util.save_image_from_url(np.image)
                     image_id = image_db.add_image(url=np.image, path=image_file_path)
                 record = dict(heading=np.heading, datetime=datetime_util.str2datetime(np.time), source_id=REUTERS_ID,
                               image_id=image_id, url=np.url, snippet=np.snippet)
-                logger.info("Insert the following record into database:\n"
-                            "[Headline] : %s\n[URL] : <%s>\n[Snippet] : %s\n\n" % (np.heading, np.url, np.snippet))
+                logger.info("Insert the following record into database:\n" +
+                            "[Headline] :\t%s\n" % np.heading +
+                            "[URL] :\t<%s>\n" % np.url +
+                            "[Snippet] :\t%s\n" % np.snippet +
+                            "[IMAGE] :\t%s\n\n" % np.image)
                 headline_db.insert_db_record(record=record)
                 unrecorded_news += 1
         self.complete = True if unrecorded_news < MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING else False
@@ -64,4 +67,3 @@ if __name__ == "__main__":
     driver = ChromeDriver()
     crawler = ReutersCrawler(driver)
     crawler.crawl()
-    driver.close()

@@ -29,7 +29,7 @@ def main():
         classes = find_public_classes(module)
         for _,cls in classes.items():
             if issubclass(cls, Crawler) and not issubclass(Crawler, cls):
-                driver = webdriver_util.Driver()
+                driver = webdriver_util.ChromeDriver()
                 obj = cls(driver)
                 obj.crawl()
 
