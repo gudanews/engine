@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import unittest
 import logging
 from database.source import SourceDB
-from util import LoggedTestCase
+from util.common import LoggedTestCase
 
 logger = logging.getLogger("Database.Headline")
 

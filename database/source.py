@@ -1,7 +1,7 @@
 from database import DataBase
 import unittest
 import logging
-from util import LoggedTestCase
+from util.common import LoggedTestCase
 
 logger = logging.getLogger("DataBase.Source")
 

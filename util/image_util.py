@@ -4,20 +4,22 @@ import random
 import string
 from datetime import date
 from PIL import Image
-from util import LoggedTestCase
+from util.common import LoggedTestCase
 import unittest
+from util.config_util import Configure
 
 TODAY = date.today()
 
-WEBSITE_BASE_PATH = "/var/www/html/wordpress"
-IMAGE_BASE_PATH = "/var/www/html/wordpress/images"
-#WEBSITE_BASE_PATH = "."
-#IMAGE_BASE_PATH = "./tmp/"
+config = Configure()
+
+WEBSITE_BASE_PATH = config.setting["website_path"]
+IMAGE_BASE_PATH = config.setting["image_path"]
 IMAGE_PATH = os.path.join(IMAGE_BASE_PATH, str(TODAY.year), "%02d-%02d" % (TODAY.month, TODAY.day))
 
-def get_resized_img(img_path, video_size):
+
+def get_resized_img(img_path, img_size):
     img = Image.open(img_path)
-    width, height = video_size
+    width, height = img_size
     video_ratio = width / height
     img_ratio = img.size[0] / img.size[1]
     if video_ratio >= 1:
