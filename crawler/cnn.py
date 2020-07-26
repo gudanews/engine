@@ -50,13 +50,13 @@ class CNNCrawler(BaseCrawler):
                     if img.download_image():
                         image_id = image_db.add_image(url=img.url, path=img.db_path, thumbnail=img.db_thumbnail)
                 record = dict(heading=np.heading, datetime=datetime_util.str2datetime(np.date), source_id=CNN_ID,
-                              image_id=image_id, url=np.url, snippet=np.snippet)
+                              image_id=image_id, url=np.url, snippet=np.snippet[:256])
                 headline_db.insert_db_record(record=record)
                 logger.info("Insert the following CNN record into database:\n" +
                             "[Headline] :\t%s\n" % np.heading +
                             "[URL] :\t<%s>\n" % np.url +
                             "[Date] :\t<%s>\n" % np.date +
-                            "[Snippet] :\t%s\n" % np.snippet +
+                            "[Snippet] :\t%s\n" % np.snippet[:256] +
                             "[ImageURL] :\t%s\n\n" % np.image)
                 unrecorded_news += 1
         logger.info("Found [%d] unrecorded news on this page......\n" % unrecorded_news)
