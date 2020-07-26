@@ -65,3 +65,12 @@ def checksimilarity(a, b):
 
     n = float(s) / float(len(wb))
     return n
+
+
+def remove_parameter_from_url(url, parameter):
+    import furl
+    f = furl.furl(url)
+    if type(parameter) == type(""):
+        parameter = [parameter]
+    f.remove(parameter)
+    return f.url

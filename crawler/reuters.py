@@ -1,4 +1,4 @@
-from util import datetime_util, image_util
+from util import datetime_util
 from crawler import Crawler as BaseCrawler
 from util.webdriver_util import ChromeDriver
 from webpage.reuters import ReutersPage
@@ -7,7 +7,7 @@ from database.image import ImageDB
 import logging
 import time
 from util.image_util import ImageURL
-
+from util import remove_parameter_from_url
 
 logger = logging.getLogger("CRAWLERS.Reuters")
 
@@ -40,10 +40,11 @@ class ReutersCrawler(BaseCrawler):
         for np in page.news:
             if not (np.heading, np.url) in existing_data:
                 np.wrapper.scroll_to()
-                time.sleep(0.5)
+                time.sleep(1.0)
                 image_id = image_db.get_image_id_by_url(np.image)
                 if not image_id:
-                    img = ImageURL(np.image)
+                    url = remove_parameter_from_url(np.image, "w")
+                    img = ImageURL(url)
                     success = img.download_image()
                     if success:
                         image_id = image_db.add_image(url=np.image, path=img.db_path, thumbnail=img.db_thumbnail)

@@ -71,7 +71,7 @@ class ImageURL:
         if not os.path.exists(folder):
             os.makedirs(folder)
 
-    def is_image_valid(self, path):
+    def is_image_valid(self, path=None):
         if not path:
             path = self.path
         with Image.open(path) as img:

@@ -15,8 +15,8 @@ class ImageDB(DataBase):
         result = self.fetch_db_record(column="id", condition=["url = '%s'" % url])
         return result[0] if result else None
 
-    def add_image(self, url=None, path=None):
-        self.insert_db_record(record=dict(url=url, path=path))
+    def add_image(self, url=None, path=None, thumbnail=None):
+        self.insert_db_record(record=dict(url=url, path=path, thumbnail=thumbnail))
         return self.db._cursor.lastrowid
 
 
