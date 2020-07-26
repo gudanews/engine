@@ -14,6 +14,9 @@ class SourceDB(DataBase):
         result = self.fetch_db_record(column="id", condition=["name = '%s'" % name])
         return result[0] if result else 0
 
+    def get_source_name_by_id(self, id):
+        result = self.fetch_db_record(column="name", condition=["id = '%s'" % id])
+        return result[0] if result else ""
 
 class TestSourceData(LoggedTestCase):
 

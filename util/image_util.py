@@ -103,10 +103,23 @@ class ImageHelper:
         return False
 
     def _generate_thumbnail(self):
-        size = self.resize(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, dst_path=self.thumbnail)
+        size = self._shrink(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, dst_path=self.thumbnail)
         logger.info("Thumbnail image [%s] created, with resolution %s" % (self.thumbnail, size))
 
-    def resize(self, width, height, keep_aspect_ratio=True, src_path=None, dst_path=None): # Only works for shrinking size
+    def resize(self, width, height, keep_aspect_ratio=True, src_path=None, dst_path=None):
+        if not src_path:
+            src_path = self.path
+        if not dst_path:
+            dst_path = src_path
+        with Image.open(src_path) as img:
+            width_current, height_current = img.size  # (width, height) format
+            if width <= width_current or height <= height_current:
+                return self._shrink(width, height, keep_aspect_ratio, src_path, dst_path)
+            else:
+                return self._expand(width, height, keep_aspect_ratio, src_path, dst_path)
+        return (width, height)
+
+    def _shrink(self, width, height, keep_aspect_ratio=True, src_path=None, dst_path=None):
         if not src_path:
             src_path = self.path
         if not dst_path:
@@ -148,7 +161,7 @@ class ImageHelper:
         logger.debug("Image file [%s] padded to resolution %s" % (dst_path, str(size)))
         return size
 
-    def expand(self, width, height, keep_aspect_ratio=True, src_path=None, dst_path=None, fill=DEFAULT_FILLING):
+    def _expand(self, width, height, keep_aspect_ratio=True, src_path=None, dst_path=None, fill=DEFAULT_FILLING):
         if not src_path:
             src_path = self.path
         if not dst_path:
@@ -216,9 +229,9 @@ class TestCase(LoggedTestCase):
         with Image.open(self.image.path) as img:
             self.assertEqual(img.size, (800, 400))
 
-    def test_exanding_larger(self):
+    def test_resize_larger(self):
         self.image.download_image()
-        self.image.expand(1024, 768)
+        self.image.resize(1024, 768)
         with Image.open(self.image.path) as img:
             self.assertEqual(img.size, (1024, 768))
 
