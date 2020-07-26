@@ -11,7 +11,7 @@ from furl import furl
 
 logger = logging.getLogger("Crawler.Reuters")
 
-MAX_CRAWLING_PAGES = 10
+MAX_CRAWLING_PAGES = 20
 MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING = 3
 REUTERS_ID = 1
 

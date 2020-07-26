@@ -10,7 +10,7 @@ from util.image_util import ImageHelper
 
 logger = logging.getLogger("Crawler.CNN")
 
-MAX_CRAWLING_PAGES = 10
+MAX_CRAWLING_PAGES = 20
 MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING = 3
 CNN_ID = 101
 
