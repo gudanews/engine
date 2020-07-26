@@ -1,18 +1,18 @@
 from crawler import Crawler as BaseCrawler
-from util import datetime_util, image_util
-
+from util import datetime_util
 from util.webdriver_util import ChromeDriver
 from webpage.americanpress import APPage
 from database.news_headline import NewsHeadlineDB
 from database.image import ImageDB
 import time
 import logging
-from datetime import datetime
-logger = logging.getLogger("Crawler.CNN")
-class APCrawler(BaseCrawler):
+
+logger = logging.getLogger("Crawler.AP")
+
+class _APCrawler(BaseCrawler):
     def __init__(self, driver):
         self.homepage = "https://www.americanpress.com/news/"
-        super(APCrawler, self).__init__(driver)
+        super(_APCrawler, self).__init__(driver)
 
     def goto_homepage(self):
         self.driver.get(self.homepage)
@@ -29,6 +29,9 @@ class APCrawler(BaseCrawler):
     def crawl(self):
         self.goto_homepage()
         self.insert_records()
-driver = ChromeDriver()
-ac = APCrawler(driver=driver)
-ac.crawl()
+
+
+if __name__ == "__main__":
+    driver = ChromeDriver()
+    crawler = _APCrawler(driver)
+    crawler.crawl()

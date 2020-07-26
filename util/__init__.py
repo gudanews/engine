@@ -5,7 +5,6 @@ from setuptools import find_packages
 from pkgutil import iter_modules
 import logging
 
-
 from util.config_util import Configure
 
 config = Configure()
@@ -66,11 +65,3 @@ def checksimilarity(a, b):
     n = float(s) / float(len(wb))
     return n
 
-
-def remove_parameter_from_url(url, parameter):
-    import furl
-    f = furl.furl(url)
-    if type(parameter) == type(""):
-        parameter = [parameter]
-    f.remove(parameter)
-    return f.url
