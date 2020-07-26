@@ -6,6 +6,7 @@ from database.news_headline import NewsHeadlineDB
 from database.image import ImageDB
 import logging
 import time
+from util.image_util import ImageURL
 
 
 logger = logging.getLogger("CRAWLERS.Reuters")
@@ -42,8 +43,9 @@ class ReutersCrawler(BaseCrawler):
                 time.sleep(0.5)
                 image_id = image_db.get_image_id_by_url(np.image)
                 if not image_id:
-                    image_file_path = image_util.save_image_from_url(np.image)
-                    image_id = image_db.add_image(url=np.image, path=image_file_path)
+                    img = ImageURL(np.image)
+                    img.download_image()
+                    image_id = image_db.add_image(url=np.image, path=img.db_path, thumbnail=img.db_thumbnail)
                 record = dict(heading=np.heading, datetime=datetime_util.str2datetime(np.time), source_id=REUTERS_ID,
                               image_id=image_id, url=np.url, snippet=np.snippet)
                 logger.info("Insert the following record into database:\n" +
