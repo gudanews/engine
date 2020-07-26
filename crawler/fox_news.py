@@ -1,6 +1,5 @@
-from util import datetime_util, image_util
 from crawler import Crawler as BaseCrawler
-from util.webdriver_util import Driver, scroll_down
+from util.webdriver_util import ChromeDriver
 from database.news_headline import NewsHeadlineDB
 from database.image import ImageDB
 from webpage.fox_news import FoxNewsPage
@@ -19,6 +18,6 @@ class _FoxCrawler(BaseCrawler):
             print(i.heading)
 
 if __name__ == "__main__":
-    driver = Driver().connect()
+    driver = ChromeDriver()
     crawler = _FoxCrawler(driver)
     crawler.crawl()

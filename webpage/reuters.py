@@ -10,7 +10,7 @@ class Story(Sections):
         value=lambda el: el.text,
         timeout=5
     )
-    time = Element(
+    datetime = Element(
         Locators.CSS_SELECTOR,
         "div.story-content > time.article-time > span",
         value=lambda el: el.text,

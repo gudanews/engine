@@ -21,7 +21,7 @@ class News(Sections):
         value=lambda el: el.get_attribute('src'),
         timeout=5
     )
-    date = Element(
+    datetime = Element(
         Locators.CSS_SELECTOR,
         "div.cnn-search__result-publish-date",
         value=lambda el: el.text,
