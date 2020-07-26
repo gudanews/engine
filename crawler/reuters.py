@@ -6,8 +6,6 @@ from database.news_headline import NewsHeadlineDB
 from database.image import ImageDB
 import logging
 import time
-
-
 logger = logging.getLogger("CRAWLERS.Reuters")
 
 MAX_CRAWLING_PAGES = 1

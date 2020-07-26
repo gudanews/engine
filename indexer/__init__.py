@@ -8,7 +8,7 @@ class Processor:
 def main():
     import os
     from util import find_modules, find_public_classes
-    from processor import Processor
+    from indexer import Processor
     modules = find_modules(os.path.dirname(__file__))
     for module in modules:
         classes = find_public_classes(module)
