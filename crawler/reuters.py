@@ -1,4 +1,4 @@
-from util import datetime_util, image_util
+from util import datetime_util
 from crawler import Crawler as BaseCrawler
 from util.webdriver_util import ChromeDriver
 from webpage.reuters import ReutersPage
@@ -6,7 +6,8 @@ from database.news_headline import NewsHeadlineDB
 from database.image import ImageDB
 import logging
 import time
-
+from util.image_util import ImageURL
+from util import remove_parameter_from_url
 
 logger = logging.getLogger("CRAWLERS.Reuters")
 
@@ -39,11 +40,16 @@ class ReutersCrawler(BaseCrawler):
         for np in page.news:
             if not (np.heading, np.url) in existing_data:
                 np.wrapper.scroll_to()
-                time.sleep(0.5)
+                time.sleep(1.0)
                 image_id = image_db.get_image_id_by_url(np.image)
                 if not image_id:
-                    image_file_path = image_util.save_image_from_url(np.image)
-                    image_id = image_db.add_image(url=np.image, path=image_file_path)
+                    url = remove_parameter_from_url(np.image, "w")
+                    img = ImageURL(url)
+                    success = img.download_image()
+                    if success:
+                        image_id = image_db.add_image(url=np.image, path=img.db_path, thumbnail=img.db_thumbnail)
+                    else:
+                        image_id = 0
                 record = dict(heading=np.heading, datetime=datetime_util.str2datetime(np.time), source_id=REUTERS_ID,
                               image_id=image_id, url=np.url, snippet=np.snippet)
                 logger.info("Insert the following record into database:\n" +
