@@ -20,8 +20,10 @@ DATETIME_REGEX = dict(
     hh_mm_24 = r'^(?P<hour>\d{1,2}):(?P<minute>\d{2})$',  # 20:33
     hh_mm_12_zone=r'^(?P<hour>\d{1,2}):(?P<minute>\d{2})(?P<period>AM|PM) (?P<zone>%s)$' % ANY_TIMEZONE,  # 08:33AM EDT
     hh_mm_24_zone=r'^(?P<hour>\d{1,2}):(?P<minute>\d{2}) (?P<zone>PST|EST)$',  # 20:33 PST
-    month_day_year=r'^(?P<month>%s) (?P<day>\d{1,2}) (?P<year>\d{2,4})$' % ANY_MONTHS_3L,  # JUL 7 2020
-    mon_day_year = r'^(?P<month>%s) (?P<day>\d{1,2}) (?P<year>\d{2,4})$' % ANY_MONTHS,  # JUL 7 2020
+    month_day_year=r'^(?P<month>%s)(\.{0,1})(\s{0,1})(?P<day>\d{1,2})(\,{0,1}) (?P<year>\d{2,4})$' % ANY_MONTHS_3L,  # JUL 7 2020
+    mon_day_year = r'^(?P<month>%s)(\.{0,1})(\s{0,1})(?P<day>\d{1,2})(\,{0,1}) (?P<year>\d{2,4})$' % ANY_MONTHS,  # JUL 7 2020
+    month_day=r'^(?P<month>%s)(\.{0,1})(\s{0,1})(?P<day>\d{1,2})(\,{0,1})$' % ANY_MONTHS_3L,  # JUL 7
+    mon_day = r'^(?P<month>%s)(\.{0,1})(\s{0,1})(?P<day>\d{1,2})(\,{0,1})$' % ANY_MONTHS,  # JUL 7
     min_ago = r'^(?P<ago_minute>\d{1,2})(\s{0,1})(%s) (?P<ago>AGO)$' % ANY_MINUTES,  # 4mins ago
     hour_ago = r'^(?P<ago_hour>\d{1,2})(\s{0,1})(%s) (?P<ago>AGO)$' % ANY_HOURS,  # 10 hours ago
     hour_min_ago = r'^(?P<ago_hour>\d{1,2})(\s{0,1})(%s)(?P<ago_minute>\d{1,2})(\s{0,1})(%s) (?P<ago>AGO)$' % (ANY_HOURS, ANY_MINUTES)  # 2h30m ago
@@ -51,29 +53,32 @@ def str2datetime(p_time):
         if m:
             adj_hour = 0 # Adjust hours due to time zone and period and ago
             adj_minute = 0 # Adjust minutes
-            d_time = m.groupdict()
+            ic_time = m.groupdict()
             for key in ("year", "month", "day", "hour", "minute"):
-                if key in d_time:
-                    if d_time[key].isdigit():
-                        d_time[key] = int(d_time[key])
+                if key in ic_time:
+                    if ic_time[key].isdigit():
+                        ic_time[key] = int(ic_time[key])
                 else:
-                    exec("d_time['" + key + "'] = NOW." + key)
-            if isinstance(d_time["month"], str): # e.g. Convert d_time["month"] = July to 7
-                d_time["month"] = _convert_month_to_number(d_time["month"])
-            if "period" in d_time: # Adjust PM to 24 hour format
-                if d_time["period"].upper() == "PM" and d_time["hour"] != 12: # 3PM -> 15, but 12PM -> 12
+                    if key in ("hour", "minute") and not "ago" in ic_time: # if time not specified set to 00:00
+                        ic_time[key] = 0
+                    else:
+                        exec("ic_time['" + key + "'] = NOW." + key)
+            if isinstance(ic_time["month"], str): # e.g. Convert ic_time["month"] = July to 7
+                ic_time["month"] = _convert_month_to_number(ic_time["month"])
+            if "period" in ic_time: # Adjust PM to 24 hour format
+                if ic_time["period"].upper() == "PM" and ic_time["hour"] != 12: # 3PM -> 15, but 12PM -> 12
                     adj_hour += 12
-                del d_time["period"]
-            if "zone" in d_time: # Adjust timezone to current local time
-                adj_hour += _adjust_timezone(d_time["hour"], d_time["zone"])
-                del d_time["zone"]
-            if "ago" in d_time: # Adjust time deltas
-                if "ago_hour" in d_time:
-                    adj_hour -= int(d_time.pop("ago_hour"))
-                if "ago_minute" in d_time:
-                    adj_minute -= int(d_time.pop("ago_minute"))
-                del d_time["ago"]
-            r_time = datetime(**d_time) + timedelta(hours=adj_hour, minutes=adj_minute)
+                del ic_time["period"]
+            if "zone" in ic_time: # Adjust timezone to current local time
+                adj_hour += _adjust_timezone(ic_time["hour"], ic_time["zone"])
+                del ic_time["zone"]
+            if "ago" in ic_time: # Adjust time deltas
+                if "ago_hour" in ic_time:
+                    adj_hour -= int(ic_time.pop("ago_hour"))
+                if "ago_minute" in ic_time:
+                    adj_minute -= int(ic_time.pop("ago_minute"))
+                del ic_time["ago"]
+            r_time = datetime(**ic_time) + timedelta(hours=adj_hour, minutes=adj_minute)
             logger.debug("Convert [%s] to standardized datetime [%s]" %
                          (p_time, r_time))
             return r_time
@@ -99,9 +104,13 @@ class TestDateTime(LoggedTestCase):
         result = str2datetime("03:30PM")
         self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,15,30)))
         result = str2datetime("Jul 03 2020")
-        self.assertEqual(str(result), str(datetime(2020,7,3,NOW.hour,NOW.minute)))
+        self.assertEqual(str(result), str(datetime(2020,7,3,0,0)))
+        result = str2datetime("Jul 03, 2020")
+        self.assertEqual(str(result), str(datetime(2020,7,3,0,0)))
         result = str2datetime("August 03 2020")
-        self.assertEqual(str(result), str(datetime(2020,8,3,NOW.hour,NOW.minute)))
+        self.assertEqual(str(result), str(datetime(2020,8,3,0,0)))
+        result = str2datetime("August 03, 2020")
+        self.assertEqual(str(result), str(datetime(2020,8,3,0,0)))
 
 if __name__ == '__main__':
     unittest.main()

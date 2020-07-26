@@ -20,8 +20,8 @@ WEBSITE_BASE_PATH = config.setting["website_path"]
 IMAGE_BASE_PATH = config.setting["image_path"]
 IMAGE_PATH = os.path.join(IMAGE_BASE_PATH, str(TODAY.year), "%02d-%02d" % (TODAY.month, TODAY.day))
 
-IMAGE_WIDTH = 1024
-IMAGE_HEIGHT = 708
+IMAGE_WIDTH = 780
+IMAGE_HEIGHT = 538
 THUMBNAIL_WIDTH = 300
 THUMBNAIL_HEIGHT = 208
 DEFAULT_FILLING = (255, 255, 255)
@@ -38,7 +38,7 @@ def human_format(number):
     magnitude = int(floor(log(number, k)))
     return '%.2f%s' % (number / k**magnitude, units[magnitude])
 
-class ImageURL:
+class ImageHelper:
 
     def __init__(self, url, path=None):
         self.url = url
@@ -95,11 +95,11 @@ class ImageURL:
         logger.info("Image file [%s] created, size [%s]" % (path, human_format(file_size)))
         if self.is_image_valid():
             if not keep_original:
-                size = self.resize(IMAGE_WIDTH, IMAGE_HEIGHT)
-                logger.info("Image file [%s] resized to resolution %s" % (path, size))
+                self.resize(IMAGE_WIDTH, IMAGE_HEIGHT)
             if thumbnail:
                 self._generate_thumbnail()
             return True
+        logger.info("Image link [%s] ist invalid" % self.url)
         return False
 
     def _generate_thumbnail(self):
@@ -111,19 +111,21 @@ class ImageURL:
             src_path = self.path
         if not dst_path:
             dst_path = src_path
-        size = tuple([width, height])
+        size = (width, height)
         with Image.open(src_path) as img:
             width_current, height_current = img.size # (width, height) format
-            if width > width_current or height > height_current:
+            if width > width_current and height > height_current:
                 return img.size
             if keep_aspect_ratio:
                 ratio = min(float(width / width_current), float(height / height_current))
                 size = tuple([int(i*ratio) for i in img.size])
-            img.thumbnail(size, Image.ANTIALIAS)
+            if ratio < 1:
+                img.thumbnail(size, Image.ANTIALIAS)
             self._create_parent_folders(dst_path)
             img.save(dst_path)
-        if size != tuple([width, height]):
+        if size != (width, height):
             return self._padding(width, height, src_path=dst_path, dst_path=dst_path)
+        logger.debug("Image file [%s] resized to resolution %s" % (dst_path, str(size)))
         return size
 
     def _padding(self, width, height, src_path=None, dst_path=None, fill=DEFAULT_FILLING):
@@ -131,28 +133,30 @@ class ImageURL:
             src_path = self.path
         if not dst_path:
             dst_path = src_path
+        size = (width, height)
         with Image.open(src_path) as img:
             width_current, height_current = img.size # (width, height) format
             if width < width_current or height < height_current: # cannot padding
                 return img.size
             # create a new image and paste the resized on it
-            with Image.new("RGB", (width, height), fill) as new_img:
+            with Image.new("RGB", size, fill) as new_img:
                 width_delta = width - width_current
                 height_delta = height - height_current
                 new_img.paste(img, (width_delta//2, height_delta//2))
                 self._create_parent_folders(dst_path)
                 new_img.save(dst_path)
-        return tuple([width, height])
+        logger.debug("Image file [%s] padded to resolution %s" % (dst_path, str(size)))
+        return size
 
     def expand(self, width, height, keep_aspect_ratio=True, src_path=None, dst_path=None, fill=DEFAULT_FILLING):
         if not src_path:
             src_path = self.path
         if not dst_path:
             dst_path = src_path
-        size = tuple([width, height])
-        with  Image.open(src_path) as img:
+        size = (width, height)
+        with Image.open(src_path) as img:
             width_current, height_current = img.size # (width, height) format
-            if width < width_current or height < height_current:
+            if width < width_current and height < height_current:
                 return img.size
             if keep_aspect_ratio:
                 ratio = min(float(width / width_current), float(height / height_current))
@@ -163,30 +167,61 @@ class ImageURL:
                                        height_delta-(height_delta//2)), fill) as new_img:
                 self._create_parent_folders(dst_path)
                 new_img.save(dst_path)
-        if size != tuple([width, height]):
+        if size != (width, height):
             return self._padding(width, height, src_path=dst_path, dst_path=dst_path)
+        logger.debug("Image file [%s] expanded to resolution %s" % (dst_path, str(size)))
         return size
 
 
 class TestCase(LoggedTestCase):
 
     def setUp(self):
-        self.image = ImageURL(url="https://s4.reutersmedia.net/resources/r/?m=02&d=20200725&t=2&i=1527081659&fh=&fw=&ll=&pl=&sq=&r=LYNXNPEG6O02V",
+        self.image = ImageHelper(url="https://s4.reutersmedia.net/resources/r/?m=02&d=20200725&t=2&i=1527081659&fh=&fw=&ll=&pl=&sq=&r=LYNXNPEG6O02V",
                               path="/tmp/images/testing/testing.jpg")
 
     def test_download_url(self):
         self.image.download_image()
         self.assertTrue(os.path.exists(self.image.path))
+        self.assertTrue(os.path.exists(self.image.thumbnail))
+        with Image.open(self.image.path) as img:
+            self.assertEqual(img.size, (IMAGE_WIDTH, IMAGE_HEIGHT))
 
-    def test_resize(self):
+    def test_resize_smaller(self):
+        self.image.download_image()
         self.image.resize(640, 480)
-        img = Image.open(self.image.path)
-        self.assertEqual(img.size, (640, 480))
+        with Image.open(self.image.path) as img:
+            self.assertEqual(img.size, (640, 480))
 
-    def test_exanding(self):
-        self.image.expand(2048, 1536)
-        img = Image.open(self.image.path)
-        self.assertEqual(img.size, (2048, 1536))
+    def test_resize_only_height(self):
+        self.image.download_image()
+        self.image.resize(IMAGE_WIDTH, 480)
+        with Image.open(self.image.path) as img:
+            self.assertEqual(img.size, (IMAGE_WIDTH, 480))
+
+    def test_resize_only_width(self):
+        self.image.download_image()
+        self.image.resize(600, IMAGE_HEIGHT)
+        with Image.open(self.image.path) as img:
+            self.assertEqual(img.size, (600, IMAGE_HEIGHT))
+
+    def test_resize_smaller_width_larger_height(self):
+        self.image.download_image()
+        self.image.resize(480, 800)
+        with Image.open(self.image.path) as img:
+            self.assertEqual(img.size, (480, 800))
+
+    def test_resize_larger_width_smaller_height(self):
+        self.image.download_image()
+        self.image.resize(800, 400)
+        with Image.open(self.image.path) as img:
+            self.assertEqual(img.size, (800, 400))
+
+    def test_exanding_larger(self):
+        self.image.download_image()
+        self.image.expand(1024, 768)
+        with Image.open(self.image.path) as img:
+            self.assertEqual(img.size, (1024, 768))
+
 
 if __name__ == "__main__":
     unittest.main()

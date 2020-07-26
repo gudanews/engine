@@ -34,12 +34,6 @@ class Story(Sections):
         value=lambda el: el.get_attribute('src'),
         timeout=5,
     )
-    wrapper = Element(
-        Locators.CSS_SELECTOR,
-        "div.story-content",
-        timeout=5,
-        only_if=VISIBLE()
-    )
 
 
 class ReutersPage(Page):
