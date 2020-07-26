@@ -44,8 +44,11 @@ class ReutersCrawler(BaseCrawler):
                 image_id = image_db.get_image_id_by_url(np.image)
                 if not image_id:
                     img = ImageURL(np.image)
-                    img.download_image()
-                    image_id = image_db.add_image(url=np.image, path=img.db_path, thumbnail=img.db_thumbnail)
+                    success = img.download_image()
+                    if success:
+                        image_id = image_db.add_image(url=np.image, path=img.db_path, thumbnail=img.db_thumbnail)
+                    else:
+                        image_id = 0
                 record = dict(heading=np.heading, datetime=datetime_util.str2datetime(np.time), source_id=REUTERS_ID,
                               image_id=image_id, url=np.url, snippet=np.snippet)
                 logger.info("Insert the following record into database:\n" +
