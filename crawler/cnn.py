@@ -8,6 +8,7 @@ logger = logging.getLogger("Crawler.CNN")
 
 class CNNCrawler(BaseCrawler):
 
+    MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING = 0
     SOURCE_ID = 101
     logger = logging.getLogger("Crawler.CNN")
 
