@@ -5,21 +5,21 @@ from holmium.core.conditions import VISIBLE
 class News(Sections):
     heading = Element(
         Locators.CSS_SELECTOR,
-        "h3.cnn-search__result-headline a",
+        "h3 a span",
         value=lambda el: el.text,
         timeout=5
     )
     url = Element(
         Locators.CSS_SELECTOR,
-        "h3.cnn-search__result-headline a",
+        "h3 a[href]",
         value=lambda el: el.get_attribute('href'),
         timeout=5
     )
     image = Element(
         Locators.CSS_SELECTOR,
-        "div.cnn-search__result-thumbnail img",
-        value=lambda el: el.get_attribute('src'),
-        timeout=5
+        "div.media a img",
+        value=lambda el: el.get_attribute('data-src-full16x9'),
+        timeout=0.2
     )
     datetime = Element(
         Locators.CSS_SELECTOR,
@@ -27,21 +27,10 @@ class News(Sections):
         value=lambda el: el.text,
         timeout=5
     )
-    snippet = Element(
-        Locators.CSS_SELECTOR,
-        "div.cnn-search__result-body",
-        value=lambda el: el.text,
-        timeout=5
-    )
 
 class CNNPage(Page):
     news = News(
         Locators.CSS_SELECTOR,
-        "div.cnn-search__result",
-        timeout=10
-    )
-    next = Element(
-        Locators.CSS_SELECTOR,
-        "div.pagination-arrow-right",
+        "section.zn-homepage1-zone-1 div.zn__containers li > article",
         timeout=10
     )

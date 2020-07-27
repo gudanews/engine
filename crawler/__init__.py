@@ -21,7 +21,7 @@ class Crawler:
         self.page = page
         self.current_page_number = 1
         if not self.SOURCE_ID:
-            raise NotImplementedError("Please specify the SOURCE_ID")
+            raise NotImplementedError("Please provide SOURCE_ID before proceed.")
 
     def goto_main_page(self):  # goes to main page
         self.driver.get(self.web_url)
@@ -36,19 +36,18 @@ class Crawler:
         return url
 
     def process_image(self, url):
-        image_db = ImageDB()
-        image_id = image_db.get_image_id_by_url(url)
-        if not image_id:
-            # Change the image url to download image right size image
-            url_alternative = self.find_alternative_image_url(url)
-            try:
+        if url:
+            image_db = ImageDB()
+            image_id = image_db.get_image_id_by_url(url)
+            if not image_id:
+                # Change the image url to download image right size image
+                url_alternative = self.find_alternative_image_url(url)
                 image_id = self.save_image(url_alternative)
-            except:
-                self.logger.info("Image link[%s] is not valid" % url_alternative)
-            finally:
-                if image_id == 0:
+                if not image_id:
+                    self.logger.info("Ulternative image link [%s] is not valid" % url_alternative)
                     image_id = self.save_image(url)
-        return image_id
+            return image_id
+        return 0
 
     def save_image(self, url):
         img = ImageHelper(url)
@@ -79,11 +78,13 @@ class Crawler:
                 try:
                     np.root.scroll_to()
                     time.sleep(0.5)
-                    image_id = self.process_image(np.image)
-                    self.logger.info("Inserting a new record into database.")
+                    image_id = 0
+                    if "image" in dir(np):
+                        image_id = self.process_image(np.image)
                     record = self.build_record_from_page_element(np)
                     record["source_id"]=self.SOURCE_ID
                     record["image_id"]=image_id
+                    self.logger.info("Inserting a new record into database.")
                     headline_db.insert_db_record(record=record)
                 except:
                     self.logger.warning("Unexpected issues happened when crawling the page")

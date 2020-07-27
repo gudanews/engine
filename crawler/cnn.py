@@ -17,11 +17,6 @@ class _CNNCrawler(BaseCrawler):
         page = CNNPage(driver)
         super(_CNNCrawler, self).__init__(driver, web_url, page)
 
-    def find_alternative_image_url(self, url):
-        if url and url.endswith("-story-body.jpg"):
-            url = "-exlarge-169".join(url.rsplit("-story-body", 1))
-        return url
-
 
 if __name__ == "__main__":
     driver = ChromeDriver()

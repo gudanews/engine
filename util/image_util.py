@@ -85,14 +85,18 @@ class ImageHelper:
             path = self.path
         self._create_parent_folders(path)
         result = None
-        if sys.version[0] =='3':
-            import urllib.request
-            result = urllib.request.urlretrieve(url, path)
-        if sys.version[0] =='2':
-            import urllib
-            result = urllib.urlretrieve(url, path)
-        file_size = int(result[1]["Content-Length"]) if "Content-Length" in result[1] else 0
-        logger.info("Image file [%s] created, size [%s]" % (path, human_format(file_size)))
+        try:
+            if sys.version[0] =='3':
+                import urllib.request.urlretrieve
+                result = urllib.request.urlretrieve(url, path)
+            if sys.version[0] =='2':
+                import urllib
+                result = urllib.urlretrieve(url, path)
+            file_size = int(result[1]["Content-Length"]) if "Content-Length" in result[1] else 0
+            logger.info("Image file [%s] created, size [%s]" % (path, human_format(file_size)))
+        except:
+            logger.warning("Error when download image [%s]" % url)
+            return False
         if self.is_image_valid():
             if not keep_original:
                 self.resize(IMAGE_WIDTH, IMAGE_HEIGHT)
