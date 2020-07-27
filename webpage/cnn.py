@@ -18,14 +18,8 @@ class News(Sections):
     image = Element(
         Locators.CSS_SELECTOR,
         "div.media a img",
-        value=lambda el: el.get_attribute('data-src-full16x9'),
+        value=lambda el: el.get_attribute('src'),
         timeout=0.5
-    )
-    datetime = Element(
-        Locators.CSS_SELECTOR,
-        "div.cnn-search__result-publish-date",
-        value=lambda el: el.text,
-        timeout=5
     )
 
 class CNNPage(Page):

@@ -6,16 +6,16 @@ import logging
 logger = logging.getLogger("Crawler.CNN")
 
 
-class _CNNCrawler(BaseCrawler):
+class CNNCrawler(BaseCrawler):
 
     MAX_CRAWLING_PAGES = 1
     SOURCE_ID = 101
     logger = logging.getLogger("Crawler.CNN")
 
     def __init__(self, driver):
-        web_url = "https://www.cnn.com/search?q=cnn"
+        web_url = "https://www.cnn.com"
         page = CNNPage(driver)
-        super(_CNNCrawler, self).__init__(driver, web_url, page)
+        super(CNNCrawler, self).__init__(driver, web_url, page)
 
     def goto_next_page(self):  # CNN news only checks one page
         raise Exception("CNN news should only be crawled on home page")
@@ -23,5 +23,5 @@ class _CNNCrawler(BaseCrawler):
 
 if __name__ == "__main__":
     driver = ChromeDriver()
-    crawler = _CNNCrawler(driver)
+    crawler = CNNCrawler(driver)
     crawler.crawl()
