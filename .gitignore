@@ -4,6 +4,7 @@
 venv
 venv/
 gudanews*.cfg
+.gitignore
 
 
 ######################
