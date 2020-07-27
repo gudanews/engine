@@ -14,15 +14,18 @@ class NewsHeadlineDB(DataBase):
         super(NewsHeadlineDB, self).__init__("news_headline")
 
     def get_latest_news(self, column=None, source=None):
-        conditions = ["datetime BETWEEN '%(start_time)s' and '%(end_time)s'" %
-                      {'start_time': datetime.strftime(datetime.now() - timedelta(hours=72), "%Y-%m-%d %H:%M:%S"),
-                       'end_time': datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")}]
+        conditions = ["datetime > '%s'" %
+                      (datetime.strftime(datetime.now() - timedelta(hours=72), "%Y-%m-%d %H:%M:%S"))]
         if source and type(source) == type(0): # is integer
             conditions.append("source_id = '%d'" % source)
         elif source:
             src = SourceDB()
             conditions.append("source_id = '%s'" % src.get_source_id_by_name(source))
         return self.fetch_db_records(column=column, condition=conditions)
+
+    def add_headline(self, record):
+        self.insert_db_record(record=record)
+        return self.db._cursor.lastrowid
 
 
 class TestNewHeadlineDB(LoggedTestCase):

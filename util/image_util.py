@@ -89,7 +89,7 @@ class ImageHelper:
             if sys.version[0] =='3':
                 import urllib.request
                 result = urllib.request.urlretrieve(url, path)
-            if sys.version[0] =='2':
+            elif sys.version[0] =='2':
                 import urllib
                 result = urllib.urlretrieve(url, path)
             file_size = int(result[1]["Content-Length"]) if "Content-Length" in result[1] else 0

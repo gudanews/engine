@@ -6,7 +6,7 @@ from database.news_headline import NewsHeadlineDB
 from database.image import ImageDB
 from database.source import SourceDB
 from util.image_util import ImageHelper
-
+from datetime import datetime
 
 class Crawler:
 
@@ -61,11 +61,18 @@ class Crawler:
         for el in ("heading", "datetime", "url", "snippet"):
             if el in dir(element):
                 exec("record[el] = element." + el)
-                if el == "datetime":
-                    record["datetime"] = datetime_util.str2datetime(element.datetime) # convert to proper datetime
-                if el == "snippet":
-                    record["snippet"] = record[el][:256] # limit the snippet 256
-                self.logger.debug("[%s] :\t%s\n" % (el.upper(), record[el]))
+                if record[el]:
+                    if el == "datetime":
+                        record["datetime"] = datetime_util.str2datetime(element.datetime) # convert to proper datetime
+                    elif el == "snippet":
+                        record["snippet"] = record[el][:256] # limit the snippet 256
+                    self.logger.debug("[%s] :\t%s\n" % (el.upper(), record[el]))
+                else: # In case find None value for web elements, remove the entry
+                    del record[el]
+        if not set(("heading", "url")).intersection(dir(element)): # element must contain at least heading or url
+            raise Exception("Record does NOT contain both <heading> and <url> field, at least one must be specified")
+        if not "datetime" in record.keys(): # Always provide a datetime for record
+            record["datetime"] = datetime.now()
         return record
 
     def parse_current_page(self):
@@ -84,8 +91,8 @@ class Crawler:
                     record = self.build_record_from_page_element(np)
                     record["source_id"]=self.SOURCE_ID
                     record["image_id"]=image_id
-                    self.logger.info("Inserting a new record into database.")
-                    headline_db.insert_db_record(record=record)
+                    headline_id = headline_db.add_headline(record=record)
+                    self.logger.info("Inserting a new record ID[%s] into database." % headline_id)
                 except:
                     self.logger.warning("Unexpected issues happened when crawling the page")
                 finally:
