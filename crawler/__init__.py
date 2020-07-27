@@ -74,7 +74,7 @@ class Crawler:
         existing_data = headline_db.get_latest_news(column=columns, source=self.SOURCE_ID)
         unrecorded_news = 0
         for np in self.page.news:
-            if not (np.url) in existing_data:
+            if not (np.url,) in existing_data: # ("abc",) is different than ("abc")
                 np.root.scroll_to()
                 time.sleep(0.5)
                 image_id = self.process_image(np.image)
