@@ -8,6 +8,12 @@ from database.source import SourceDB
 from util.image_util import ImageHelper
 from datetime import datetime
 
+DEBUGGING_TEST = False
+
+NOW = datetime.now()
+logger = logging.getLogger("Crawler")
+
+
 class Crawler:
 
     MAX_CRAWLING_PAGES = 5
@@ -51,6 +57,8 @@ class Crawler:
         return 0
 
     def save_image(self, url):
+        if DEBUGGING_TEST:
+            return 0
         img = ImageHelper(url)
         image_db = ImageDB()
         if img.download_image():
@@ -70,8 +78,8 @@ class Crawler:
                     self.logger.debug("[%s] :\t%s" % (el.upper(), record[el]))
                 else: # In case find None value for web elements, remove the entry
                     del record[el]
-        if not set(("heading", "url")).intersection(dir(element)): # element must contain at least heading or url
-            raise Exception("Record does NOT contain both <heading> and <url> field, at least one must be specified")
+        if not any(check in ["heading", "url"] for check in record.keys()): # element must contain at least heading or url
+            raise Exception("Record does NOT contain eith <heading> or <url> field, at least one must be specified")
         if not "datetime" in record.keys(): # Always provide a datetime for record
             record["datetime"] = datetime.now()
         return record
@@ -84,6 +92,11 @@ class Crawler:
         for np in self.page.news:
             if not (np.url,) in existing_data: # ("abc",) is different than ("abc")
                 try:
+                    self.logger.info("Found a new record on the page.")
+                    if "heading" in dir(np):
+                        self.logger.info("[HEADING]:\t%s" % np.heading)
+                    if "url" in dir(np):
+                        self.logger.info("[URL]:\t%s" % np.url)
                     np.root.scroll_to()
                     time.sleep(0.5)
                     image_id = 0
@@ -92,10 +105,13 @@ class Crawler:
                     record = self.build_record_from_page_element(np)
                     record["source_id"]=self.SOURCE_ID
                     record["image_id"]=image_id
-                    headline_id = headline_db.add_headline(record=record)
+                    headline_id = 0
+                    if not DEBUGGING_TEST:
+                        headline_id = headline_db.add_headline(record=record)
                     self.logger.info("Inserting a new record [ID=%s] into database." % headline_id)
-                except:
+                except Exception as e:
                     self.logger.warning("Unexpected issues happened when crawling the page")
+                    self.logger.warning("%s" % e)
                 finally:
                     unrecorded_news += 1
         self.logger.info("Found [%d] unrecorded news on current page." % unrecorded_news)
@@ -124,6 +140,7 @@ def main():
     import os
     from util import find_modules, find_public_classes
     from crawler import Crawler
+    logger.info("Start crawling [%s] ......\n" % str(NOW))
     modules = find_modules(os.path.dirname(__file__))
     for module in modules:
         classes = find_public_classes(module)
@@ -135,6 +152,7 @@ def main():
                     obj.crawl()
                 except:
                     cls.logger.warning("Error happens to current crawler, continuing......")
+    logger.info("Completed crawling [%s].\n" % str(NOW))
 
 
 

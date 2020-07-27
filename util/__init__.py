@@ -11,7 +11,7 @@ config = Configure()
 
 logging.basicConfig(level=int(config.setting["logging_level"]),
                     format='[%(asctime)s]\t%(name)-12s\t[%(levelname)s]\t%(message)s',
-                    datefmt='%m-%d %H:%M')
+                    datefmt='%m-%d %H:%M:%S')
 
 
 def find_modules(path):
