@@ -58,7 +58,7 @@ def str2datetime(p_time):
             ic_time = m.groupdict()
             if "zone" in ic_time: # Adjust timezone to current local time
                 adj_hour += _adjust_timezone(ic_time["zone"])
-                if not "day" in ic_time and "hour" in ic_time and int(ic_time["hour"]) < -adj_hour: # 02:34AM EST
+                if not "day" in ic_time and "hour" in ic_time and int(ic_time["hour"]) < -adj_hour and NOW.hour >= 24 + adj_hour: # 02:34AM EST
                     adj_hour += 24
                 del ic_time["zone"]
             for key in ("year", "month", "day", "hour", "minute", "second"):
@@ -105,7 +105,10 @@ class TestDateTime(LoggedTestCase):
 
     def test_string_to_datetime4(self):
         result = str2datetime("02:30 EST")
-        self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,23,30,0)))
+        if NOW.hour > 20:
+            self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,23,30,0)))
+        else:
+            self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,23,30,0) - timedelta(days=1)))
 
     def test_string_to_datetime5(self):
         result = str2datetime("03:30 EST")

@@ -1,10 +1,6 @@
-import unittest
 from holmium.core import Element, Locators, Section, Sections, Page
-from util.webdriver_util import ChromeDriver
-from util import datetime_util, image_util
-from crawler import Crawler as BaseCrawler
+from holmium.core.conditions import VISIBLE
 
-from database.news_headline import NewsHeadlineDB
 class Section(Sections):
     heading = Element(
         Locators.CSS_SELECTOR,
@@ -12,28 +8,33 @@ class Section(Sections):
         value=lambda el: el.text,
         timeout=5
     )
-    time = Element(
+    datetime = Element(
         Locators.CSS_SELECTOR,
-        "div.card-meta ul.list-inline li.card-date time",
-        value=lambda el: el.text,
+        "div.card-meta li.card-date time[datetime]",
+        value=lambda el: el.get_attribute("datetime"),
         timeout=5
     )
     url = Element(
         Locators.CSS_SELECTOR,
-        "h3.tnt-headline a",
-        value=lambda el: el.get_attribute('href'),
+        "div.card-headline h3.tnt-headline a[href]",
+        value=lambda el: el.get_attribute("href"),
         timeout=5
     )
     snippet = Element(
         Locators.CSS_SELECTOR,
-        "p.tnt-summary",
+        "div.card-lead p.tnt-summary",
         value=lambda el: el.text,
         timeout=5
     )
+
+
 class APPage(Page):
     news = Section(
-        Locators.XPATH,
-        "//div[@class='card-container']//div[@class='card-label-flags']/../..",
+        #Locators.XPATH,
+        #"//div[@class='card-container']//div[@class='card-label-flags']/../..",
+        Locators.CSS_SELECTOR,
+        #"div.col-lg-12 div.card-container",
+        "div.card-panel div.card-container",
         timeout=10
     )
 

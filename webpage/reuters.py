@@ -1,4 +1,4 @@
-from holmium.core import Element, Locators, Sections
+from holmium.core import Element, Locators, Section, Sections
 from holmium.core import Page
 from holmium.core.conditions import VISIBLE
 
