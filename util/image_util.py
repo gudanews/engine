@@ -87,7 +87,7 @@ class ImageHelper:
         result = None
         try:
             if sys.version[0] =='3':
-                import urllib.request.urlretrieve
+                import urllib.request
                 result = urllib.request.urlretrieve(url, path)
             if sys.version[0] =='2':
                 import urllib
