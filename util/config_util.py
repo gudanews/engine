@@ -9,7 +9,7 @@ import unittest
 logger = logging.getLogger("Until.Config")
 
 CONFIG_FILE = os.environ.get("CONFIG_FILE", os.path.abspath(os.path.dirname(__file__) + "/../gudanews.cfg"))
-ENVIRONMENT = os.environ.get("ENVIRONMENT", "SANDBOX")
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "PRODUCTION")
 
 class Configure:
 

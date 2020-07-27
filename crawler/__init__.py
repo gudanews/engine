@@ -11,7 +11,7 @@ from util.image_util import ImageHelper
 
 class Crawler:
 
-    MAX_CRAWLING_PAGES = 20
+    MAX_CRAWLING_PAGES = 5
     MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING = 3
     SOURCE_ID = None
     logger = logging.getLogger("Crawler")
