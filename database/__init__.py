@@ -29,7 +29,7 @@ class DataBase:
         return self._table_schema
 
     def insert_db_record(self, record):
-        return self.db.insert_table_record(self.table, record)
+        self.db.insert_table_record(self.table, record)
 
     def fetch_db_records(self, column=None, condition=None, order_by=None):
         return self.db.fetch_table_records(self.table, column, condition, order_by)
