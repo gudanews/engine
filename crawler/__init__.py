@@ -40,12 +40,13 @@ class Crawler:
             image_db = ImageDB()
             image_id = image_db.get_image_id_by_url(url)
             if not image_id:
-                # Change the image url to download image right size image
+                # Change the image url to download image with better resolution
                 url_alternative = self.find_alternative_image_url(url)
                 image_id = self.save_image(url_alternative)
                 if not image_id:
-                    self.logger.info("Ulternative image link [%s] is not valid" % url_alternative)
-                    image_id = self.save_image(url)
+                    if url_alternative != url:
+                        self.logger.info("Ulternative image link [%s] is not valid" % url_alternative)
+                        image_id = self.save_image(url)
             return image_id
         return 0
 
@@ -66,7 +67,7 @@ class Crawler:
                         record["datetime"] = datetime_util.str2datetime(element.datetime) # convert to proper datetime
                     elif el == "snippet":
                         record["snippet"] = record[el][:256] # limit the snippet 256
-                    self.logger.debug("[%s] :\t%s\n" % (el.upper(), record[el]))
+                    self.logger.debug("[%s] :\t%s" % (el.upper(), record[el]))
                 else: # In case find None value for web elements, remove the entry
                     del record[el]
         if not set(("heading", "url")).intersection(dir(element)): # element must contain at least heading or url
@@ -92,7 +93,7 @@ class Crawler:
                     record["source_id"]=self.SOURCE_ID
                     record["image_id"]=image_id
                     headline_id = headline_db.add_headline(record=record)
-                    self.logger.info("Inserting a new record ID[%s] into database." % headline_id)
+                    self.logger.info("Inserting a new record [ID=%s] into database." % headline_id)
                 except:
                     self.logger.warning("Unexpected issues happened when crawling the page")
                 finally:
