@@ -1,0 +1,52 @@
+#####################
+# Project files #
+#####################
+venv
+venv/
+gudanews*.cfg
+
+
+######################
+# OS generated files #
+######################
+.DS_Store*
+Thumbs.db
+ehthumbs.db
+
+###################
+# Compiled source #
+###################
+*.class
+*.pyc
+*.o
+
+############
+# IDE Misc #
+############
+# Intelli files
+.idea
+.pydevproject
+
+# Ecipse files
+/.externalToolBuilders/
+/.settings/
+/eclipse-bin/
+.classpath
+.project
+.cache
+
+# Vim files
+.*.sw[a-z]
+*.un~
+Session.vim
+
+# Emacs files
+*~
+semantic.cache
+
+#####################
+# Incorrect logs and out folders which are intellij defaults
+#####################
+logs/
+out/
+
