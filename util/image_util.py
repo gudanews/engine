@@ -103,12 +103,12 @@ class ImageHelper:
             if thumbnail:
                 self._generate_thumbnail()
             return True
-        logger.info("Image link [%s] ist invalid" % self.url)
+        logger.warning("Image link [%s] ist invalid" % self.url)
         return False
 
     def _generate_thumbnail(self):
         size = self._shrink(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, dst_path=self.thumbnail)
-        logger.info("Thumbnail image [%s] created, with resolution %s" % (self.thumbnail, size))
+        logger.debug("Thumbnail image [%s] created, with resolution %s" % (self.thumbnail, size))
 
     def resize(self, width, height, keep_aspect_ratio=True, src_path=None, dst_path=None):
         if not src_path:
