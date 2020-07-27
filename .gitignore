@@ -1,8 +1,10 @@
 #####################
-# Dependency caches #
+# Project files #
 #####################
 venv
 venv/
+gudanews*.cfg
+
 
 ######################
 # OS generated files #
