@@ -26,7 +26,8 @@ DATETIME_REGEX = dict(
     mon_day = r'^(?P<month>%s)(\.{0,1})(\s{0,1})(?P<day>\d{1,2})(\,{0,1})$' % ANY_MONTHS,  # JUL 7
     min_ago = r'^(?P<ago_minute>\d{1,2})(\s{0,1})(%s) (?P<ago>AGO)$' % ANY_MINUTES,  # 4mins ago
     hour_ago = r'^(?P<ago_hour>\d{1,2})(\s{0,1})(%s) (?P<ago>AGO)$' % ANY_HOURS,  # 10 hours ago
-    hour_min_ago = r'^(?P<ago_hour>\d{1,2})(\s{0,1})(%s)(?P<ago_minute>\d{1,2})(\s{0,1})(%s) (?P<ago>AGO)$' % (ANY_HOURS, ANY_MINUTES)  # 2h30m ago
+    hour_min_ago = r'^(?P<ago_hour>\d{1,2})(\s{0,1})(%s)(?P<ago_minute>\d{1,2})(\s{0,1})(%s) (?P<ago>AGO)$' % (ANY_HOURS, ANY_MINUTES),  # 2h30m ago
+    year_month_day_hh_mm_ss_zone = r'^(?P<year>\d{2,4})-(?P<month>\d{1,2})-(?P<day>\d{1,2})T(?P<hour>\d{1,2}):(?P<minute>\d{2}):(?P<second>\d{2})(?P<zone>.*)$'# 2020-07-26T16:23:55-04:00
 )
 def _convert_month_to_number(month):
     MONTH_3L = dict(JAN=1,FEB=2,MAR=3,APR=4,MAY=5,JUN=6,JUL=7,AUG=8,SEP=9,OCT=10,NOV=11,DEC=12)
@@ -41,28 +42,32 @@ def _convert_month_to_number(month):
 
 def _adjust_timezone(hour, zone):
     adjust = 0
-    if zone and zone.upper() in ("EST", "EDT"):
-        adjust -= 3
-        if hour < 3:
-            adjust += 24
+    if zone:
+        if zone.upper() in ("EST", "EDT", "-04:00", "-4:00", "-4", "-4"):
+            adjust -= 3
+            if hour < 3:
+                adjust += 24
     return adjust
 
 def str2datetime(p_time):
+    if not p_time: # Return current time if p_time is None
+        return NOW
     for _,pattern in DATETIME_REGEX.items():
         m = re.match(pattern, p_time, re.IGNORECASE)
         if m:
             adj_hour = 0 # Adjust hours due to time zone and period and ago
             adj_minute = 0 # Adjust minutes
             ic_time = m.groupdict()
-            for key in ("year", "month", "day", "hour", "minute"):
+            for key in ("year", "month", "day", "hour", "minute", "second"):
                 if key in ic_time:
                     if ic_time[key].isdigit():
                         ic_time[key] = int(ic_time[key])
                 else:
-                    if key in ("hour", "minute") and not "ago" in ic_time: # if time not specified set to 00:00
+                    if key in ("hour", "minute", "second") and not "ago" in ic_time: # if time not specified set to 00:00
                         ic_time[key] = 0
                     else:
                         exec("ic_time['" + key + "'] = NOW." + key)
+
             if isinstance(ic_time["month"], str): # e.g. Convert ic_time["month"] = July to 7
                 ic_time["month"] = _convert_month_to_number(ic_time["month"])
             if "period" in ic_time: # Adjust PM to 24 hour format
@@ -79,38 +84,69 @@ def str2datetime(p_time):
                     adj_minute -= int(ic_time.pop("ago_minute"))
                 del ic_time["ago"]
             r_time = datetime(**ic_time) + timedelta(hours=adj_hour, minutes=adj_minute)
-            logger.debug("Convert [%s] to standardized datetime [%s]" %
-                         (p_time, r_time))
+            logger.debug("Convert [%s] to standardized datetime [%s]" % (p_time, r_time))
             return r_time
-
+    logger.warning("Cannot find the expected time format [%s]" % p_time)
+    return p_time
 
 class TestDateTime(LoggedTestCase):
 
-    def test_string_to_datetime(self):
+    def test_string_to_datetime1(self):
         result = str2datetime("2h30m ago")
-        self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,NOW.hour,NOW.minute) - timedelta(hours=2, minutes=30)))
+        self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,NOW.hour,NOW.minute,NOW.second) - timedelta(hours=2, minutes=30)))
+
+    def test_string_to_datetime2(self):
         result = str2datetime("10 hours ago")
-        self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,NOW.hour,NOW.minute) - timedelta(hours=10)))
+        self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,NOW.hour,NOW.minute,NOW.second) - timedelta(hours=10)))
+
+    def test_string_to_datetime3(self):
         result = str2datetime("4min ago")
-        self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,NOW.hour,NOW.minute) - timedelta(minutes=4)))
+        self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,NOW.hour,NOW.minute,NOW.second) - timedelta(minutes=4)))
+
+    def test_string_to_datetime4(self):
         result = str2datetime("02:30 EST")
-        self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,23,30)))
+        self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,23,30,0)))
+
+    def test_string_to_datetime5(self):
         result = str2datetime("03:30 EST")
-        self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,0,30)))
+        self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,0,30,0)))
+
+    def test_string_to_datetime6(self):
         result = str2datetime("03:30PM PST")
-        self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,15,30)))
+        self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,15,30,0)))
+
+    def test_string_to_datetime7(self):
         result = str2datetime("03:30")
-        self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,3,30)))
+        self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,3,30,0)))
+
+    def test_string_to_datetime8(self):
         result = str2datetime("03:30PM")
-        self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,15,30)))
+        self.assertEqual(str(result), str(datetime(TODAY.year,TODAY.month,TODAY.day,15,30,0)))
+
+    def test_string_to_datetime9(self):
         result = str2datetime("Jul 03 2020")
-        self.assertEqual(str(result), str(datetime(2020,7,3,0,0)))
+        self.assertEqual(str(result), str(datetime(2020,7,3,0,0,0)))
+
+    def test_string_to_datetime10(self):
         result = str2datetime("Jul 03, 2020")
-        self.assertEqual(str(result), str(datetime(2020,7,3,0,0)))
+        self.assertEqual(str(result), str(datetime(2020,7,3,0,0,0)))
+
+    def test_string_to_datetime11(self):
         result = str2datetime("August 03 2020")
-        self.assertEqual(str(result), str(datetime(2020,8,3,0,0)))
+        self.assertEqual(str(result), str(datetime(2020,8,3,0,0,0)))
+
+    def test_string_to_datetime12(self):
         result = str2datetime("August 03, 2020")
-        self.assertEqual(str(result), str(datetime(2020,8,3,0,0)))
+        self.assertEqual(str(result), str(datetime(2020,8,3,0,0,0)))
+
+    def test_string_to_datetime13(self):
+        result = str2datetime(None)
+        self.assertEqual(str(result), str(NOW))
+
+    def test_string_to_datetime14(self):
+        result = str2datetime("2020-07-26T16:23:55-04:00")
+        self.assertEqual(str(result), str(datetime(2020,7,26,13,23,55)))
+
 
 if __name__ == '__main__':
     unittest.main()

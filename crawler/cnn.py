@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger("Crawler.CNN")
 
 
-class CNNCrawler(BaseCrawler):
+class _CNNCrawler(BaseCrawler):
 
     MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING = 0
     SOURCE_ID = 101
@@ -15,7 +15,7 @@ class CNNCrawler(BaseCrawler):
     def __init__(self, driver):
         web_url = "https://www.cnn.com/search?q=cnn"
         page = CNNPage(driver)
-        super(CNNCrawler, self).__init__(driver, web_url, page)
+        super(_CNNCrawler, self).__init__(driver, web_url, page)
 
     def find_alternative_image_url(self, url):
         if url and url.endswith("-story-body.jpg"):
@@ -25,5 +25,5 @@ class CNNCrawler(BaseCrawler):
 
 if __name__ == "__main__":
     driver = ChromeDriver()
-    crawler = CNNCrawler(driver)
+    crawler = _CNNCrawler(driver)
     crawler.crawl()
