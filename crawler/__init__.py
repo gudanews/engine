@@ -6,7 +6,7 @@ from database.news_headline import NewsHeadlineDB
 from database.image import ImageDB
 from database.source import SourceDB
 from util.image_util import ImageHelper
-
+from datetime import datetime
 
 class Crawler:
 
@@ -57,15 +57,20 @@ class Crawler:
         return 0
 
     def build_record_from_page_element(self, element):
-        record = dict()
+        if set(("heading", "url")).intersection(dir(element)): # element must contain at least heading or url
+            raise Exception("Record does NOT contain both <heading> and <url> field, at least one must be specified")
+        record = dict(datetime=datetime.now())
         for el in ("heading", "datetime", "url", "snippet"):
             if el in dir(element):
-                exec("record[el] = element." + el)
-                if el == "datetime":
-                    record["datetime"] = datetime_util.str2datetime(element.datetime) # convert to proper datetime
-                if el == "snippet":
-                    record["snippet"] = record[el][:256] # limit the snippet 256
-                self.logger.debug("[%s] :\t%s\n" % (el.upper(), record[el]))
+                value = None
+                exec("value = element." + el)
+                if value:
+                    record[el] = value
+                    if el == "datetime":
+                        record["datetime"] = datetime_util.str2datetime(element.datetime) # convert to proper datetime
+                    if el == "snippet":
+                        record["snippet"] = record[el][:256] # limit the snippet 256
+                    self.logger.debug("[%s] :\t%s\n" % (el.upper(), record[el]))
         return record
 
     def parse_current_page(self):

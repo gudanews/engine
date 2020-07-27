@@ -24,6 +24,10 @@ class NewsHeadlineDB(DataBase):
             conditions.append("source_id = '%s'" % src.get_source_id_by_name(source))
         return self.fetch_db_records(column=column, condition=conditions)
 
+    def add_headline(self, record):
+        self.insert_db_record(record)
+        return self.db._cursor.lastrowid
+
 
 class TestNewHeadlineDB(LoggedTestCase):
 

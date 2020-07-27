@@ -5,7 +5,7 @@ from holmium.core.conditions import VISIBLE
 class News(Sections):
     heading = Element(
         Locators.CSS_SELECTOR,
-        "h3 a span",
+        "h3 a span.cd__headline-text",
         value=lambda el: el.text,
         timeout=5
     )
@@ -19,7 +19,7 @@ class News(Sections):
         Locators.CSS_SELECTOR,
         "div.media a img",
         value=lambda el: el.get_attribute('data-src-full16x9'),
-        timeout=0.2
+        timeout=0.5
     )
     datetime = Element(
         Locators.CSS_SELECTOR,

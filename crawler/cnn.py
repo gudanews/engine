@@ -8,7 +8,7 @@ logger = logging.getLogger("Crawler.CNN")
 
 class _CNNCrawler(BaseCrawler):
 
-    MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING = 0
+    MAX_CRAWLING_PAGES = 1
     SOURCE_ID = 101
     logger = logging.getLogger("Crawler.CNN")
 
@@ -16,6 +16,9 @@ class _CNNCrawler(BaseCrawler):
         web_url = "https://www.cnn.com/search?q=cnn"
         page = CNNPage(driver)
         super(_CNNCrawler, self).__init__(driver, web_url, page)
+
+    def goto_next_page(self):  # CNN news only checks one page
+        raise Exception("CNN news should only be crawled on home page")
 
 
 if __name__ == "__main__":

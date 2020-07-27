@@ -12,7 +12,7 @@ class Article(Sections):
         Locators.CSS_SELECTOR,
         "div.info div.meta span.time",
         value=lambda el: el.get_attribute("data-time-published"),
-        timeout=0.2
+        timeout=0.5
     )
     url = Element(
         Locators.CSS_SELECTOR,

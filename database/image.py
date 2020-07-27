@@ -27,7 +27,7 @@ class TestImageData(LoggedTestCase):
 
     def test_get_image_id_by_non_exist_url(self):
         id = self.data.get_image_id_by_url('does_not_exist')
-        self.assertIsNone(id)
+        self.assertEqual(id, 0)
         logger.info(id)
 
 

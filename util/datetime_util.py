@@ -40,13 +40,11 @@ def _convert_month_to_number(month):
         return MONTH_3L[month.upper()]
     return None
 
-def _adjust_timezone(hour, zone):
+def _adjust_timezone(zone):
     adjust = 0
     if zone:
-        if zone.upper() in ("EST", "EDT", "-04:00", "-4:00", "-4", "-4"):
+        if zone.upper() in ("EST", "EDT", "-04:00", "-4:00", "-4"):
             adjust -= 3
-            if hour < 3:
-                adjust += 24
     return adjust
 
 def str2datetime(p_time):
@@ -58,6 +56,11 @@ def str2datetime(p_time):
             adj_hour = 0 # Adjust hours due to time zone and period and ago
             adj_minute = 0 # Adjust minutes
             ic_time = m.groupdict()
+            if "zone" in ic_time: # Adjust timezone to current local time
+                adj_hour += _adjust_timezone(ic_time["zone"])
+                if not "day" in ic_time and "hour" in ic_time and int(ic_time["hour"]) < -adj_hour: # 02:34AM EST
+                    adj_hour += 24
+                del ic_time["zone"]
             for key in ("year", "month", "day", "hour", "minute", "second"):
                 if key in ic_time:
                     if ic_time[key].isdigit():
@@ -74,9 +77,6 @@ def str2datetime(p_time):
                 if ic_time["period"].upper() == "PM" and ic_time["hour"] != 12: # 3PM -> 15, but 12PM -> 12
                     adj_hour += 12
                 del ic_time["period"]
-            if "zone" in ic_time: # Adjust timezone to current local time
-                adj_hour += _adjust_timezone(ic_time["hour"], ic_time["zone"])
-                del ic_time["zone"]
             if "ago" in ic_time: # Adjust time deltas
                 if "ago_hour" in ic_time:
                     adj_hour -= int(ic_time.pop("ago_hour"))
@@ -146,6 +146,10 @@ class TestDateTime(LoggedTestCase):
     def test_string_to_datetime14(self):
         result = str2datetime("2020-07-26T16:23:55-04:00")
         self.assertEqual(str(result), str(datetime(2020,7,26,13,23,55)))
+
+    def test_string_to_datetime15(self):
+        result = str2datetime("2020-07-26T02:23:55-04:00")
+        self.assertEqual(str(result), str(datetime(2020,7,25,23,23,55)))
 
 
 if __name__ == '__main__':
