@@ -1,5 +1,4 @@
 from util.webdriver_util import ChromeDriver
-from holmium.core import Page
 import logging
 import time
 from util import datetime_util
@@ -20,15 +19,17 @@ class Crawler:
         self.driver = driver
         self.web_url = web_url
         self.page = page
+        self.current_page_number = 1
         if not self.SOURCE_ID:
             raise NotImplementedError("Please specify the SOURCE_ID")
 
-    def goto_main_page(self):  # goes to reuters
+    def goto_main_page(self):  # goes to main page
         self.driver.get(self.web_url)
 
-    def goto_nextpage(self):  # goes to next page
+    def goto_next_page(self):  # goes to next page
         self.page.next.click()
-        self.logger.info("Click to continue on Next Page......\n")
+        self.current_page_number += 1
+        self.logger.info("Landing at [%s/%s] page......\n" % (self.current_page_number, self.MAX_CRAWLING_PAGES))
         time.sleep(2.0)
 
     def find_alternative_image_url(self, url):
@@ -43,7 +44,7 @@ class Crawler:
             try:
                 image_id = self.save_image(url_alternative)
             except:
-                pass
+                self.logger.info("Image link[%s] is not valid" % url_alternative)
             finally:
                 if image_id == 0:
                     image_id = self.save_image(url)
@@ -75,15 +76,19 @@ class Crawler:
         unrecorded_news = 0
         for np in self.page.news:
             if not (np.url,) in existing_data: # ("abc",) is different than ("abc")
-                np.root.scroll_to()
-                time.sleep(0.5)
-                image_id = self.process_image(np.image)
-                self.logger.info("Inserting a new record into database.")
-                record = self.build_record_from_page_element(np)
-                record["source_id"]=self.SOURCE_ID
-                record["image_id"]=image_id
-                headline_db.insert_db_record(record=record)
-                unrecorded_news += 1
+                try:
+                    np.root.scroll_to()
+                    time.sleep(0.5)
+                    image_id = self.process_image(np.image)
+                    self.logger.info("Inserting a new record into database.")
+                    record = self.build_record_from_page_element(np)
+                    record["source_id"]=self.SOURCE_ID
+                    record["image_id"]=image_id
+                    headline_db.insert_db_record(record=record)
+                except:
+                    self.logger.warning("Unexpected issues happened when crawling the page")
+                finally:
+                    unrecorded_news += 1
         self.logger.info("Found [%d] unrecorded news on current page." % unrecorded_news)
         self.complete = True if unrecorded_news < self.MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING else False
 
@@ -95,9 +100,9 @@ class Crawler:
                 self.parse_current_page()
             except:
                 pass
-            if self.complete or i >= self.MAX_CRAWLING_PAGES:
+            if self.complete or i == self.MAX_CRAWLING_PAGES - 1:
                 break
-            self.goto_nextpage()
+            self.goto_next_page()
         source_db = SourceDB()
         self.logger.info("=" * 50)
         self.logger.info("=" * 50)
@@ -120,7 +125,7 @@ def main():
                     obj = cls(driver)
                     obj.crawl()
                 except:
-                    pass
+                    cls.logger.warning("Error happens to current crawler, continuing......")
 
 
 

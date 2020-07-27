@@ -4,38 +4,33 @@ from holmium.core.conditions import VISIBLE
 class Article(Sections):
     heading = Element(
         Locators.CSS_SELECTOR,
-        "header.info-header h2.title a",
+        "div.info h2.title a",
         value=lambda el: el.text,
         timeout=5
     )
-    time = Element(
+    datetime = Element(
         Locators.CSS_SELECTOR,
-        "div.story-content > time.article-time > span",
-        value=lambda el: el.text,
-        timeout=5
+        "div.info div.meta span.time",
+        value=lambda el: el.get_attribute("data-time-published"),
+        timeout=0.2
     )
     url = Element(
         Locators.CSS_SELECTOR,
-        "div.story-content > a[href]",
-        value=lambda el: el.get_attribute('href'),
-        timeout=5
-    )
-    snippet = Element(
-        Locators.CSS_SELECTOR,
-        "div.story-content > p",
-        value=lambda el: el.text,
+        "div.info h2.title a",
+        value=lambda el: el.get_attribute("href"),
         timeout=5
     )
     image = Element(
         Locators.CSS_SELECTOR,
-        "div.m[picture[img]]",
-        value=lambda el: el.get_attribute('src'),
+        "div.m picture img[src]",
+        value=lambda el: el.get_attribute("src"),
+        only_if=VISIBLE(),
         timeout=5
     )
 
 class FoxNewsPage(Page):
     news = Article(
         Locators.CSS_SELECTOR,
-        "div.main article.article",
+        "main.main-content div.collection article.article",
         timeout=10
     )
