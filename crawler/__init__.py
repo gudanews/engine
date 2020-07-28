@@ -134,7 +134,7 @@ class Crawler:
             self.goto_next_page()
         source_db = SourceDB()
         self.logger.info(">>>>>>>>>  Total [%s] New Records  <<<<<<<<<" % self.total_found)
-        self.logger.info(">>>>>>>>>  Crawling [%s] completed  <<<<<<<<<" % source_name)
+        self.logger.info(">>>>>>>>>  Crawling [%s] completed  <<<<<<<<<\n\n" % source_name)
 
 
 def main():
@@ -142,7 +142,7 @@ def main():
     from util import find_modules, find_public_classes
     from crawler import Crawler
     logger.info("=" * 40)
-    logger.info("Started crawling [%s] ......\n" % str(NOW))
+    logger.info("Started crawling [%s] ......" % str(NOW))
     logger.info("=" * 40)
     modules = find_modules(os.path.dirname(__file__))
     for module in modules:
@@ -156,7 +156,7 @@ def main():
                 except:
                     cls.logger.warning("Error happens to current crawler, continuing......")
     logger.info("=" * 40)
-    logger.info("Completed crawling [%s].\n" % str(NOW))
+    logger.info("Completed crawling [%s]." % str(NOW))
     logger.info("=" * 40)
 
 
