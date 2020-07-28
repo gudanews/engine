@@ -10,7 +10,7 @@ from util.config_util import Configure
 config = Configure()
 
 logging.basicConfig(level=int(config.setting["logging_level"]),
-                    format='[%(asctime)s]\t%(name)-12s\t[%(levelname)s]\t%(message)s',
+                    format='[%(asctime)s]  %(name)-12s\t[%(levelname)s]\t%(message)s',
                     datefmt='%m-%d %H:%M:%S')
 
 
