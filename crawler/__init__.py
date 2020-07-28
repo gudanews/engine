@@ -26,8 +26,9 @@ class Crawler:
         self.web_url = web_url
         self.page = page
         self.current_page_number = 1
+        self.total_found = 0
         if not self.SOURCE_ID:
-            raise NotImplementedError("Please provide SOURCE_ID before proceed.")
+            raise NotImplementedError("Please Provide A Valid SOURCE_ID Before Proceed......")
 
     def goto_main_page(self):  # goes to main page
         self.driver.get(self.web_url)
@@ -35,7 +36,7 @@ class Crawler:
     def goto_next_page(self):  # goes to next page
         self.page.next.click()
         self.current_page_number += 1
-        self.logger.info("Landing at [%s/%s] page......\n" % (self.current_page_number, self.MAX_CRAWLING_PAGES))
+        self.logger.info("Landing At [%s/%s] Page......\n" % (self.current_page_number, self.MAX_CRAWLING_PAGES))
         time.sleep(2.0)
 
     def find_alternative_image_url(self, url):
@@ -51,7 +52,7 @@ class Crawler:
                 image_id = self.save_image(url_alternative)
                 if not image_id:
                     if url_alternative != url:
-                        self.logger.info("Ulternative image link [%s] is not valid" % url_alternative)
+                        self.logger.info("Ulternative Image Link [%s] Is NOT Valid" % url_alternative)
                         image_id = self.save_image(url)
             return image_id
         return 0
@@ -79,7 +80,7 @@ class Crawler:
                 else: # In case find None value for web elements, remove the entry
                     del record[el]
         if not any(check in ["heading", "url"] for check in record.keys()): # element must contain at least heading or url
-            raise Exception("Record does NOT contain eith <heading> or <url> field, at least one must be specified")
+            raise Exception("Record Does NOT Contain Either <Heading> or <URL> Field, At Least One MUST Be Specified")
         if not "datetime" in record.keys(): # Always provide a datetime for record
             record["datetime"] = datetime.now()
         return record
@@ -92,11 +93,10 @@ class Crawler:
         for np in self.page.news:
             if not (np.url,) in existing_data: # ("abc",) is different than ("abc")
                 try:
-                    self.logger.info("Found a new record on the page.")
                     if "heading" in dir(np):
-                        self.logger.info("[HEADING]:\t%s" % np.heading)
+                        self.logger.info("[New Heading]:\t%s" % np.heading)
                     if "url" in dir(np):
-                        self.logger.info("[URL]:\t%s" % np.url)
+                        self.logger.info("[New URL]:\t%s" % np.url)
                     np.root.scroll_to()
                     time.sleep(0.5)
                     image_id = 0
@@ -108,13 +108,14 @@ class Crawler:
                     headline_id = 0
                     if not DEBUGGING_TEST:
                         headline_id = headline_db.add_headline(record=record)
-                    self.logger.info("Inserting a new record [ID=%s] into database." % headline_id)
+                    self.logger.info("Inserted New Record [ID=%s] into Database." % headline_id)
                 except Exception as e:
-                    self.logger.warning("Unexpected issues happened when crawling the page")
+                    self.logger.warning("Unexpected Issues Happened When Crawling as Follows:")
                     self.logger.warning("%s" % e)
                 finally:
                     unrecorded_news += 1
-        self.logger.info("Found [%d] unrecorded news on current page." % unrecorded_news)
+                    self.total_found += 1
+        self.logger.info("Found [%d] Unrecorded News on Current Page." % unrecorded_news)
         self.complete = True if unrecorded_news < self.MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING else False
 
     def crawl(self):
@@ -132,7 +133,8 @@ class Crawler:
                 break
             self.goto_next_page()
         source_db = SourceDB()
-        self.logger.info(">>>>>>>>>  Crawling [%s] completed  <<<<<<<<<" % source_db.get_source_name_by_id(self.SOURCE_ID))
+        self.logger.info(">>>>>>>>>  Total [%s] New Records  <<<<<<<<<" % self.total_found)
+        self.logger.info(">>>>>>>>>  Crawling [%s] completed  <<<<<<<<<" % source_name)
 
 
 def main():
