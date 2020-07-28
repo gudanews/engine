@@ -121,7 +121,7 @@ class Crawler:
     def crawl(self):
         source_db = SourceDB()
         source_name = source_db.get_source_name_by_id(self.SOURCE_ID)
-        self.logger.info(">>>>>>>>>  Crawling [%s] started  <<<<<<<<<" % source_name
+        self.logger.info(">>>>>>>>>  Crawling [%s] started  <<<<<<<<<" % source_name)
         self.goto_main_page()
         self.complete = False
         for i in range(self.MAX_CRAWLING_PAGES):
