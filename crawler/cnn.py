@@ -18,7 +18,7 @@ class CNNCrawler(BaseCrawler):
         super(CNNCrawler, self).__init__(driver, web_url, page)
 
     def goto_next_page(self):  # CNN news only checks one page
-        raise Exception("CNN news should only be crawled on home page")
+        raise Exception("CNN News Should Only Be Crawled On Home Page")
 
 
 if __name__ == "__main__":

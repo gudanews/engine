@@ -17,7 +17,7 @@ class FoxCrawler(BaseCrawler):
         super(FoxCrawler, self).__init__(driver, web_url, page)
 
     def goto_next_page(self):  # Fox news only checks one page
-        raise Exception("Fox news should only be crawled on home page")
+        raise Exception("Fox News Should Only Be Crawled On Home Page")
 
     def find_alternative_image_url(self, url):
         # Expected url

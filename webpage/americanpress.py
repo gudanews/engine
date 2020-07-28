@@ -1,7 +1,7 @@
 from holmium.core import Element, Locators, Section, Sections, Page
 from holmium.core.conditions import VISIBLE
 
-class Section(Sections):
+class Cards(Sections):
     heading = Element(
         Locators.CSS_SELECTOR,
         "div.card-headline h3.tnt-headline a",
@@ -29,7 +29,7 @@ class Section(Sections):
 
 
 class APPage(Page):
-    news = Section(
+    news = Cards(
         #Locators.XPATH,
         #"//div[@class='card-container']//div[@class='card-label-flags']/../..",
         Locators.CSS_SELECTOR,
@@ -37,19 +37,3 @@ class APPage(Page):
         "div.card-panel div.card-container",
         timeout=10
     )
-
-#class TestBaseData(unittest.TestCase):
-#
-#    def setUp(self):
-#        self.driver = Driver().connect()
-#        self.driver.get('https://www.americanpress.com/news/')
-#        self.page = APPage(self.driver)
-#
-#    def test(self):
-#        a = 1
-#        for i in self.page.news:
-#            print(i.heading)
-#
-#if __name__ == '__main__':
-#    #unittest.main()
-#    pass
