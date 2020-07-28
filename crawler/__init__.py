@@ -121,7 +121,7 @@ class Crawler:
     def crawl(self):
         source_db = SourceDB()
         source_name = source_db.get_source_name_by_id(self.SOURCE_ID)
-        self.logger.info(">>>>>>>>>  Crawling [%s] started  <<<<<<<<<" % source_name)
+        self.logger.info("===========  Crawling [%s] started  ===========" % source_name)
         self.goto_main_page()
         self.complete = False
         for i in range(self.MAX_CRAWLING_PAGES):
@@ -133,8 +133,8 @@ class Crawler:
                 break
             self.goto_next_page()
         source_db = SourceDB()
-        self.logger.info(">>>>>>>>>  Total [%s] New Records  <<<<<<<<<" % self.total_found)
-        self.logger.info(">>>>>>>>>  Crawling [%s] completed  <<<<<<<<<\n\n" % source_name)
+        self.logger.info("-----------  Total [%s] New Records  -----------" % self.total_found)
+        self.logger.info("===========  Crawling [%s] completed  ===========\n" % source_name)
 
 
 def main():
@@ -142,7 +142,7 @@ def main():
     from util import find_modules, find_public_classes
     from crawler import Crawler
     logger.info("=" * 40)
-    logger.info("Started crawling [%s] ......" % str(NOW))
+    logger.info("Started Crawling ......")
     logger.info("=" * 40)
     modules = find_modules(os.path.dirname(__file__))
     for module in modules:
@@ -155,9 +155,9 @@ def main():
                     obj.crawl()
                 except:
                     cls.logger.warning("Error happens to current crawler, continuing......")
-    logger.info("=" * 40)
-    logger.info("Completed crawling [%s]." % str(NOW))
-    logger.info("=" * 40 + "\n" * 2)
+    logger.info(">" * 30 + "<" * 30)
+    logger.info("Completed Crawling, Processing Time [%s]." % str(datetime.now() - NOW))
+    logger.info(">" * 30 + "<" * 30 + "\n" * 2)
 
 
 
