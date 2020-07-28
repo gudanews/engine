@@ -157,7 +157,7 @@ def main():
                     cls.logger.warning("Error happens to current crawler, continuing......")
     logger.info("=" * 40)
     logger.info("Completed crawling [%s]." % str(NOW))
-    logger.info("=" * 40)
+    logger.info("=" * 40 + "\n" * 2)
 
 
 

@@ -8,7 +8,7 @@ from furl import furl
 class ReutersCrawler(BaseCrawler):
 
     SOURCE_ID = 1
-    logger = logging.getLogger("Crawler.Reuters")
+    logger = logging.getLogger("Crawler.REU")
 
     def __init__(self, driver):
         web_url = "https://www.reuters.com/news/archive/us-the-wire?view=page"
