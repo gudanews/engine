@@ -118,6 +118,9 @@ class Crawler:
         self.complete = True if unrecorded_news < self.MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING else False
 
     def crawl(self):
+        source_db = SourceDB()
+        source_name = source_db.get_source_name_by_id(self.SOURCE_ID)
+        self.logger.info(">>>>>>>>>  Crawling [%s] started  <<<<<<<<<" % source_name
         self.goto_main_page()
         self.complete = False
         for i in range(self.MAX_CRAWLING_PAGES):
@@ -129,18 +132,16 @@ class Crawler:
                 break
             self.goto_next_page()
         source_db = SourceDB()
-        self.logger.info("=" * 50)
-        self.logger.info("=" * 50)
         self.logger.info(">>>>>>>>>  Crawling [%s] completed  <<<<<<<<<" % source_db.get_source_name_by_id(self.SOURCE_ID))
-        self.logger.info("=" * 50)
-        self.logger.info("=" * 50)
 
 
 def main():
     import os
     from util import find_modules, find_public_classes
     from crawler import Crawler
-    logger.info("Start crawling [%s] ......\n" % str(NOW))
+    logger.info("=" * 40)
+    logger.info("Started crawling [%s] ......\n" % str(NOW))
+    logger.info("=" * 40)
     modules = find_modules(os.path.dirname(__file__))
     for module in modules:
         classes = find_public_classes(module)
@@ -152,7 +153,9 @@ def main():
                     obj.crawl()
                 except:
                     cls.logger.warning("Error happens to current crawler, continuing......")
+    logger.info("=" * 40)
     logger.info("Completed crawling [%s].\n" % str(NOW))
+    logger.info("=" * 40)
 
 
 
