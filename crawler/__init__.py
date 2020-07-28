@@ -39,6 +39,9 @@ class Crawler:
         self.logger.info("Landing At [%s/%s] Page......\n" % (self.current_page_number, self.MAX_CRAWLING_PAGES))
         time.sleep(2.0)
 
+    def is_valid_record(self, element):
+        return True
+
     def find_alternative_image_url(self, url):
         return url
 
@@ -58,12 +61,11 @@ class Crawler:
         return 0
 
     def save_image(self, url):
-        if DEBUGGING_TEST:
-            return 0
-        img = ImageHelper(url)
-        image_db = ImageDB()
-        if img.download_image():
-            return image_db.add_image(url=img.url, path=img.db_path, thumbnail=img.db_thumbnail)
+        if not DEBUGGING_TEST:
+            img = ImageHelper(url)
+            image_db = ImageDB()
+            if img.download_image():
+                return image_db.add_image(url=img.url, path=img.db_path, thumbnail=img.db_thumbnail)
         return 0
 
     def build_record_from_page_element(self, element):
@@ -92,29 +94,26 @@ class Crawler:
         unrecorded_news = 0
         for np in self.page.news:
             if not (np.url,) in existing_data: # ("abc",) is different than ("abc")
-                try:
-                    if "heading" in dir(np):
-                        self.logger.info("[New Heading]:\t%s" % np.heading)
-                    if "url" in dir(np):
-                        self.logger.info("[New URL]:\t%s" % np.url)
-                    np.root.scroll_to()
-                    time.sleep(0.5)
-                    image_id = 0
-                    if "image" in dir(np):
-                        image_id = self.process_image(np.image)
-                    record = self.build_record_from_page_element(np)
-                    record["source_id"]=self.SOURCE_ID
-                    record["image_id"]=image_id
-                    headline_id = 0
-                    if not DEBUGGING_TEST:
-                        headline_id = headline_db.add_headline(record=record)
-                    self.logger.info("Inserted New Record [ID=%s] into Database." % headline_id)
-                except Exception as e:
-                    self.logger.warning("Unexpected Issues Happened When Crawling as Follows:")
-                    self.logger.warning("%s" % e)
-                finally:
-                    unrecorded_news += 1
-                    self.total_found += 1
+                if self.is_valid_record(np):
+                    try:
+                        np.root.scroll_to()
+                        time.sleep(0.5)
+                        if "heading" in dir(np):
+                            self.logger.info("[New Heading]:\t%s" % np.heading)
+                        if "url" in dir(np):
+                            self.logger.info("[New URL]:\t%s" % np.url)
+                        image_id = self.process_image(np.image) if "image" in dir(np) else 0
+                        record = self.build_record_from_page_element(np)
+                        record["source_id"]=self.SOURCE_ID
+                        record["image_id"]=image_id
+                        headline_id = headline_db.add_headline(record=record) if not DEBUGGING_TEST else 0
+                        self.logger.info("Inserted New Record [ID=%s] into Database." % headline_id)
+                    except Exception as e:
+                        self.logger.warning("Unexpected Issues Happened When Crawling as Follows:")
+                        self.logger.warning("%s" % e)
+                    finally:
+                        unrecorded_news += 1
+                        self.total_found += 1
         self.logger.info("Found [%d] Unrecorded News on Current Page." % unrecorded_news)
         self.complete = True if unrecorded_news < self.MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING else False
 

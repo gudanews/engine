@@ -139,7 +139,8 @@ class ImageHelper:
             if ratio < 1:
                 img.thumbnail(size, Image.ANTIALIAS)
             self._create_parent_folders(dst_path)
-            img.save(dst_path)
+            rgb_img = img.convert('RGB')
+            rgb_img.save(dst_path)
         if size != (width, height):
             return self._padding(width, height, src_path=dst_path, dst_path=dst_path)
         logger.debug("Image file [%s] resized to resolution %s" % (dst_path, str(size)))
@@ -161,7 +162,8 @@ class ImageHelper:
                 height_delta = height - height_current
                 new_img.paste(img, (width_delta//2, height_delta//2))
                 self._create_parent_folders(dst_path)
-                new_img.save(dst_path)
+                rgb_img = new_img.convert('RGB')
+                rgb_img.save(dst_path)
         logger.debug("Image file [%s] padded to resolution %s" % (dst_path, str(size)))
         return size
 
@@ -183,7 +185,8 @@ class ImageHelper:
             with ImageOps.expand(img, (width_delta//2, height_delta//2, width_delta-(width_delta//2),
                                        height_delta-(height_delta//2)), fill) as new_img:
                 self._create_parent_folders(dst_path)
-                new_img.save(dst_path)
+                rgb_img = new_img.convert('RGB')
+                rgb_img.save(dst_path)
         if size != (width, height):
             return self._padding(width, height, src_path=dst_path, dst_path=dst_path)
         logger.debug("Image file [%s] expanded to resolution %s" % (dst_path, str(size)))
