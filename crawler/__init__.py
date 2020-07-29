@@ -10,7 +10,7 @@ from datetime import datetime
 
 DEBUGGING_TEST = False
 
-NOW = datetime.now()
+START_TIME = datetime.now()
 logger = logging.getLogger("Crawler")
 
 
@@ -18,6 +18,7 @@ class Crawler:
 
     MAX_CRAWLING_PAGES = 5
     MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING = 2
+    WAIT_FOR_PAGE_READY = 2.0
     WAIT_FOR_ELEMENT_READY = 1.0
     SOURCE_ID = None
     logger = logging.getLogger("Crawler")
@@ -28,17 +29,19 @@ class Crawler:
         self.page = page
         self.current_page_number = 1
         self.total_found = 0
+        self.start_time = datetime.now()
         if not self.SOURCE_ID:
             raise NotImplementedError("Please Provide A Valid SOURCE_ID Before Proceed......")
 
     def goto_main_page(self):  # goes to main page
         self.driver.get(self.web_url)
+        time.sleep(self.WAIT_FOR_PAGE_READY)
 
     def goto_next_page(self):  # goes to next page
         self.page.next.click()
         self.current_page_number += 1
         self.logger.info("Landing At [%s/%s] Page......\n" % (self.current_page_number, self.MAX_CRAWLING_PAGES))
-        time.sleep(2.0)
+        time.sleep(self.WAIT_FOR_PAGE_READY)
 
     def is_valid_record(self, record):
         if not "url" in record.keys(): # element must contain url
@@ -103,7 +106,7 @@ class Crawler:
         existing_data = headline_db.get_latest_news(column=columns, source=self.SOURCE_ID)
         unrecorded_news = 0
         for np in self.page.news:
-            self.logger.info("[TESTING PURPOSE]: %s" + np.heading)
+            self.logger.info("[TESTING PURPOSE]: %s" % np.heading)
             if not (np.url,) in existing_data:  # ("abc",) is different than ("abc")
                 np.root.scroll_to()
                 time.sleep(self.WAIT_FOR_ELEMENT_READY)
@@ -125,12 +128,12 @@ class Crawler:
                         unrecorded_news += 1
                         self.total_found += 1
         self.logger.info("Found [%d] Unrecorded News on Current Page." % unrecorded_news)
-        self.complete = True if unrecorded_news < self.MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING else False
+        self.complete = False if unrecorded_news >= self.MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING else True
 
     def crawl(self):
         source_db = SourceDB()
         source_name = source_db.get_source_name_by_id(self.SOURCE_ID)
-        self.logger.info("===========  Crawling [%s] started  ===========" % source_name)
+        self.logger.info("=====================  Crawling [%s] started  =====================" % source_name)
         self.goto_main_page()
         self.complete = False
         for i in range(self.MAX_CRAWLING_PAGES):
@@ -141,8 +144,9 @@ class Crawler:
             if self.complete or i == self.MAX_CRAWLING_PAGES - 1:
                 break
             self.goto_next_page()
-        self.logger.info("-----------  Total [%s] New Records  -----------" % self.total_found)
-        self.logger.info("===========  Crawling [%s] completed  ===========\n" % source_name)
+        self.logger.info("---------------------  Total [%s] New Records  ---------------------" % self.total_found)
+        self.logger.info("===========  Crawling [%s] completed in [%s]  ===========\n" %
+                         (source_name, str(datetime.now() - self.start_time)))
 
 
 def main():
@@ -151,7 +155,7 @@ def main():
     from crawler import Crawler
     logger.info("=" * 40)
     logger.info("Started Crawling ......")
-    logger.info("=" * 40)
+    logger.info("=" * 40 + "\n")
     found = 0
     modules = find_modules(os.path.dirname(__file__))
     for module in modules:
@@ -167,7 +171,8 @@ def main():
                 except:
                     cls.logger.warning("Error happens to current crawler, continuing......")
     logger.info(">" * 40 + "<" * 40)
-    logger.info(">>> Completed Crawling. Processing Time [%s]. Total Found [%d]. <<<" % (str(datetime.now() - NOW), found))
+    logger.info(">>> Completed Crawling. Processing Time [%s]. Total Found [%d]. <<<"
+                % (str(datetime.now() - START_TIME), found))
     logger.info(">" * 40 + "<" * 40 + "\n" * 2)
 
 
