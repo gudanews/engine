@@ -6,7 +6,7 @@ from furl import furl
 import re
 
 
-class _APCrawler(BaseCrawler):
+class APCrawler(BaseCrawler):
 
     MAX_CRAWLING_PAGES = 1
     SOURCE_ID = 2
@@ -15,7 +15,7 @@ class _APCrawler(BaseCrawler):
     def __init__(self, driver):
         web_url = "https://apnews.com/apf-topnews"
         page = APPage(driver)
-        super(_APCrawler, self).__init__(driver, web_url, page)
+        super(APCrawler, self).__init__(driver, web_url, page)
 
     def goto_next_page(self):  # AP news only checks one page
         raise Exception("American Press News Should Only Be Crawled On Home Page")
@@ -30,5 +30,5 @@ class _APCrawler(BaseCrawler):
 
 if __name__ == "__main__":
     driver = ChromeDriver()
-    crawler = _APCrawler(driver)
+    crawler = APCrawler(driver)
     crawler.crawl()

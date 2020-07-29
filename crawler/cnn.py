@@ -9,6 +9,7 @@ logger = logging.getLogger("Crawler.CNN")
 class CNNCrawler(BaseCrawler):
 
     MAX_CRAWLING_PAGES = 1
+    WAIT_FOR_ELEMENT_READY = 0.3
     SOURCE_ID = 101
     logger = logging.getLogger("Crawler.CNN")
 

@@ -25,6 +25,6 @@ class News(Sections):
 class CNNPage(Page):
     news = News(
         Locators.CSS_SELECTOR,
-        "section.zn-homepage1-zone-1 div.zn__containers li > article",
+        "section.zn-homepage1-zone-1 div.zn__containers li > article.cd--card",
         timeout=10
     )
