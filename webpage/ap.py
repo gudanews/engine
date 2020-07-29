@@ -30,6 +30,7 @@ class Cards(Sections):
         Locators.CSS_SELECTOR,
         "div[data-key='media-placeholder'] img",
         value=lambda el: el.get_attribute("src"),
+        only_if=VISIBLE(),
         timeout=5
     )
 

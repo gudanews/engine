@@ -9,7 +9,7 @@ logger = logging.getLogger("Crawler.CNN")
 class CNNCrawler(BaseCrawler):
 
     MAX_CRAWLING_PAGES = 1
-    WAIT_FOR_ELEMENT_READY = 0.3
+    WAIT_FOR_ELEMENT_READY = 0.2
     SOURCE_ID = 101
     logger = logging.getLogger("Crawler.CNN")
 
@@ -26,3 +26,4 @@ if __name__ == "__main__":
     driver = ChromeDriver()
     crawler = CNNCrawler(driver)
     crawler.crawl()
+    driver.close()

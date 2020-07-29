@@ -7,6 +7,9 @@ from furl import furl
 
 class ReutersCrawler(BaseCrawler):
 
+    MAX_CRAWLING_PAGES = 5
+    MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING = 0
+    WAIT_FOR_ELEMENT_READY = 2.0
     SOURCE_ID = 1
     logger = logging.getLogger("Crawler.REU")
 
@@ -27,3 +30,5 @@ if __name__ == "__main__":
     driver = ChromeDriver()
     crawler = ReutersCrawler(driver)
     crawler.crawl()
+    driver.close()
+

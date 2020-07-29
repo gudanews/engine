@@ -19,6 +19,7 @@ class News(Sections):
         Locators.CSS_SELECTOR,
         "div.media a img",
         value=lambda el: el.get_attribute('src'),
+        only_if=VISIBLE(),
         timeout=0.5
     )
 

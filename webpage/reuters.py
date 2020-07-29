@@ -32,6 +32,7 @@ class Stories(Sections):
         Locators.CSS_SELECTOR,
         "div.story-photo img[src]",
         value=lambda el: el.get_attribute('src'),
+        only_if=VISIBLE(),
         timeout=5,
     )
 

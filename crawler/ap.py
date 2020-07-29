@@ -32,3 +32,5 @@ if __name__ == "__main__":
     driver = ChromeDriver()
     crawler = APCrawler(driver)
     crawler.crawl()
+    driver.close()
+
