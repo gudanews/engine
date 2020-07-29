@@ -36,3 +36,4 @@ if __name__ == "__main__":
     driver = ChromeDriver()
     crawler = FoxCrawler(driver)
     crawler.crawl()
+    driver.close()

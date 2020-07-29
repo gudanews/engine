@@ -17,7 +17,7 @@ logger = logging.getLogger("Crawler")
 class Crawler:
 
     MAX_CRAWLING_PAGES = 5
-    MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING = 3
+    MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING = 2
     WAIT_FOR_ELEMENT_READY = 1.0
     SOURCE_ID = None
     logger = logging.getLogger("Crawler")
@@ -103,11 +103,11 @@ class Crawler:
         existing_data = headline_db.get_latest_news(column=columns, source=self.SOURCE_ID)
         unrecorded_news = 0
         for np in self.page.news:
-            np.root.scroll_to()
-            time.sleep(self.WAIT_FOR_ELEMENT_READY)
-            record = self.build_record_from_page_element(np)
-            if self.is_valid_record(record):
-                if not (record["url"],) in existing_data:  # ("abc",) is different than ("abc")
+            if not (np.url,) in existing_data:  # ("abc",) is different than ("abc")
+                np.root.scroll_to()
+                time.sleep(self.WAIT_FOR_ELEMENT_READY)
+                record = self.build_record_from_page_element(np)
+                if self.is_valid_record(record):
                     try:
                         image_id = self.process_image(record["image"]) if "image" in record.keys() else 0
                         record["source_id"]=self.SOURCE_ID
@@ -151,6 +151,7 @@ def main():
     logger.info("=" * 40)
     logger.info("Started Crawling ......")
     logger.info("=" * 40)
+    found = 0
     modules = find_modules(os.path.dirname(__file__))
     for module in modules:
         classes = find_public_classes(module)
@@ -160,12 +161,13 @@ def main():
                     driver = ChromeDriver()
                     obj = cls(driver)
                     obj.crawl()
+                    found += obj.total_found
                     driver.close()
                 except:
                     cls.logger.warning("Error happens to current crawler, continuing......")
-    logger.info(">" * 30 + "<" * 30)
-    logger.info("Completed Crawling, Processing Time [%s]." % str(datetime.now() - NOW))
-    logger.info(">" * 30 + "<" * 30 + "\n" * 2)
+    logger.info(">" * 40 + "<" * 40)
+    logger.info(">>> Completed Crawling. Processing Time [%s]. Total Found [%d]. <<<" % (str(datetime.now() - NOW), found))
+    logger.info(">" * 40 + "<" * 40 + "\n" * 2)
 
 
 
