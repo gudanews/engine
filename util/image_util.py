@@ -55,7 +55,7 @@ class ImageHelper:
         if not self._thumbnail:
             name, extension = os.path.splitext(self.path)
             self._thumbnail = os.path.join(os.path.dirname(self.path),
-                                           name + '_%sX%s' % (THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT) + extension)
+                                         name + '_%sX%s' % (THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT) + extension)
         return self._thumbnail
 
     @property
@@ -64,7 +64,8 @@ class ImageHelper:
 
     @property
     def db_thumbnail(self):
-        return os.path.relpath(self.thumbnail, WEBSITE_BASE_PATH)
+        if self.thumbnail:
+            return os.path.relpath(self.thumbnail, WEBSITE_BASE_PATH)
 
     def _create_parent_folders(self, path):
         folder = os.path.dirname(path)
@@ -74,11 +75,19 @@ class ImageHelper:
     def is_image_valid(self, path=None):
         if not path:
             path = self.path
-        with Image.open(path) as img:
-            width_current, height_current = img.size # (width, height) format
-            return width_current > IMAGE_PIXEL_MIN and height_current > IMAGE_PIXEL_MIN
+        size = self.get_image_size(path)
+        for pixel in size:
+            if pixel < IMAGE_PIXEL_MIN:
+                return False
+        return True
 
-    def download_image(self, url=None, path=None, thumbnail=True, keep_original=False, default=None):
+    def get_image_size(self, path=None):
+        if not path:
+            path = self.path
+        with Image.open(path) as img:
+            return img.size # (width, height) format
+
+    def download_image(self, url=None, path=None, generate_thumbnail=True, keep_original=False, default=None):
         if not url:
             url = self.url
         if not path:
@@ -93,37 +102,30 @@ class ImageHelper:
                 import urllib
                 result = urllib.urlretrieve(url, path)
             file_size = int(result[1]["Content-Length"]) if "Content-Length" in result[1] else 0
-            logger.info("Image file [%s] created, size [%s]" % (path, human_format(file_size)))
+            logger.info("Image file [%s] downloaded size [%s]" % (path, human_format(file_size)))
         except:
             logger.warning("Error when download image [%s]" % url)
             return False
         if self.is_image_valid():
+            if generate_thumbnail:
+                self.generate_thumbnail()
             if not keep_original:
-                self.resize(IMAGE_WIDTH, IMAGE_HEIGHT)
-            if thumbnail:
-                self._generate_thumbnail()
+                width, height = self.resize(IMAGE_WIDTH, IMAGE_HEIGHT)
+                if (width, height) != (IMAGE_WIDTH, IMAGE_HEIGHT):
+                    self.padding(IMAGE_WIDTH, IMAGE_HEIGHT)
             return True
         logger.warning("Image link [%s] ist invalid" % self.url)
         return False
 
-    def _generate_thumbnail(self):
-        size = self._shrink(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, dst_path=self.thumbnail)
-        logger.debug("Thumbnail image [%s] created, with resolution %s" % (self.thumbnail, size))
+    def generate_thumbnail(self):
+        (width, height) = self.resize(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, for_padding=False,
+                                      src_path=self.path, dst_path=self.thumbnail)
+        if (width, height) != (THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT):
+            logger.debug("Creating thumbnail image [%s]" % self.thumbnail)
+            self.cropping(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, src_path=self.thumbnail, dst_path=self.thumbnail)
 
-    def resize(self, width, height, keep_aspect_ratio=True, src_path=None, dst_path=None):
-        if not src_path:
-            src_path = self.path
-        if not dst_path:
-            dst_path = src_path
-        with Image.open(src_path) as img:
-            width_current, height_current = img.size  # (width, height) format
-            if width <= width_current or height <= height_current:
-                return self._shrink(width, height, keep_aspect_ratio, src_path, dst_path)
-            else:
-                return self._expand(width, height, keep_aspect_ratio, src_path, dst_path)
-        return (width, height)
-
-    def _shrink(self, width, height, keep_aspect_ratio=True, src_path=None, dst_path=None):
+    def resize(self, width, height, keep_aspect_ratio=True, for_padding=True, src_path=None, dst_path=None):
+        # for_cropping if not for_padding
         if not src_path:
             src_path = self.path
         if not dst_path:
@@ -131,22 +133,20 @@ class ImageHelper:
         size = (width, height)
         with Image.open(src_path) as img:
             width_current, height_current = img.size # (width, height) format
-            if width > width_current and height > height_current:
+            if width == width_current and height == height_current:
                 return img.size
             if keep_aspect_ratio:
-                ratio = min(float(width / width_current), float(height / height_current))
+                ratio = min(float(width / width_current), float(height / height_current)) if for_padding \
+                    else max(float(width / width_current), float(height / height_current))
                 size = tuple([int(i*ratio) for i in img.size])
-            if ratio < 1:
-                img.thumbnail(size, Image.ANTIALIAS)
+            img = img.resize(size, Image.ANTIALIAS)
             self._create_parent_folders(dst_path)
             rgb_img = img.convert('RGB')
             rgb_img.save(dst_path)
-        if size != (width, height):
-            return self._padding(width, height, src_path=dst_path, dst_path=dst_path)
         logger.debug("Image file [%s] resized to resolution %s" % (dst_path, str(size)))
         return size
 
-    def _padding(self, width, height, src_path=None, dst_path=None, fill=DEFAULT_FILLING):
+    def padding(self, width, height, src_path=None, dst_path=None, fill=DEFAULT_FILLING):
         if not src_path:
             src_path = self.path
         if not dst_path:
@@ -167,7 +167,7 @@ class ImageHelper:
         logger.debug("Image file [%s] padded to resolution %s" % (dst_path, str(size)))
         return size
 
-    def _expand(self, width, height, keep_aspect_ratio=True, src_path=None, dst_path=None, fill=DEFAULT_FILLING):
+    def cropping(self, width, height, src_path=None, dst_path=None):
         if not src_path:
             src_path = self.path
         if not dst_path:
@@ -175,72 +175,59 @@ class ImageHelper:
         size = (width, height)
         with Image.open(src_path) as img:
             width_current, height_current = img.size # (width, height) format
-            if width < width_current and height < height_current:
+            if width > width_current or height > height_current: # cannot cropping
                 return img.size
-            if keep_aspect_ratio:
-                ratio = min(float(width / width_current), float(height / height_current))
-                size = tuple([int(i*ratio) for i in img.size])
-            width_delta = width - width_current
-            height_delta = height - height_current
-            with ImageOps.expand(img, (width_delta//2, height_delta//2, width_delta-(width_delta//2),
-                                       height_delta-(height_delta//2)), fill) as new_img:
-                self._create_parent_folders(dst_path)
-                rgb_img = new_img.convert('RGB')
-                rgb_img.save(dst_path)
-        if size != (width, height):
-            return self._padding(width, height, src_path=dst_path, dst_path=dst_path)
-        logger.debug("Image file [%s] expanded to resolution %s" % (dst_path, str(size)))
+            width_delta = width_current - width
+            height_delta = height_current - height
+            img = img.crop((width_delta//2, height_delta//2, width_current-(width_delta//2), height_current-(height_delta//2)))
+            self._create_parent_folders(dst_path)
+            rgb_img = img.convert('RGB')
+            rgb_img.save(dst_path)
+        logger.debug("Image file [%s] cropped to resolution %s" % (dst_path, str(size)))
         return size
 
 
 class TestCase(LoggedTestCase):
 
     def setUp(self):
-        self.image = ImageHelper(url="https://s4.reutersmedia.net/resources/r/?m=02&d=20200725&t=2&i=1527081659&fh=&fw=&ll=&pl=&sq=&r=LYNXNPEG6O02V",
+        self.image = ImageHelper(url="https://s4.reutersmedia.net/resources/r/?m=02&d=20200728&t=2&i=1527434485&w=800&fh=&fw=&ll=&pl=&sq=&r=LYNXNPEG6R1DY",
                               path="/tmp/images/testing/testing.jpg")
+        name = self.shortDescription()
+        if name != "skip_setup":
+            self.image.download_image(keep_original=True, generate_thumbnail=False)
+            self.image.resize(640, 480, keep_aspect_ratio=False)
 
     def test_download_url(self):
+        """skip_setup"""
         self.image.download_image()
         self.assertTrue(os.path.exists(self.image.path))
         self.assertTrue(os.path.exists(self.image.thumbnail))
-        with Image.open(self.image.path) as img:
-            self.assertEqual(img.size, (IMAGE_WIDTH, IMAGE_HEIGHT))
+        self.assertEqual(self.image.get_image_size(), (IMAGE_WIDTH, IMAGE_HEIGHT))
+        self.assertEqual(self.image.get_image_size(self.image.thumbnail), (THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT))
 
     def test_resize_smaller(self):
-        self.image.download_image()
-        self.image.resize(640, 480)
-        with Image.open(self.image.path) as img:
-            self.assertEqual(img.size, (640, 480))
-
-    def test_resize_only_height(self):
-        self.image.download_image()
-        self.image.resize(IMAGE_WIDTH, 480)
-        with Image.open(self.image.path) as img:
-            self.assertEqual(img.size, (IMAGE_WIDTH, 480))
-
-    def test_resize_only_width(self):
-        self.image.download_image()
-        self.image.resize(600, IMAGE_HEIGHT)
-        with Image.open(self.image.path) as img:
-            self.assertEqual(img.size, (600, IMAGE_HEIGHT))
-
-    def test_resize_smaller_width_larger_height(self):
-        self.image.download_image()
-        self.image.resize(480, 800)
-        with Image.open(self.image.path) as img:
-            self.assertEqual(img.size, (480, 800))
-
-    def test_resize_larger_width_smaller_height(self):
-        self.image.download_image()
-        self.image.resize(800, 400)
-        with Image.open(self.image.path) as img:
-            self.assertEqual(img.size, (800, 400))
+        self.image.resize(320, 240)
+        self.assertEqual(self.image.get_image_size(), (320, 240))
 
     def test_resize_larger(self):
-        self.image.download_image()
         self.image.resize(1024, 768)
-        with Image.open(self.image.path) as img:
-            self.assertEqual(img.size, (1024, 768))
+        self.assertEqual(self.image.get_image_size(), (1024, 768))
+
+    def test_resize_keep_ratio(self):
+        self.image.resize(320, 320)
+        self.assertEqual(self.image.get_image_size(), (320, 240))
+
+    def test_resize_no_keep_ratio(self):
+        self.image.resize(320, 500, keep_aspect_ratio=False)
+        self.assertEqual(self.image.get_image_size(), (320, 500))
+
+    def test_padding(self):
+        self.image.padding(800, 800)
+        self.assertEqual(self.image.get_image_size(), (800, 800))
+
+    def test_cropping(self):
+        self.image.cropping(400, 400)
+        self.assertEqual(self.image.get_image_size(), (400, 400))
 
 
 if __name__ == "__main__":
