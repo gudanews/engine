@@ -75,8 +75,7 @@ class Crawler:
                 return image_db.add_image(url=img.url, path=img.db_path, thumbnail=img.db_thumbnail)
         return 0
 
-    def build_record_from_page_element(self, element):
-        record = dict()
+    def update_record_with_page_element(self, record, element):
         for el in ("heading", "datetime", "url", "snippet", "image"):
             if el in dir(element):
                 record[el] = eval("element." + el)
@@ -98,7 +97,6 @@ class Crawler:
                 self.logger.info("[DATETIME]:\t%s" % record["datetime"])
             else:
                 self.logger.debug("[DATETIME]:\t%s" % record["datetime"])
-        return record
 
     def parse_current_page(self):
         headline_db = NewsHeadlineDB()
@@ -106,11 +104,11 @@ class Crawler:
         existing_data = headline_db.get_latest_news(column=columns, source=self.SOURCE_ID)
         unrecorded_news = 0
         for np in self.page.news:
-            self.logger.info("[TESTING PURPOSE]: %s" % np.heading)
-            if not (np.url,) in existing_data:  # ("abc",) is different than ("abc")
+            record = dict(url=np.url[:512])
+            if not (record["url"],) in existing_data:  # ("abc",) is different than ("abc")
                 np.root.scroll_to()
                 time.sleep(self.WAIT_FOR_ELEMENT_READY)
-                record = self.build_record_from_page_element(np)
+                self.update_record_with_page_element(record, np)
                 if self.is_valid_record(record):
                     try:
                         image_id = self.process_image(record["image"]) if "image" in record.keys() else 0
