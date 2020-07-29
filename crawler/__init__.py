@@ -103,6 +103,7 @@ class Crawler:
         existing_data = headline_db.get_latest_news(column=columns, source=self.SOURCE_ID)
         unrecorded_news = 0
         for np in self.page.news:
+            self.logger.info("[TESTING PURPOSE]: %s" + np.heading)
             if not (np.url,) in existing_data:  # ("abc",) is different than ("abc")
                 np.root.scroll_to()
                 time.sleep(self.WAIT_FOR_ELEMENT_READY)

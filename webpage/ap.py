@@ -16,7 +16,7 @@ class Cards(Sections):
     )
     url = Element(
         Locators.CSS_SELECTOR,
-        "a[href], div.CardHeadline [data-key='card-headline']",
+        "div.CardHeadline [data-key='card-headline'], div.FeedCard > a[href]",
         value=lambda el: el.get_attribute("href"),
         timeout=5
     )
