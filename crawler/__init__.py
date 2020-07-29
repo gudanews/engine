@@ -18,6 +18,7 @@ class Crawler:
 
     MAX_CRAWLING_PAGES = 5
     MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING = 3
+    WAIT_FOR_ELEMENT_READY = 1.0
     SOURCE_ID = None
     logger = logging.getLogger("Crawler")
 
@@ -39,7 +40,10 @@ class Crawler:
         self.logger.info("Landing At [%s/%s] Page......\n" % (self.current_page_number, self.MAX_CRAWLING_PAGES))
         time.sleep(2.0)
 
-    def is_valid_record(self, element):
+    def is_valid_record(self, record):
+        if not "url" in record.keys(): # element must contain url
+            self.logger.warning("Record Does NOT Contain <URL> Field.\n%s" % record)
+            return False
         return True
 
     def find_alternative_image_url(self, url):
@@ -55,7 +59,7 @@ class Crawler:
                 image_id = self.save_image(url_alternative)
                 if not image_id:
                     if url_alternative != url:
-                        self.logger.info("Ulternative Image Link [%s] Is NOT Valid" % url_alternative)
+                        self.logger.info("Alternative Image Link Failed: [%s]" % url_alternative)
                         image_id = self.save_image(url)
             return image_id
         return 0
@@ -70,21 +74,27 @@ class Crawler:
 
     def build_record_from_page_element(self, element):
         record = dict()
-        for el in ("heading", "datetime", "url", "snippet"):
+        for el in ("heading", "datetime", "url", "snippet", "image"):
             if el in dir(element):
-                exec("record[el] = element." + el)
-                if record[el]:
-                    if el == "datetime":
-                        record["datetime"] = datetime_util.str2datetime(element.datetime) # convert to proper datetime
-                    elif el == "snippet":
-                        record["snippet"] = record[el][:256] # limit the snippet 256
-                    self.logger.debug("[%s] :\t%s" % (el.upper(), record[el]))
-                else: # In case find None value for web elements, remove the entry
-                    del record[el]
-        if not any(check in ["heading", "url"] for check in record.keys()): # element must contain at least heading or url
-            raise Exception("Record Does NOT Contain Either <Heading> or <URL> Field, At Least One MUST Be Specified")
+                record[el] = eval("element." + el)
+                if not record[el]:
+                    record.pop(el)
+                else:
+                    record[el] = datetime_util.str2datetime(element.datetime) if el == "datetime" else \
+                            record[el][:320] if el == "snippet" else \
+                            record[el][:256] if el == "heading" else \
+                            record[el][:512] if el in ("url", "image") else \
+                            record[el]
+                    if DEBUGGING_TEST:
+                        self.logger.info("[%s]:\t%s" % (el.upper(), record[el]))
+                    else:
+                        self.logger.debug("[%s]:\t%s" % (el.upper(), record[el]))
         if not "datetime" in record.keys(): # Always provide a datetime for record
             record["datetime"] = datetime.now()
+            if DEBUGGING_TEST:
+                self.logger.info("[DATETIME]:\t%s" % record["datetime"])
+            else:
+                self.logger.debug("[DATETIME]:\t%s" % record["datetime"])
         return record
 
     def parse_current_page(self):
@@ -93,24 +103,23 @@ class Crawler:
         existing_data = headline_db.get_latest_news(column=columns, source=self.SOURCE_ID)
         unrecorded_news = 0
         for np in self.page.news:
-            if not (np.url,) in existing_data: # ("abc",) is different than ("abc")
-                if self.is_valid_record(np):
+            np.root.scroll_to()
+            time.sleep(self.WAIT_FOR_ELEMENT_READY)
+            record = self.build_record_from_page_element(np)
+            if self.is_valid_record(record):
+                if not (record["url"],) in existing_data:  # ("abc",) is different than ("abc")
                     try:
-                        np.root.scroll_to()
-                        time.sleep(0.5)
-                        if "heading" in dir(np):
-                            self.logger.info("[New Heading]:\t%s" % np.heading)
-                        if "url" in dir(np):
-                            self.logger.info("[New URL]:\t%s" % np.url)
-                        image_id = self.process_image(np.image) if "image" in dir(np) else 0
-                        record = self.build_record_from_page_element(np)
+                        image_id = self.process_image(record["image"]) if "image" in record.keys() else 0
                         record["source_id"]=self.SOURCE_ID
                         record["image_id"]=image_id
+                        record.pop("image", None) # Remove image key if exists
+                        self.logger.info("Record To Be Inserted: %s" % record)
                         headline_id = headline_db.add_headline(record=record) if not DEBUGGING_TEST else 0
                         self.logger.info("Inserted New Record [ID=%s] into Database." % headline_id)
                     except Exception as e:
                         self.logger.warning("Unexpected Issues Happened When Crawling as Follows:")
                         self.logger.warning("%s" % e)
+                        self.logger.warning("Problematic Record Details: %s" % record)
                     finally:
                         unrecorded_news += 1
                         self.total_found += 1
@@ -131,7 +140,6 @@ class Crawler:
             if self.complete or i == self.MAX_CRAWLING_PAGES - 1:
                 break
             self.goto_next_page()
-        source_db = SourceDB()
         self.logger.info("-----------  Total [%s] New Records  -----------" % self.total_found)
         self.logger.info("===========  Crawling [%s] completed  ===========\n" % source_name)
 
@@ -152,6 +160,7 @@ def main():
                     driver = ChromeDriver()
                     obj = cls(driver)
                     obj.crawl()
+                    driver.close()
                 except:
                     cls.logger.warning("Error happens to current crawler, continuing......")
     logger.info(">" * 30 + "<" * 30)

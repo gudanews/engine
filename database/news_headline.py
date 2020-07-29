@@ -15,7 +15,7 @@ class NewsHeadlineDB(DataBase):
 
     def get_latest_news(self, column=None, source=None):
         conditions = ["datetime > '%s'" %
-                      (datetime.strftime(datetime.now() - timedelta(hours=72), "%Y-%m-%d %H:%M:%S"))]
+                      (datetime.strftime(datetime.now() - timedelta(hours=96), "%Y-%m-%d %H:%M:%S"))]
         if source and type(source) == type(0): # is integer
             conditions.append("source_id = '%d'" % source)
         elif source:

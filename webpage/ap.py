@@ -16,7 +16,7 @@ class Cards(Sections):
     )
     url = Element(
         Locators.CSS_SELECTOR,
-        "div.CardHeadline [data-key='card-headline']",
+        "a[href], div.CardHeadline [data-key='card-headline']",
         value=lambda el: el.get_attribute("href"),
         timeout=5
     )
@@ -37,6 +37,6 @@ class Cards(Sections):
 class APPage(Page):
     news = Cards(
         Locators.CSS_SELECTOR,
-        "article div.FeedCard",
+        "article div.FeedCard[data-key='feed-card-wire-story-with-image']",
         timeout=10
     )
