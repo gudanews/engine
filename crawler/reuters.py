@@ -16,8 +16,11 @@ class ReutersCrawler(BaseCrawler):
         super(ReutersCrawler, self).__init__(driver, web_url, page)
 
     def find_alternative_image_url(self, url):
+        # Expected https://s4.reutersmedia.net/resources/r/?m=02&d=20200728&t=2&i=1527461013&w=370&fh=&fw=&ll=&pl=&sq=&r=LYNXNPEG6R1MZ
+        # Alternative https://s4.reutersmedia.net/resources/r/?m=02&d=20200728&t=2&i=1527461013&w=800&fh=&fw=&ll=&pl=&sq=&r=LYNXNPEG6R1MZ
         f = furl(url)
-        f.args["w"] = "1024"
+        if "w" in f.args.keys():
+            f.args["w"] = "800"
         return f.url
 
 if __name__ == "__main__":

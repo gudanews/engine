@@ -102,7 +102,7 @@ class ImageHelper:
                 import urllib
                 result = urllib.urlretrieve(url, path)
             file_size = int(result[1]["Content-Length"]) if "Content-Length" in result[1] else 0
-            logger.info("Image file [%s] created, size [%s]" % (path, human_format(file_size)))
+            logger.info("Image file [%s] downloaded size [%s]" % (path, human_format(file_size)))
         except:
             logger.warning("Error when download image [%s]" % url)
             return False
@@ -112,7 +112,7 @@ class ImageHelper:
             if not keep_original:
                 width, height = self.resize(IMAGE_WIDTH, IMAGE_HEIGHT)
                 if (width, height) != (IMAGE_WIDTH, IMAGE_HEIGHT):
-                    return self.padding(IMAGE_WIDTH, IMAGE_HEIGHT)
+                    self.padding(IMAGE_WIDTH, IMAGE_HEIGHT)
             return True
         logger.warning("Image link [%s] ist invalid" % self.url)
         return False
@@ -143,7 +143,7 @@ class ImageHelper:
             self._create_parent_folders(dst_path)
             rgb_img = img.convert('RGB')
             rgb_img.save(dst_path)
-        logger.debug("Image File [%s] Resized To Resolution %s" % (dst_path, str(size)))
+        logger.debug("Image file [%s] resized to resolution %s" % (dst_path, str(size)))
         return size
 
     def padding(self, width, height, src_path=None, dst_path=None, fill=DEFAULT_FILLING):
@@ -164,6 +164,8 @@ class ImageHelper:
                 self._create_parent_folders(dst_path)
                 rgb_img = new_img.convert('RGB')
                 rgb_img.save(dst_path)
+        logger.debug("Image file [%s] padded to resolution %s" % (dst_path, str(size)))
+        return size
 
     def cropping(self, width, height, src_path=None, dst_path=None):
         if not src_path:
@@ -216,8 +218,8 @@ class TestCase(LoggedTestCase):
         self.assertEqual(self.image.get_image_size(), (320, 240))
 
     def test_resize_no_keep_ratio(self):
-        self.image.resize(320, 320, keep_aspect_ratio=False)
-        self.assertEqual(self.image.get_image_size(), (320, 320))
+        self.image.resize(320, 500, keep_aspect_ratio=False)
+        self.assertEqual(self.image.get_image_size(), (320, 500))
 
     def test_padding(self):
         self.image.padding(800, 800)

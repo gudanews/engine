@@ -1,7 +1,7 @@
 from holmium.core import Element, Locators, Section, Sections, Page
 from holmium.core.conditions import VISIBLE
 
-class Article(Sections):
+class Articles(Sections):
     heading = Element(
         Locators.CSS_SELECTOR,
         "div.info h2.title a",
@@ -29,7 +29,7 @@ class Article(Sections):
     )
 
 class FoxNewsPage(Page):
-    news = Article(
+    news = Articles(
         Locators.CSS_SELECTOR,
         "main.main-content div.collection article.article",
         timeout=10

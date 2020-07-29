@@ -3,7 +3,7 @@ from holmium.core import Page
 from holmium.core.conditions import VISIBLE
 
 
-class Story(Sections):
+class Stories(Sections):
     heading = Element(
         Locators.CSS_SELECTOR,
         "div.story-content h3.story-title",
@@ -37,7 +37,7 @@ class Story(Sections):
 
 
 class ReutersPage(Page):
-    news = Story(
+    news = Stories(
         Locators.CSS_SELECTOR,
         "article.story:not(.no-border-bottom)",
         timeout=10
