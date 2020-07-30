@@ -22,8 +22,8 @@ IMAGE_PATH = os.path.join(IMAGE_BASE_PATH, str(TODAY.year), "%02d-%02d" % (TODAY
 
 IMAGE_WIDTH = 780
 IMAGE_HEIGHT = 439
-THUMBNAIL_WIDTH = 220
-THUMBNAIL_HEIGHT = 220
+THUMBNAIL_WIDTH = 240
+THUMBNAIL_HEIGHT = 180
 DEFAULT_FILLING = (255, 255, 255)
 IMAGE_PIXEL_MIN = 20
 
@@ -215,7 +215,7 @@ class TestCase(LoggedTestCase):
 
     def test_resize_keep_ratio(self):
         self.image.resize(320, 320)
-        self.assertEqual(self.image.get_image_size(), (320, 240))
+        self.assertEqual(self.image.get_image_size(), (320, 320))
 
     def test_resize_no_keep_ratio(self):
         self.image.resize(320, 500, keep_aspect_ratio=False)
