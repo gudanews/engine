@@ -25,11 +25,11 @@ class TestSourceData(LoggedTestCase):
 
     def test_get_source_id_by_name(self):
         result = self.data.get_source_id_by_name("Reuters")
-        self.assertEqual(result[0], 1)
+        self.assertEqual(result, 1)
 
     def test_get_non_exist_resource_id(self):
         id = self.data.get_source_id_by_name('does_not_exist')
-        self.assertIsNone(id)
+        self.assertEqual(id, 0)
         logger.info("test_get_non_exist_resource_id: %s" % id)
 
 if __name__ == "__main__":

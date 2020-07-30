@@ -21,9 +21,9 @@ IMAGE_BASE_PATH = config.setting["image_path"]
 IMAGE_PATH = os.path.join(IMAGE_BASE_PATH, str(TODAY.year), "%02d-%02d" % (TODAY.month, TODAY.day))
 
 IMAGE_WIDTH = 780
-IMAGE_HEIGHT = 538
-THUMBNAIL_WIDTH = 300
-THUMBNAIL_HEIGHT = 208
+IMAGE_HEIGHT = 439
+THUMBNAIL_WIDTH = 240
+THUMBNAIL_HEIGHT = 180
 DEFAULT_FILLING = (255, 255, 255)
 IMAGE_PIXEL_MIN = 20
 
@@ -112,19 +112,19 @@ class ImageHelper:
             if not keep_original:
                 width, height = self.resize(IMAGE_WIDTH, IMAGE_HEIGHT)
                 if (width, height) != (IMAGE_WIDTH, IMAGE_HEIGHT):
-                    self.padding(IMAGE_WIDTH, IMAGE_HEIGHT)
+                    self.cropping(IMAGE_WIDTH, IMAGE_HEIGHT)
             return True
         logger.warning("Image link [%s] ist invalid" % self.url)
         return False
 
     def generate_thumbnail(self):
-        (width, height) = self.resize(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, for_padding=False,
+        (width, height) = self.resize(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT,
                                       src_path=self.path, dst_path=self.thumbnail)
         if (width, height) != (THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT):
             logger.debug("Creating thumbnail image [%s]" % self.thumbnail)
             self.cropping(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, src_path=self.thumbnail, dst_path=self.thumbnail)
 
-    def resize(self, width, height, keep_aspect_ratio=True, for_padding=True, src_path=None, dst_path=None):
+    def resize(self, width, height, keep_aspect_ratio=True, for_chopping=True, src_path=None, dst_path=None):
         # for_cropping if not for_padding
         if not src_path:
             src_path = self.path
@@ -136,8 +136,8 @@ class ImageHelper:
             if width == width_current and height == height_current:
                 return img.size
             if keep_aspect_ratio:
-                ratio = min(float(width / width_current), float(height / height_current)) if for_padding \
-                    else max(float(width / width_current), float(height / height_current))
+                ratio = max(float(width / width_current), float(height / height_current)) if for_chopping \
+                    else min(float(width / width_current), float(height / height_current))
                 size = tuple([int(i*ratio) for i in img.size])
             img = img.resize(size, Image.ANTIALIAS)
             self._create_parent_folders(dst_path)
@@ -215,7 +215,7 @@ class TestCase(LoggedTestCase):
 
     def test_resize_keep_ratio(self):
         self.image.resize(320, 320)
-        self.assertEqual(self.image.get_image_size(), (320, 240))
+        self.assertEqual(self.image.get_image_size(), (320, 320))
 
     def test_resize_no_keep_ratio(self):
         self.image.resize(320, 500, keep_aspect_ratio=False)

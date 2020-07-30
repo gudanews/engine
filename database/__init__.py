@@ -41,7 +41,7 @@ class DataBase:
 class TestBaseData(unittest.TestCase):
 
     def setUp(self):
-        self.data = DataBase("news_headline")
+        self.data = DataBase("headline")
         stream_handler = logging.StreamHandler(sys.stdout)
         logger.level = logging.INFO
         logger.addHandler(stream_handler)

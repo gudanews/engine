@@ -1,6 +1,6 @@
 from database import DataBase
-from datetime import datetime, timedelta
 import unittest
+from datetime import datetime, timedelta
 import logging
 from util.common import LoggedTestCase
 from database.source import SourceDB
@@ -11,7 +11,7 @@ logger = logging.getLogger("DataBase.NewsData")
 class NewsDataDB(DataBase):
 
     def __init__(self):
-        super(NewsDataDB, self).__init__("news_data")
+        super(NewsDataDB, self).__init__("newsdata")
 
     def get_latest_news(self, column=None, source=None):
         conditions = ["datetime BETWEEN '%(start_time)s' and '%(end_time)s'" %
