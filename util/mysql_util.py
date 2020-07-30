@@ -112,25 +112,25 @@ class TestMySQLDB(LoggedTestCase):
         self.db=MySQLDB(user=DEFAULT_USER,password=DEFAULT_PASSWORD,host=DEFAULT_HOST,database=DEFAULT_DATABASE)
 
     def test_get_table_records(self):
-        results = self.db.fetch_table_records(table='news_headline', column=["id", "is_processed", "is_duplicated"])
+        results = self.db.fetch_table_records(table='headline', column=["id", "is_processed", "is_duplicated"])
         self.assertIsNotNone(results)
         self.assertEqual(len(results[0]), 3)
         logger.info(results)
 
     def test_get_table_record(self):
-        result = self.db.fetch_table_record(table='news_headline', column=["id", "is_processed", "is_duplicated"])
+        result = self.db.fetch_table_record(table='headline', column=["id", "is_processed", "is_duplicated"])
         self.assertIsNotNone(result)
         self.assertEqual(len(result), 3)
         logger.info(result)
 
     def test_get_table_non_exists_record(self):
-        result = self.db.fetch_table_record(table='news_headline', column=["id", "is_processed", "is_duplicated"],
+        result = self.db.fetch_table_record(table='headline', column=["id", "is_processed", "is_duplicated"],
                                             condition=["id < 0"])
         self.assertIsNone(result)
         logger.info(result)
 
     def test_get_table_schema(self):
-        result = self.db.get_table_schema(table='news_headline')
+        result = self.db.get_table_schema(table='headline')
         self.assertIsNotNone(result)
         logger.info(result)
 

@@ -2,7 +2,7 @@ from util.webdriver_util import ChromeDriver
 import logging
 import time
 from util import datetime_util
-from database.news_headline import NewsHeadlineDB
+from database.headline import HeadlineDB
 from database.image import ImageDB
 from database.source import SourceDB
 from util.image_util import ImageHelper
@@ -99,7 +99,7 @@ class Crawler:
                 self.logger.debug("[DATETIME]:\t%s" % record["datetime"])
 
     def parse_current_page(self):
-        headline_db = NewsHeadlineDB()
+        headline_db = HeadlineDB()
         columns = ["url"]
         existing_data = headline_db.get_latest_news(column=columns, source=self.SOURCE_ID)
         unrecorded_news = 0

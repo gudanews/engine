@@ -1,5 +1,4 @@
 from database import DataBase
-from datetime import datetime, timedelta
 import unittest
 import logging
 from util.common import LoggedTestCase
@@ -11,7 +10,7 @@ logger = logging.getLogger("DataBase.NewsData")
 class NewsDataDB(DataBase):
 
     def __init__(self):
-        super(NewsDataDB, self).__init__("news_data")
+        super(NewsDataDB, self).__init__("newsdata")
 
 
 class TestNewsDataDB(LoggedTestCase):
