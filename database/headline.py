@@ -8,10 +8,10 @@ from util.common import LoggedTestCase
 logger = logging.getLogger("Database.Headline")
 
 
-class NewsHeadlineDB(DataBase):
+class HeadlineDB(DataBase):
 
     def __init__(self):
-        super(NewsHeadlineDB, self).__init__("news_headline")
+        super(HeadlineDB, self).__init__("headline")
 
     def get_latest_news(self, column=None, source=None):
         conditions = ["datetime > '%s'" %
@@ -31,14 +31,14 @@ class NewsHeadlineDB(DataBase):
 class TestNewHeadlineDB(LoggedTestCase):
 
     def setUp(self):
-        self.data = NewsHeadlineDB()
+        self.data = HeadlineDB()
 
     def test_get_latest_news(self):
         columns = ["id", "heading", "datetime", "source_id"]
         results = self.data.get_latest_news(column=columns)
         self.assertGreater(len(results), 0)
         first_news_date = results[0][2]
-        start_date = datetime.now() - timedelta(hours=72)
+        start_date = datetime.now() - timedelta(hours=96)
         end_date = datetime.now()
         self.assertTrue(start_date <= first_news_date <= end_date)
         logger.info(results)
