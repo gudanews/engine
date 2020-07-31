@@ -75,10 +75,12 @@ class MySQLDB:
         self._commit(sql, val=tuple(val), msg=sql)
 
     def update_table_record(self, table, record, condition=None):
+        col = []
         val = []
         for (k,v) in record.items():
-            val.append("%s=%s" % (k,v))
-        sql = "UPDATE %s SET %s" % (table, ",".join(val))
+            col.append("%s = %s" % (k, "%s"))
+            val.append(v)
+        sql = "UPDATE %s SET %s" % (table, ",".join(col))
         if condition:
             sql += " WHERE "
             if isinstance(condition, str):

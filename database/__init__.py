@@ -31,6 +31,9 @@ class DataBase:
     def insert_db_record(self, record):
         self.db.insert_table_record(self.table, record)
 
+    def update_db_record(self, record, condition):
+        self.db.update_table_record(self.table, record, condition)
+
     def fetch_db_records(self, column=None, condition=None, order_by=None):
         return self.db.fetch_table_records(self.table, column, condition, order_by)
 

@@ -18,12 +18,12 @@ config = Configure()
 
 WEBSITE_BASE_PATH = config.setting["website_path"]
 IMAGE_BASE_PATH = config.setting["image_path"]
-IMAGE_PATH = os.path.join(IMAGE_BASE_PATH, str(TODAY.year), "%02d-%02d" % (TODAY.month, TODAY.day))
+IMAGE_PATH = os.path.join(IMAGE_BASE_PATH, str(TODAY.year), "%02d" % TODAY.month, "%02d" % TODAY.day)
 
 IMAGE_WIDTH = 780
 IMAGE_HEIGHT = 439
-THUMBNAIL_WIDTH = 240
-THUMBNAIL_HEIGHT = 180
+THUMBNAIL_WIDTH = 256
+THUMBNAIL_HEIGHT = 192
 DEFAULT_FILLING = (255, 255, 255)
 IMAGE_PIXEL_MIN = 20
 
@@ -87,7 +87,7 @@ class ImageHelper:
         with Image.open(path) as img:
             return img.size # (width, height) format
 
-    def download_image(self, url=None, path=None, generate_thumbnail=True, keep_original=False, default=None):
+    def download_image(self, url=None, path=None, generate_thumbnail=False, keep_original=False, default=None):
         if not url:
             url = self.url
         if not path:
