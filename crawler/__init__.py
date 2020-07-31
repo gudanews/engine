@@ -91,7 +91,6 @@ class Crawler:
                     if DEBUGGING_TEST:
                         self.logger.info("[%s]:\t%s" % (el.upper(), record[el]))
                     else:
-                        self.logger.info("[DEBUGGING_ONLY] [%s]:\t%s" % (el.upper(), record[el]))
                         self.logger.debug("[%s]:\t%s" % (el.upper(), record[el]))
 
     def parse_current_page(self):
@@ -102,7 +101,6 @@ class Crawler:
         unrecorded_news = 0
         for np in self.page.news:
             record = dict(url=np.url[:512])
-            self.logger.info("[DEBUGGING_ONLY]:\tURL found [%s]" % record["url"])
             if not (record["url"],) in existing_data:  # ("abc",) is different than ("abc")
                 np.root.scroll_to()
                 time.sleep(self.WAIT_FOR_ELEMENT_READY)
