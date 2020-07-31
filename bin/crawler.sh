@@ -12,10 +12,10 @@ if [[ "$?" != "0" ]]; then
 	/usr/bin/git checkout master
 	/usr/bin/git pull
 	/usr/bin/pip3 install -r /home/pi/workspace/gudanews/requirements.txt
-	if [ `ls -lad "/tmp/logs/gudanews.log" | awk '{print $5}'` -gt 1000000 ]; then mv /home/pi/logs/gudanews.log "/home/pi/logs/gudanews_`date '+%Y-%m-%d_%H-%M'`.log"; fi
+	if [ `ls -lad "/home/pi/log/gudanews.log" | awk '{print $5}'` -gt 1000000 ]; then mv /home/pi/log/gudanews.log "/home/pi/log/gudanews_`date '+%Y-%m-%d_%H-%M'`.log"; fi
 	killall chromedriver > /dev/null 2>&1
 	killall chromium > /dev/null 2>&1
-	/usr/bin/python3 /home/pi/workspace/gudanews/crawler >> /home/pi/logs/gudanews.log 2>&1
+	/usr/bin/python3 /home/pi/workspace/gudanews/crawler >> /home/pi/log/gudanews.log 2>&1
 	killall chromedriver > /dev/null 2>&1
 	killall chromium > /dev/null 2>&1
 fi
