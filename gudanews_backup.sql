@@ -161,7 +161,6 @@ CREATE TABLE `news` (
 
 LOCK TABLES `news` WRITE;
 /*!40000 ALTER TABLE `news` DISABLE KEYS */;
-INSERT INTO `news` VALUES (2,0,1,325,1,'2020-07-24 01:42:49','Today\'s news','http://www.foxsnews.com/?','News body',0),(4,0,1,0,1,'2020-07-08 00:00:00','test','test',NULL,0),(5,0,1,0,1,'2020-07-24 01:47:12','testing','testing',NULL,0),(6,0,1,0,1,'2020-07-24 01:48:51','testing','testing',NULL,0),(7,0,1,0,1,'2020-07-24 01:50:46','testing','testing',NULL,0),(10,0,1,0,1,'2020-07-24 01:52:25','testing','testing',NULL,0);
 /*!40000 ALTER TABLE `news` ENABLE KEYS */;
 UNLOCK TABLES;
 
