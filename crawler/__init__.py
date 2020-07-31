@@ -91,6 +91,7 @@ class Crawler:
                     if DEBUGGING_TEST:
                         self.logger.info("[%s]:\t%s" % (el.upper(), record[el]))
                     else:
+                        self.logger.info("[DEBUGGING_ONLY] [%s]:\t%s" % (el.upper(), record[el]))
                         self.logger.debug("[%s]:\t%s" % (el.upper(), record[el]))
 
     def parse_current_page(self):
