@@ -5,13 +5,13 @@ import logging
 from util.common import LoggedTestCase
 from database.source import SourceDB
 
-logger = logging.getLogger("DataBase.NewsData")
+logger = logging.getLogger("DataBase.News")
 
 
-class NewsDataDB(DataBase):
+class NewsDB(DataBase):
 
     def __init__(self):
-        super(NewsDataDB, self).__init__("newsdata")
+        super(NewsDB, self).__init__("news")
 
     def get_latest_news(self, column=None, source=None):
         conditions = ["datetime BETWEEN '%(start_time)s' and '%(end_time)s'" %
@@ -24,11 +24,15 @@ class NewsDataDB(DataBase):
             conditions.append("source_id = '%s'" % src.get_source_id_by_name(source))
         return self.fetch_db_records(column=column, condition=conditions)
 
+    def add_news(self, record):
+        self.insert_db_record(record=record)
+        return self.db._cursor.lastrowid
+
 
 class TestNewsDataDB(LoggedTestCase):
 
     def setUp(self):
-        self.data = NewsDataDB()
+        self.data = NewsDB()
 
     def _test_retrieve_all_records(self):
         columns = ["id", "headline_id", "datetime", "source_id", "heading", "url"]

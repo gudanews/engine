@@ -4,6 +4,7 @@ import time
 from util import datetime_util
 from database.headline import HeadlineDB
 from database.image import ImageDB
+from database.news import NewsDB
 from database.source import SourceDB
 from util.image_util import ImageHelper
 from datetime import datetime
@@ -40,7 +41,7 @@ class Crawler:
     def goto_next_page(self):  # goes to next page
         self.page.next.click()
         self.current_page_number += 1
-        self.logger.info("Landing At [%s/%s] Page......\n" % (self.current_page_number, self.MAX_CRAWLING_PAGES))
+        self.logger.info("Go To Page [%s/%s]......\n" % (self.current_page_number, self.MAX_CRAWLING_PAGES))
         time.sleep(self.WAIT_FOR_PAGE_READY)
 
     def is_valid_record(self, record):
@@ -71,12 +72,12 @@ class Crawler:
         if not DEBUGGING_TEST:
             img = ImageHelper(url)
             image_db = ImageDB()
-            if img.download_image():
+            if img.download_image(generate_thumbnail=True):
                 return image_db.add_image(url=img.url, path=img.db_path, thumbnail=img.db_thumbnail)
         return 0
 
     def update_record_with_page_element(self, record, element):
-        for el in ("heading", "datetime", "url", "snippet", "image"):
+        for el in ("heading", "datetime", "snippet", "image"): # No need to insert url again
             if el in dir(element):
                 record[el] = eval("element." + el)
                 if not record[el]:
@@ -85,21 +86,16 @@ class Crawler:
                     record[el] = datetime_util.str2datetime(element.datetime) if el == "datetime" else \
                             record[el][:320] if el == "snippet" else \
                             record[el][:256] if el == "heading" else \
-                            record[el][:512] if el in ("url", "image") else \
+                            record[el][:512] if el == "image" else \
                             record[el]
                     if DEBUGGING_TEST:
                         self.logger.info("[%s]:\t%s" % (el.upper(), record[el]))
                     else:
                         self.logger.debug("[%s]:\t%s" % (el.upper(), record[el]))
-        if not "datetime" in record.keys(): # Always provide a datetime for record
-            record["datetime"] = datetime.now()
-            if DEBUGGING_TEST:
-                self.logger.info("[DATETIME]:\t%s" % record["datetime"])
-            else:
-                self.logger.debug("[DATETIME]:\t%s" % record["datetime"])
 
     def parse_current_page(self):
         headline_db = HeadlineDB()
+        news_db = NewsDB()
         columns = ["url"]
         existing_data = headline_db.get_latest_news(column=columns, source=self.SOURCE_ID)
         unrecorded_news = 0
@@ -114,10 +110,16 @@ class Crawler:
                         image_id = self.process_image(record["image"]) if "image" in record.keys() else 0
                         record["source_id"]=self.SOURCE_ID
                         record["image_id"]=image_id
-                        record.pop("image", None) # Remove image key if exists
-                        self.logger.info("Record To Be Inserted: %s" % record)
+                        record.pop("image", None) # Remove image key and replace with image_id
                         headline_id = headline_db.add_headline(record=record) if not DEBUGGING_TEST else 0
-                        self.logger.info("Inserted New Record [ID=%s] into Database." % headline_id)
+                        self.logger.info("Inserted Into <headline> DB [ID=%s] With Values: %s." % (headline_id, record))
+                        if headline_id:
+                            record["headline_id"] = headline_id
+                            record.pop("snippet", None)  # Remove snippet key, not present in <news> db
+                            news_id = news_db.add_news(record=record) if not DEBUGGING_TEST else 0
+                            self.logger.info("Inserted Into <news> DB [ID=%s] With Values: %s." % (news_id, record))
+                            headline_db.update_record_with_id(record=dict(news_id=news_id), id=record["headline_id"]) if not DEBUGGING_TEST else None
+                            self.logger.info("Update <headline> Record With [news_id].")
                     except Exception as e:
                         self.logger.warning("Unexpected Issues Happened When Crawling as Follows:")
                         self.logger.warning("%s" % e)

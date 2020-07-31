@@ -28,6 +28,11 @@ class HeadlineDB(DataBase):
         return self.db._cursor.lastrowid
 
 
+    def update_record_with_id(self, record, id):
+        self.update_db_record(record=record, condition="id = %s" % id)
+        return self.db._cursor.lastrowid
+
+
 class TestNewHeadlineDB(LoggedTestCase):
 
     def setUp(self):
