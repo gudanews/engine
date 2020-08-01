@@ -84,7 +84,7 @@ class Crawler:
                     record.pop(el)
                 else:
                     record[el] = datetime_util.str2datetime(element.datetime) if el == "datetime" else \
-                            record[el][:320] if el == "snippet" else \
+                            record[el][:360] if el == "snippet" else \
                             record[el][:256] if el == "heading" else \
                             record[el][:512] if el == "image" else \
                             record[el]
