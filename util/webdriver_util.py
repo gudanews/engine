@@ -16,12 +16,12 @@ config = Configure()
 USE_HEADLESS_CHROME = os.environ.get("BROWSER", config.setting["browser"]) == "HEADLESS_CHROME"
 
 
-class ChromeDriver(webdriver.Chrome, metaclass=MetaClassSingleton):
+class ChromeDriver(webdriver.Chrome):
     """
     Driver class decorated by the meta class: MetaClassSingleton.
     Behaviour changed in singleton
     """
-    __metaclass__ = MetaClassSingleton
+    #__metaclass__ = MetaClassSingleton
 
     def __init__(self):
         chrome_options = Options()
