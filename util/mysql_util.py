@@ -1,40 +1,52 @@
 import mysql.connector
 import logging
 import unittest
-from util.common import LoggedTestCase
-from util.config_util import Configure
+import time
+from util.common import MetaClassSingleton
 
-logger = logging.getLogger("Util.MySQL")
 
-class MySQLDB:
+logger = logging.getLogger("Util.MySQLDB")
+
+
+class MySQLDB(metaclass=MetaClassSingleton):
+
+    __metaclass__ = MetaClassSingleton
+
     def __init__(self, user, password, host, database):
         self._connection = mysql.connector.connect(user=user, password=password, host=host, database=database)
         self._cursor = None
 
-    def _commit(self, sql, val=None, msg=None):
+    def _commit(self, sql, val=None):
         if not self._connection.is_connected():
             raise mysql.connector.DatabaseError("Cannot connect to DB")
         self._cursor = self._connection.cursor()
-        self._cursor.execute(sql, val)
+        if val:
+            self._cursor.execute(sql, val)
+        else:
+            self._cursor.execute(sql)
         self._connection.commit()
-        if msg:
-            logger.debug(msg)
+        time.sleep(0.1)
+        logger.debug("Commit SQL:\t%s" % sql)
         logger.debug("Commit Result: [%d] record affected." % self._cursor.rowcount)
 
-    def _fetch(self, sql, size=0, msg=None): # size = 0 stands for fetchall
+    def _fetch(self, sql, size=0): # size = 0 stands for fetchall
         if not self._connection.is_connected():
             raise mysql.connector.DatabaseError("Cannot connect to DB")
         self._cursor = self._connection.cursor()
         self._cursor.execute(sql)
         result = self._cursor.fetchall() if size == 0 else self._cursor.fetchmany(size) if size > 1 else self._cursor.fetchone()
-        if msg:
-            logger.debug(msg)
-        logger.debug("Fetch Result:\n" + str(result))
+        # If there is still results left after using fetchone() or fetchmany() method,
+        # the connection can be disconnected unless fetchall() the rest
+        if self._cursor._nextrow[0] is not None:
+            _ = self._cursor.fetchall()
+        logger.debug("Fetch SQL:\t%s" % sql)
+        logger.debug("Fetch Result [%d]:\n%s" % (self._cursor.rowcount, str(result)))
         return result
 
     def get_table_schema(self, table):
         sql = "DESC %s " % table
-        return self._fetch(sql, size=1, msg=sql)
+        logger.debug("Fetch table schema using SQL query:\t%s" % sql)
+        return self._fetch(sql, size=1)
 
     def _build_sql_select_statement(self, table, column=None, condition=None, order_by=None):
         col = "*"
@@ -54,15 +66,37 @@ class MySQLDB:
             sql += " ORDER BY %s" % order_by
         return sql
 
+    def _build_advanced_sql_select_statement(self, table, column=None, advanced=None):
+        col = "*"
+        if column:
+            if isinstance(column, str):
+                col = column
+            elif isinstance(column, list):
+                col = ",".join(column)
+        sql = "SELECT %s FROM %s " % (col, table)
+        if advanced:
+            sql += advanced
+        return sql
+
     def fetch_table_record(self, table, column=None, condition=None, order_by=None):
         sql = self._build_sql_select_statement(table=table, column=column, condition=condition, order_by=order_by)
-        logger.debug("Fetch table record using SQL query:\n%s" % sql)
-        return self._fetch(sql, size=1, msg=sql)
+        logger.debug("Fetch single table record using SQL query:\t%s" % sql)
+        return self._fetch(sql, size=1)
 
     def fetch_table_records(self, table, column=None, condition=None, order_by=None):
         sql = self._build_sql_select_statement(table=table, column=column, condition=condition, order_by=order_by)
-        logger.debug("Fetch table records using query:\n%s" % sql)
-        return self._fetch(sql, msg=sql)
+        logger.debug("Fetch all table records using SQL query:\t%s" % sql)
+        return self._fetch(sql)
+
+    def fetch_advanced_table_record(self, table, column=None, advanced=None):
+        sql = self._build_advanced_sql_select_statement(table=table, column=column, advanced=advanced)
+        logger.debug("Fetch single table record using SQL query:\t%s" % sql)
+        return self._fetch(sql, size=1)
+
+    def fetch_advanced_table_records(self, table, column=None, advanced=None):
+        sql = self._build_advanced_sql_select_statement(table=table, column=column, advanced=advanced)
+        logger.debug("Fetch all table records using SQL query:\t%s" % sql)
+        return self._fetch(sql)
 
     def insert_table_record(self, table, record):
         col = []
@@ -71,8 +105,8 @@ class MySQLDB:
             col.append(k)
             val.append(v)
         sql = "INSERT INTO %s (%s) VALUES (%s)" % (table, ",".join(col), ",".join(["%s"] * len(record)))
-        logger.debug("Insert into table using SQL query:\n%s" % sql)
-        self._commit(sql, val=tuple(val), msg=sql)
+        logger.debug("Insert into table using SQL query:\t%s" % sql)
+        self._commit(sql, val=tuple(val))
 
     def update_table_record(self, table, record, condition=None):
         col = []
@@ -87,8 +121,21 @@ class MySQLDB:
                 sql += condition
             elif isinstance(condition, list):
                 sql += " AND ".join(condition)
-        logger.debug("Update table using SQL query:\n%s" % sql)
-        self._commit(sql, val=tuple(val), msg=sql)
+        logger.debug("Update table using SQL query:\t%s" % sql)
+        self._commit(sql, val=tuple(val))
+
+    def delete_table_record(self, table, condition=None):
+        col = []
+        val = []
+        sql = "DELETE FROM %s" % table
+        if condition:
+            sql += " WHERE "
+            if isinstance(condition, str):
+                sql += condition
+            elif isinstance(condition, list):
+                sql += " AND ".join(condition)
+        logger.debug("Update table using SQL query:\t%s" % sql)
+        self._commit(sql)
 
     def __exit__(self):
         self._connection.close()
@@ -100,18 +147,21 @@ class MySQLDB:
             pass
 
 
+from util.common import LoggedTestCase
+from util.config_util import Configure
+
 config = Configure()
 
-DEFAULT_USER = config.setting["db_user"]
-DEFAULT_PASSWORD = config.setting["db_password"]
-DEFAULT_HOST = config.setting["db_host"]
-DEFAULT_DATABASE = config.setting["db_schema"]
+SANDBOX_USER = config.sandbox["db_user"]
+SANDBOX_PASSWORD = config.sandbox["db_password"]
+SANDBOX_HOST = config.sandbox["db_host"]
+SANDBOX_DATABASE = config.sandbox["db_schema"]
 
 
 class TestMySQLDB(LoggedTestCase):
 
     def setUp(self):
-        self.db=MySQLDB(user=DEFAULT_USER,password=DEFAULT_PASSWORD,host=DEFAULT_HOST,database=DEFAULT_DATABASE)
+        self.db=MySQLDB(user=SANDBOX_USER,password=SANDBOX_PASSWORD,host=SANDBOX_HOST,database=SANDBOX_DATABASE)
 
     def test_get_table_records(self):
         results = self.db.fetch_table_records(table='headline', column=["id", "is_processed", "is_duplicated"])

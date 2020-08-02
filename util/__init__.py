@@ -1,14 +1,11 @@
-import difflib as dl
 import inspect
 import sys
 from setuptools import find_packages
 from pkgutil import iter_modules
 import logging
-
 from util.config_util import Configure
 
 config = Configure()
-
 logging.basicConfig(level=int(config.setting["logging_level"]),
                     format='[%(asctime)s]  %(name)-12s\t[%(levelname)s]\t%(message)s',
                     datefmt='%m-%d %H:%M:%S')
@@ -50,18 +47,4 @@ def find_public_classes(module):
                 public_classes[dir_name] = dir_obj
     return public_classes
 
-
-def checksimilarity(a, b):
-    sim = dl.get_close_matches
-
-    s = 0
-    wa = a.split()
-    wb = b.split()
-
-    for i in wb:
-        if sim(i, wa):
-            s += 1
-
-    n = float(s) / float(len(wb))
-    return n
 

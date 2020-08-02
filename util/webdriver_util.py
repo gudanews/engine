@@ -8,13 +8,15 @@ import unittest
 import logging
 from util.config_util import Configure
 
+
 logger = logging.getLogger("Util.WebDriver")
 
 config = Configure()
 
 USE_HEADLESS_CHROME = os.environ.get("BROWSER", config.setting["browser"]) == "HEADLESS_CHROME"
 
-class ChromeDriver(webdriver.Chrome):
+
+class ChromeDriver(webdriver.Chrome, metaclass=MetaClassSingleton):
     """
     Driver class decorated by the meta class: MetaClassSingleton.
     Behaviour changed in singleton
