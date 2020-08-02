@@ -60,7 +60,7 @@ class HeadlineDB(DataBase):
     def get_latest_headlines(self, column=None, condition=None):
         if not column:
             column = self.SELECT_COLUMN_CONSTRAINT
-        conditions = ["datetime > '%s'" % (datetime.strftime(datetime.now() - timedelta(hours=96), "%Y-%m-%d %H:%M:%S"))]
+        conditions = ["datetime > '%s'" % (datetime.strftime(datetime.now() - timedelta(days=14), "%Y-%m-%d %H:%M:%S"))]
         if isinstance(condition, str):
             conditions.append(condition)
         elif isinstance(condition, list):
