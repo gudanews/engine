@@ -168,7 +168,8 @@ def main():
                     obj.crawl()
                     found += obj.total_found
                     driver.close()
-                except:
+                except Exception as e:
+                    cls.logger.warning("%s" % e)
                     cls.logger.warning("Error happens to current crawler, continuing......")
     logger.info(">" * 40 + "<" * 40)
     logger.info(">>> Completed Crawling. Processing Time [%s]. Total Found [%d]. <<<"
