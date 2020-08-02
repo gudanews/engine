@@ -84,9 +84,8 @@ class Crawler:
                     record.pop(el)
                 else:
                     record[el] = datetime_util.str2datetime(element.datetime) if el == "datetime" else \
-                            record[el][:360] if el == "snippet" else \
+                            record[el][:512] if el in ("snippet", "image") else \
                             record[el][:256] if el == "heading" else \
-                            record[el][:512] if el == "image" else \
                             record[el]
                     if DEBUGGING_TEST:
                         self.logger.info("[%s]:\t%s" % (el.upper(), record[el]))
@@ -115,7 +114,6 @@ class Crawler:
                         self.logger.info("Inserted Into <headline> DB [ID=%s] With Values: %s." % (headline_id, record))
                         if headline_id:
                             record["headline_id"] = headline_id
-                            record.pop("snippet", None)  # Remove snippet key, not present in <news> db
                             news_id = news_db.add_news(record=record) if not DEBUGGING_TEST else 0
                             self.logger.info("Inserted Into <news> DB [ID=%s] With Values: %s." % (news_id, record))
                             headline_db.update_headline_by_id(id=record["headline_id"], record=dict(news_id=news_id)) if not DEBUGGING_TEST else None
