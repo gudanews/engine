@@ -24,9 +24,9 @@ class HeadlineDB(DataBase):
         "image_id": (int, OPTIONAL),
         "news_id": (int, OPTIONAL),
         "heading": (str, MANDATORY),
+        "snippet": (str, OPTIONAL),
         "url": (str, MANDATORY),
         "datetime": (datetime, OPTIONAL),
-        "snippet": (str, OPTIONAL),
         "quality": (int, OPTIONAL)}
 
     UPDATE_COLUMN_CONSTRAINT = {
@@ -37,9 +37,9 @@ class HeadlineDB(DataBase):
         "image_id": int,
         "news_id": int,
         "heading": str,
+        "snippet": str,
         "url": str,
         "datetime": datetime,
-        "snippet": str,
         "quality": int}
 
     def __init__(self, user=None, password=None, host=None, database=None):
