@@ -63,5 +63,5 @@ def checksimilarity(a, b):
             s += 1
 
     n = float(s) / float(len(wb))
-    return n
+    return n * 100
 
