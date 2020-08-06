@@ -1,11 +1,11 @@
-from database.news_headline import SourceDB
+from database.source import SourceDB
 from util.common import LoggedTestCase
-
+from furl import furl
 
 def get_sources_from_url(url):
     sdb = SourceDB()
     output = []
-    for data in sdb.fetch_db_records(column=["website"]):
+    for data in sdb.fetch_db_records(column=["crawling_url"]):
         existing_data = ''
         for i in range(2, len((str(data))) - 3):
             existing_data += str(data)[i]
@@ -18,16 +18,20 @@ def get_sources_from_url(url):
         output2.append(existing_data)
 
     for entry in range(len(output)):
-        if output[entry].lower() in url.lower() or output2[entry].lower() in url.lower():#.replace(' news','').replace('.com','').replace(' ','').replace('the','')
-            return True
+        #print(output[entry])
+        f = furl(output[entry])
+        u = furl(url)
+        if f.host in u.host:
+            return f.host
     return False
 
 import unittest
 
 sdb = SourceDB()
 output = []
-
-for data in sdb.fetch_db_records(column=["website"]):
+url ='https://www.google.com'
+print(get_sources_from_url(url))
+for data in sdb.fetch_db_records(column=["crawling_url"]):
     existing_data = ''
     for i in range(2, len((str(data))) - 3):
         existing_data += str(data)[i]
@@ -38,10 +42,8 @@ class TestGetSources(LoggedTestCase):
     def test_sources(self):
         for i in output:
             a = get_sources_from_url(i.lower())
-            self.assertEqual(a,True)
-    def test_certain(self):
-        b = get_sources_from_url('https://www.nytimes.com/')
-        self.assertEqual(b, True)
+            self.assertNotEqual(a,False)
+
 if __name__ == '__main__':
     unittest.main()
-
+    pass
