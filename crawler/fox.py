@@ -16,7 +16,7 @@ class FoxCrawler(BaseCrawler):
     def __init__(self, driver):
         web_url = "https://www.foxnews.com"
         page = FoxPage(driver)
-        super(FoxCrawler, self).__init__(driver, web_url, page)
+        super(FoxCrawler, self).__init__(driver, page, web_url)
 
     def goto_next_page(self):  # Fox news only checks one page
         raise Exception("Fox News Should Only Be Crawled On Home Page")

@@ -16,7 +16,7 @@ class ReutersCrawler(BaseCrawler):
     def __init__(self, driver):
         web_url = "https://www.reuters.com/news/archive/us-the-wire?view=page"
         page = ReutersPage(driver)
-        super(ReutersCrawler, self).__init__(driver, web_url, page)
+        super(ReutersCrawler, self).__init__(driver, page, web_url)
 
     def find_alternative_image_url(self, url):
         # Expected https://s4.reutersmedia.net/resources/r/?m=02&d=20200728&t=2&i=1527461013&w=370&fh=&fw=&ll=&pl=&sq=&r=LYNXNPEG6R1MZ
