@@ -23,10 +23,10 @@ class Crawler:
     SOURCE_ID = None
     logger = logging.getLogger("Crawler")
 
-    def __init__(self, driver, web_url, page):
+    def __init__(self, driver, page, web_url):
         self.driver = driver
-        self.web_url = web_url
         self.page = page
+        self.web_url = web_url
         self.current_page_number = 1
         self.total_found = 0
         self.start_time = datetime.now()
