@@ -1,6 +1,6 @@
 from crawler import Crawler as BaseCrawler
 from util.webdriver_util import ChromeDriver
-from webpage.ap import APPage
+from webpage.ap import CrawlPage as APPage
 import logging
 from furl import furl
 import re

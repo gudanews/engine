@@ -1,6 +1,6 @@
 from crawler import Crawler as BaseCrawler
 from util.webdriver_util import ChromeDriver
-from webpage.cnn import CNNPage
+from webpage.cnn import CrawlPage as CNNPage
 import logging
 
 logger = logging.getLogger("Crawler.CNN")

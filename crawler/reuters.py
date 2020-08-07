@@ -1,6 +1,6 @@
 from crawler import Crawler as BaseCrawler
 from util.webdriver_util import ChromeDriver
-from webpage.reuters import ReutersPage
+from webpage.reuters import CrawlPage as ReutersPage
 import logging
 from furl import furl
 
