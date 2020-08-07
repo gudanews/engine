@@ -1,7 +1,6 @@
 from util.webdriver_util import ChromeDriver
 import logging
 import time
-from util import datetime_util
 from database.headline import HeadlineDB
 from database.image import ImageDB
 from database.news import NewsDB
@@ -83,10 +82,8 @@ class Crawler:
                 if not record[el]:
                     record.pop(el)
                 else:
-                    record[el] = datetime_util.str2datetime(element.datetime) if el == "datetime" else \
-                            record[el][:512] if el in ("snippet", "image") else \
-                            record[el][:256] if el == "heading" else \
-                            record[el]
+                    record[el] = record[el][:512] if el in ("snippet", "image") else \
+                            record[el][:256] if el == "heading" else record[el]
                     if DEBUGGING_TEST:
                         self.logger.info("[%s]:\t%s" % (el.upper(), record[el]))
                     else:
@@ -174,7 +171,6 @@ def main():
     logger.info(">>> Completed Crawling. Processing Time [%s]. Total Found [%d]. <<<"
                 % (str(datetime.now() - START_TIME), found))
     logger.info(">" * 40 + "<" * 40 + "\n" * 2)
-
 
 
 if __name__ == "__main__":

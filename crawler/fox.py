@@ -1,6 +1,6 @@
 from crawler import Crawler as BaseCrawler
 from util.webdriver_util import ChromeDriver
-from webpage.fox_news import FoxNewsPage
+from webpage.fox import CrawlPage as FoxPage
 import logging
 from furl import furl
 from util.image_util import IMAGE_HEIGHT, IMAGE_WIDTH
@@ -15,7 +15,7 @@ class FoxCrawler(BaseCrawler):
 
     def __init__(self, driver):
         web_url = "https://www.foxnews.com"
-        page = FoxNewsPage(driver)
+        page = FoxPage(driver)
         super(FoxCrawler, self).__init__(driver, web_url, page)
 
     def goto_next_page(self):  # Fox news only checks one page
