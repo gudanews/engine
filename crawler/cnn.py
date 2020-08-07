@@ -9,7 +9,7 @@ logger = logging.getLogger("Crawler.CNN")
 class CNNCrawler(BaseCrawler):
 
     MAX_CRAWLING_PAGES = 1
-    WAIT_FOR_ELEMENT_READY = 0.2
+    WAIT_FOR_ELEMENT_READY = 0.5
     SOURCE_ID = 101
     logger = logging.getLogger("Crawler.CNN")
 
@@ -20,6 +20,11 @@ class CNNCrawler(BaseCrawler):
 
     def goto_next_page(self):  # CNN news only checks one page
         raise Exception("CNN News Should Only Be Crawled On Home Page")
+
+    def find_alternative_image_url(self, url):
+        # Expected //cdn.cnn.com/cnnnext/dam/assets/200806183042-02-trump-0806-full-169.jpg
+        # Alternative cdn.cnn.com/cnnnext/dam/assets/200806183042-02-trump-0806-full-169.jpg
+        return "http:" + url if url.startswith("//") else url
 
 
 if __name__ == "__main__":
