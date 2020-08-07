@@ -104,11 +104,11 @@ class IndexPage(Page):
     )
     @property
     def datetime(self):
-        pass
+        return self.datetime_raw
 
     @property
     def category(self):
-        pass
+        return self.category_raw
 
     @property
     def body(self):

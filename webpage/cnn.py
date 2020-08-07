@@ -20,7 +20,7 @@ class News(Sections):
     image = Element(
         Locators.CSS_SELECTOR,
         "div.media a img",
-        value=lambda el: el.get_attribute('src'),
+        value=lambda el: el.get_attribute('data-src-full16x9'),
         only_if=VISIBLE(),
         timeout=0.5
     )
