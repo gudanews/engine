@@ -12,16 +12,18 @@ logger = logging.getLogger("DataBase.News")
 
 class NewsDB(DataBase):
 
-    SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "is_indexed", "headline_id", "image_id", "source_id",
-                      "heading", "url", "datetime", "body", "likes"]
+    SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "is_indexed", "headline_id", "category_id", "source_id", "image_id",
+                      "heading", "snippet", "url", "datetime", "body", "likes"]
 
     INSERT_COLUMN_CONSTRAINT = {
         "uuid": (str, MANDATORY),
         "is_indexed": (int, OPTIONAL),
         "headline_id": (int, OPTIONAL),
+        "category_id": (int, OPTIONAL),
         "source_id": (int, MANDATORY),
         "image_id": (int, OPTIONAL),
         "heading": (str, MANDATORY),
+        "snippet": (str, OPTIONAL),
         "url": (str, MANDATORY),
         "datetime": (datetime, OPTIONAL),
         "body": (str, OPTIONAL),
@@ -30,9 +32,11 @@ class NewsDB(DataBase):
     UPDATE_COLUMN_CONSTRAINT = {
         "is_indexed": int,
         "headline_id": int,
+        "category_id": int,
         "source_id": int,
         "image_id": int,
         "heading": str,
+        "snippet": str,
         "url": str,
         "datetime": datetime,
         "body": str,

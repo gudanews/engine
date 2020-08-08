@@ -12,34 +12,36 @@ logger = logging.getLogger("Database.Headline")
 
 class HeadlineDB(DataBase):
 
-    SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "is_processed", "is_displayable", "duplicate_id", "source_id",
-                      "image_id", "news_id", "heading", "url", "datetime", "snippet"]
+    SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "is_processed", "is_displayable", "duplicate_id", "category_id", "source_id",
+                      "image_id", "news_id", "heading", "snippet", "url", "datetime", "quality"]
 
     INSERT_COLUMN_CONSTRAINT = {
         "uuid": (str, MANDATORY),
         "is_processed": (int, OPTIONAL),
         "is_displayable": (int, OPTIONAL),
         "duplicate_id": (int, OPTIONAL),
+        "category_id": (int, OPTIONAL),
         "source_id": (int, MANDATORY),
         "image_id": (int, OPTIONAL),
         "news_id": (int, OPTIONAL),
         "heading": (str, MANDATORY),
+        "snippet": (str, OPTIONAL),
         "url": (str, MANDATORY),
         "datetime": (datetime, OPTIONAL),
-        "snippet": (str, OPTIONAL),
         "quality": (int, OPTIONAL)}
 
     UPDATE_COLUMN_CONSTRAINT = {
         "is_processed": int,
         "is_displayable": int,
         "duplicate_id": int,
+        "category_id": int,
         "source_id": int,
         "image_id": int,
         "news_id": int,
         "heading": str,
+        "snippet": str,
         "url": str,
         "datetime": datetime,
-        "snippet": str,
         "quality": int}
 
     def __init__(self, user=None, password=None, host=None, database=None):
