@@ -57,7 +57,7 @@ class NewsDB(DataBase):
         conditions = "uuid = '%s'" % uuid
         return self.fetch_record(column=column, condition=conditions)
 
-    def get_latest_news(self, column=None, condition=None):
+    def get_latest_news(self, column=None, condition=None, max_count=0):
         if not column:
             column = self.SELECT_COLUMN_CONSTRAINT
         conditions = ["datetime > '%s'" % (datetime.strftime(datetime.now() - timedelta(days=14), "%Y-%m-%d %H:%M:%S"))]
@@ -65,14 +65,37 @@ class NewsDB(DataBase):
             conditions.append(condition)
         elif isinstance(condition, list):
             conditions.extend(condition)
-        return self.fetch_records(column=column, condition=conditions)
+        limit = None
+        if max_count:
+            limit = max_count
+        return self.fetch_records(column=column, condition=conditions, limit=limit)
 
-    def get_latest_news_by_source(self, source, column=None):
+    def get_latest_news_by_source(self, source, column=None, max_count=0):
         if not source or not (isinstance(source, int) or isinstance(source, str)):
             raise Exception("Please specify <source> to use get_latest_news_by_source method")
         source = SourceDB().get_source_id_by_name(source) if isinstance(source, str) else source
-        conditions = ["source_id = %d" % source]
-        return self.get_latest_news(column=column, condition=conditions)
+        condition = ["source_id = %d" % source]
+        return self.get_latest_news(column=column, condition=condition, max_count=max_count)
+
+    def get_non_indexed_news(self, column=None, condition=None, max_count=0):
+        if not column:
+            column = ["id", "url"]
+        conditions = ["is_indexed = 0"]
+        if isinstance(condition, str):
+            conditions.append(condition)
+        elif isinstance(condition, list):
+            conditions.extend(condition)
+        limit = None
+        if max_count:
+            limit = max_count
+        return self.fetch_records(column=column, condition=conditions, limit=limit)
+
+    def get_non_indexed_news_by_source(self, source, column=None, max_count=0):
+        if not source or not (isinstance(source, int) or isinstance(source, str)):
+            raise Exception("Please specify <source> to use get_latest_news_by_source method")
+        source = SourceDB().get_source_id_by_name(source) if isinstance(source, str) else source
+        condition = ["source_id = %d" % source]
+        return self.get_non_indexed_news(column=column, condition=condition, max_count=max_count)
 
     def get_news_by_headline(self, headline, column=None):
         if not headline or not (isinstance(headline, int) or isinstance(headline, str)):

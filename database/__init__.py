@@ -101,24 +101,26 @@ class DataBase:
             return True
         return False
 
-    def fetch_records(self, column=None, condition=None, order_by=None):
+    def fetch_records(self, column=None, condition=None, group_by=None, order_by=None, limit=None):
         if not column or self.validate_select_record(column):
-            return self._db.fetch_table_records(self.table, column, condition, order_by)
+            return self._db.fetch_table_records(table=self.table, column=column, condition=condition,
+                                                group_by=group_by, order_by=order_by, limit=limit)
         return None
 
     def fetch_advanced_records(self, column=None, advanced=None):
         if not column or self.validate_select_record(column):
-            return self._db.fetch_advanced_table_records(self.table, column, advanced)
+            return self._db.fetch_advanced_table_records(table=self.table, column=column, advanced=advanced)
         return None
 
-    def fetch_record(self, column=None, condition=None, order_by=None):
+    def fetch_record(self, column=None, condition=None, group_by=None, order_by=None):
         if not column or self.validate_select_record(column):
-            return self._db.fetch_table_record(self.table, column, condition, order_by)
+            return self._db.fetch_table_record(table=self.table, column=column, condition=condition,
+                                               group_by=group_by, order_by=order_by)
         return None
 
     def fetch_advanced_record(self, column=None, advanced=None):
         if not column or self.validate_select_record(column):
-            return self._db.fetch_advanced_table_record(self.table, column, advanced)
+            return self._db.fetch_advanced_table_record(table=self.table, column=column, advanced=advanced)
         return None
 
     def delete_records(self, condition=None):

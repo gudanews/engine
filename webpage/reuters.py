@@ -2,6 +2,8 @@ from holmium.core import Element, Elements, Locators, Section, Sections
 from holmium.core import Page
 from holmium.core.conditions import VISIBLE
 from util import datetime_util
+from furl import furl
+import re
 
 
 class Stories(Sections):
@@ -53,6 +55,24 @@ class CrawlPage(Page):
         timeout=10
     )
 
+CATEGORY_MAPPING = {
+    "top": [],
+    "local": [],
+    "national": [],
+    "world": ["WORLD NEWS"],
+    "opinion": [],
+    "politics": ["POLITICS"],
+    "business": ["DEALS", "BUSINESS NEWS", "U.S. LEGAL NEWS"],
+    "technology & science": ["TECHNOLOGY NEWS", "ENVIRONMENT", "CYBER RISK"],
+    "entertainment & art": [],
+    "health": [],
+    "sport": [],
+    "weather": [],
+    "lifestyle & culture": [],
+    "multimedia": [],
+}
+# JULY 31, 2020 / 4:03 AM / 8 DAYS AGO
+DATETIME_PATTERN = r'^(?P<month>%s) (?P<day>\d{1,2})(\,{0,1}) (?P<year>\d{2,4}) / (?P<hour>\d{1,2}):(?P<minute>\d{2}) (?P<period>AM|PM)' % datetime_util.ANY_MONTHS
 
 class IndexPage(Page):
 
@@ -78,11 +98,18 @@ class IndexPage(Page):
         value=lambda el: el.text,
         timeout=5
     )
-    image = Element(
+    image_raw = Elements(
         Locators.CSS_SELECTOR,
-        BODY_CSS_SELECTOR + " div.Image_container img",
+        BODY_CSS_SELECTOR + " div.Image_container img, "
+        + BODY_CSS_SELECTOR + " div.Slideshow_container img",
         value=lambda el: el.get_attribute('src'),
-        timeout=5
+        timeout=0.5
+    )
+    media_raw = Elements(
+        Locators.CSS_SELECTOR,
+        BODY_CSS_SELECTOR + " div.Video_container iframe[src]",
+        value=lambda el: el.get_attribute('src'),
+        timeout=0.5
     )
     body_raw = Elements(
         Locators.CSS_SELECTOR,
@@ -92,9 +119,10 @@ class IndexPage(Page):
     )
     contributor = Element(
         Locators.CSS_SELECTOR,
-        BODY_CSS_SELECTOR + " Attribution_attribution > p",
+        HEADER_CSS_SELECTOR + " div.BylineBar_byline, "
+        + HEADER_CSS_SELECTOR + " Attribution_attribution > p",
         value=lambda el:el.text,
-        timeout=5
+        timeout=0.5
     )
     length = Element(
         Locators.CSS_SELECTOR,
@@ -104,12 +132,31 @@ class IndexPage(Page):
     )
     @property
     def datetime(self):
-        return self.datetime_raw
+        return datetime_util.get_datetime_use_pattern(DATETIME_PATTERN, self.datetime_raw)
 
     @property
     def category(self):
-        return self.category_raw
+        for (k,v) in CATEGORY_MAPPING.items():
+            if self.category_raw in v:
+                return k
+        return None
 
     @property
     def body(self):
         return "\n".join([b for b in self.body_raw])
+
+    @property
+    def media(self):
+        return [m for m in self.media_raw]
+
+    @property
+    def image(self):
+        normalized_results = []
+        results = []
+        for img in self.image_raw:
+            f = furl(img)
+            f.args.pop("w", None)
+            if not f.url in normalized_results:
+                normalized_results.append(f.url)
+                results.append(img)
+        return results

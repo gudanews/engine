@@ -62,47 +62,56 @@ def _adjust_timezone(zone):
 
 def str2datetime(p_time):
     if p_time: # Return current time if p_time is None
-        for _,pattern in DATETIME_REGEX.items():
-            m = re.match(pattern, p_time, re.IGNORECASE)
-            if m:
-                adj_hour = 0 # Adjust hours due to time zone and period and ago
-                adj_minute = 0 # Adjust minutes
-                ic_time = m.groupdict()
-                if "zone" in ic_time: # Adjust timezone to current local time
-                    adj_hour = _adjust_timezone(ic_time["zone"])
-                    if not "day" in ic_time:
-                        if (NOW.hour - adj_hour - 24) * 60 + NOW.minute > int(ic_time["hour"]) * 60 + int(ic_time["minute"]): # 02:34AM EST at morning
-                            adj_hour += 24
-                        elif (NOW.hour - adj_hour + 24) * 60 + NOW.minute < int(ic_time["hour"]) * 60 + int(ic_time["minute"]):  # 23:34PM HST at late night
-                            adj_hour -= 24
-                    del ic_time["zone"]
-                for key in ("year", "month", "day", "hour", "minute", "second"):
-                    if key in ic_time:
-                        if ic_time[key].isdigit():
-                            ic_time[key] = int(ic_time[key])
-                    else:
-                        if key in ("hour", "minute", "second") and not "ago" in ic_time: # if time not specified set to 00:00
-                            ic_time[key] = 0
-                        else:
-                            exec("ic_time['" + key + "'] = NOW." + key)
-
-                if isinstance(ic_time["month"], str): # e.g. Convert ic_time["month"] = July to 7
-                    ic_time["month"] = _convert_month_to_number(ic_time["month"])
-                if "period" in ic_time: # Adjust PM to 24 hour format
-                    if ic_time["period"].upper() == "PM" and ic_time["hour"] != 12: # 3PM -> 15, but 12PM -> 12
-                        adj_hour += 12
-                    del ic_time["period"]
-                if "ago" in ic_time: # Adjust time deltas
-                    if "ago_hour" in ic_time:
-                        adj_hour -= int(ic_time.pop("ago_hour"))
-                    if "ago_minute" in ic_time:
-                        adj_minute -= int(ic_time.pop("ago_minute"))
-                    del ic_time["ago"]
-                r_time = datetime(**ic_time) + timedelta(hours=adj_hour, minutes=adj_minute)
-                logger.debug("Convert [%s] to standardized datetime [%s]" % (p_time, r_time))
+        for _, pattern in DATETIME_REGEX.items():
+            r_time = get_datetime_use_pattern(pattern, p_time)
+            if r_time:
                 return r_time
     logger.warning("Cannot find the expected time format [%s]" % p_time)
     return NOW
+
+def get_datetime_use_pattern(pattern, p_time):
+    m = re.match(pattern, p_time, re.IGNORECASE)
+    if m:
+        adj_hour = 0  # Adjust hours due to time zone and period and ago
+        adj_minute = 0  # Adjust minutes
+        ic_time = m.groupdict()
+        if "zone" in ic_time:  # Adjust timezone to current local time
+            adj_hour = _adjust_timezone(ic_time["zone"])
+            if not "day" in ic_time:
+                if (NOW.hour - adj_hour - 24) * 60 + NOW.minute > int(ic_time["hour"]) * 60 + int(
+                        ic_time["minute"]):  # 02:34AM EST at morning
+                    adj_hour += 24
+                elif (NOW.hour - adj_hour + 24) * 60 + NOW.minute < int(ic_time["hour"]) * 60 + int(
+                        ic_time["minute"]):  # 23:34PM HST at late night
+                    adj_hour -= 24
+            del ic_time["zone"]
+        for key in ("year", "month", "day", "hour", "minute", "second"):
+            if key in ic_time:
+                if ic_time[key].isdigit():
+                    ic_time[key] = int(ic_time[key])
+            else:
+                if key in ("hour", "minute", "second") and not "ago" in ic_time:  # if time not specified set to 00:00
+                    ic_time[key] = 0
+                else:
+                    exec("ic_time['" + key + "'] = NOW." + key)
+
+        if isinstance(ic_time["month"], str):  # e.g. Convert ic_time["month"] = July to 7
+            ic_time["month"] = _convert_month_to_number(ic_time["month"])
+        if "period" in ic_time:  # Adjust PM to 24 hour format
+            if ic_time["period"].upper() == "PM" and ic_time["hour"] != 12:  # 3PM -> 15, but 12PM -> 12
+                adj_hour += 12
+            del ic_time["period"]
+        if "ago" in ic_time:  # Adjust time deltas
+            if "ago_hour" in ic_time:
+                adj_hour -= int(ic_time.pop("ago_hour"))
+            if "ago_minute" in ic_time:
+                adj_minute -= int(ic_time.pop("ago_minute"))
+            del ic_time["ago"]
+        r_time = datetime(**ic_time) + timedelta(hours=adj_hour, minutes=adj_minute)
+        logger.debug("Convert [%s] to standardized datetime [%s]" % (p_time, r_time))
+        return r_time
+    return None
+
 
 class TestDateTime(LoggedTestCase):
 
