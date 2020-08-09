@@ -29,7 +29,11 @@ class ImageDB(DataBase):
         return result[0] if result else 0
 
     def add_image(self, url=None, path=None, thumbnail=None):
-        if self.insert_record(record=dict(url=url, path=path, thumbnail=thumbnail)):
+        record = dict()
+        record.update({"url": url}) if url else None
+        record.update({"path": path}) if path else None
+        record.update({"thumbnail": thumbnail}) if thumbnail else None
+        if self.insert_record(record=record):
             return self._db._cursor.lastrowid
         return 0
 
@@ -53,7 +57,7 @@ class TestImageData(LoggedTestCase):
         self.id = self.data.add_image(url="http://www.reuters.com/image1", path="/path/to/image1", thumbnail=None)
         self.data.add_image(url="http://www.foxnews.com/image2", path="/path/to/image2", thumbnail="/path/to/image2_tn")
 
-    def test_get_image_id_by_non_exist_url(self):
+    def test_get_image_id_by_url(self):
         id = self.data.get_image_id_by_url('http://www.reuters.com/image1')
         self.assertEqual(id, self.id)
 
