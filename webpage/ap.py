@@ -6,7 +6,7 @@ from util import datetime_util
 class Cards(Sections):
     heading = Element(
         Locators.CSS_SELECTOR,
-        "div.CardHeadline a[href]",
+        "div.CardHeadline [data-key='card-headline']",
         value=lambda el: el.text,
         timeout=5
     )
