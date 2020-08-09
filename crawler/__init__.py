@@ -98,16 +98,16 @@ class Crawler:
         record["source_id"] = self.SOURCE_ID
         record["image_id"] = image_id
         record.pop("image", None)  # Remove image key and replace with image_id
-        headline_id = self.headline_db.add_headline(record=record) if not DEBUGGING_TEST else 0
-        self.logger.info("Inserted Into <headline> DB [ID=%s] With Values: %s." % (headline_id, record))
-        if headline_id:
-            record["headline_id"] = headline_id
-            news_id = self.news_db.add_news(record=record) if not DEBUGGING_TEST else 0
-            self.logger.info("Inserted Into <news> DB [ID=%s] With Values: %s." % (news_id, record))
-            if news_id:
-                self.headline_db.update_headline_by_id(id=record["headline_id"],
-                                                  record=dict(news_id=news_id)) if not DEBUGGING_TEST else None
-                self.logger.info("Update <headline> Record With [news_id].")
+        news_id = self.news_db.add_news(record=record) if not DEBUGGING_TEST else 0
+        self.logger.info("Inserted Into <news> DB [ID=%s] With Values: %s." % (news_id, record))
+        if news_id:
+            record["news_id"] = news_id
+            headline_id = self.headline_db.add_headline(record=record) if not DEBUGGING_TEST else 0
+            self.logger.info("Inserted Into <headline> DB [ID=%s] With Values: %s." % (headline_id, record))
+            if headline_id:
+                self.news_db.update_news_by_id(
+                    id=record["news_id"], record=dict(headline_id=headline_id)) if not DEBUGGING_TEST else None
+                self.logger.info("Update <news> Record With [headline_id].")
 
     def process_current_page(self):
         new_found = 0

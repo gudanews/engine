@@ -48,7 +48,7 @@ class MySQLDB(metaclass=MetaClassSingleton):
         logger.debug("Fetch table schema using SQL query:\t%s" % sql)
         return self._fetch(sql, size=1)
 
-    def _build_sql_select_statement(self, table, column=None, condition=None, order_by=None):
+    def _build_sql_select_statement(self, table, column=None, condition=None, group_by=None, order_by=None, limit=None):
         col = "*"
         if column:
             if isinstance(column, str):
@@ -62,8 +62,12 @@ class MySQLDB(metaclass=MetaClassSingleton):
                 sql += condition
             elif isinstance(condition, list):
                 sql += " AND ".join(condition)
+        if group_by:
+            sql += " GROUP BY %s" % group_by
         if order_by:
             sql += " ORDER BY %s" % order_by
+        if limit:
+            sql += " limit %s" % limit
         return sql
 
     def _build_advanced_sql_select_statement(self, table, column=None, advanced=None):
@@ -78,13 +82,15 @@ class MySQLDB(metaclass=MetaClassSingleton):
             sql += advanced
         return sql
 
-    def fetch_table_record(self, table, column=None, condition=None, order_by=None):
-        sql = self._build_sql_select_statement(table=table, column=column, condition=condition, order_by=order_by)
+    def fetch_table_record(self, table, column=None, condition=None, group_by=None, order_by=None):
+        sql = self._build_sql_select_statement(table=table, column=column, condition=condition,
+                                               group_by=group_by, order_by=order_by)
         logger.debug("Fetch single table record using SQL query:\t%s" % sql)
         return self._fetch(sql, size=1)
 
-    def fetch_table_records(self, table, column=None, condition=None, order_by=None):
-        sql = self._build_sql_select_statement(table=table, column=column, condition=condition, order_by=order_by)
+    def fetch_table_records(self, table, column=None, condition=None, group_by=None, order_by=None, limit=None):
+        sql = self._build_sql_select_statement(table=table, column=column, condition=condition,
+                                               group_by=group_by, order_by=order_by, limit=limit)
         logger.debug("Fetch all table records using SQL query:\t%s" % sql)
         return self._fetch(sql)
 
@@ -164,19 +170,19 @@ class TestMySQLDB(LoggedTestCase):
         self.db=MySQLDB(user=SANDBOX_USER,password=SANDBOX_PASSWORD,host=SANDBOX_HOST,database=SANDBOX_DATABASE)
 
     def test_get_table_records(self):
-        results = self.db.fetch_table_records(table='headline', column=["id", "is_processed", "is_duplicated"])
+        results = self.db.fetch_table_records(table='headline', column=["id", "is_processed", "duplicate_id"])
         self.assertIsNotNone(results)
         self.assertEqual(len(results[0]), 3)
         logger.info(results)
 
     def test_get_table_record(self):
-        result = self.db.fetch_table_record(table='headline', column=["id", "is_processed", "is_duplicated"])
+        result = self.db.fetch_table_record(table='headline', column=["id", "is_processed", "duplicate_id"])
         self.assertIsNotNone(result)
         self.assertEqual(len(result), 3)
         logger.info(result)
 
     def test_get_table_non_exists_record(self):
-        result = self.db.fetch_table_record(table='headline', column=["id", "is_processed", "is_duplicated"],
+        result = self.db.fetch_table_record(table='headline', column=["id", "is_processed", "duplicate_id"],
                                             condition=["id < 0"])
         self.assertIsNone(result)
         logger.info(result)
