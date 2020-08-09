@@ -54,7 +54,7 @@ class DataBase:
             if not k in record and v[1] == MANDATORY:
                 logger.warning("Missing mandatory column [%s] insert to database <%s>" % (k, self.table))
                 return False
-            elif k in record and not isinstance(record[k], v[0]):
+            elif k in record and record[k] and not isinstance(record[k], v[0]):
                 logger.warning("Invalid column [%s = %s] insert to database <%s>" % (k, record[k], self.table))
                 return False
         return True
