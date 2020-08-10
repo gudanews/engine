@@ -5,6 +5,7 @@ from database.headline import HeadlineDB
 from database.image import ImageDB
 from database.news import NewsDB
 from database.source import SourceDB
+from database.category import CategoryDB
 from util.image_util import ImageHelper
 from datetime import datetime
 
@@ -35,6 +36,8 @@ class Crawler:
         self.headline_db = HeadlineDB()
         self.news_db = NewsDB()
         self.image_db = ImageDB()
+        self.category_db = CategoryDB()
+        self.source_db = SourceDB()
         self.existing_urls = [u for (u,) in self.headline_db.get_latest_headlines_by_source(source=self.SOURCE_ID, column=["url"])]
 
     def goto_main_page(self):  # goes to main page
@@ -73,14 +76,13 @@ class Crawler:
     def save_image(self, url):
         if not DEBUGGING_TEST:
             img = ImageHelper(url)
-            image_db = ImageDB()
             self.logger.info("Download image with URL [%s]" % url)
             if img.download_image(generate_thumbnail=True):
-                return image_db.add_image(url=img.url, path=img.db_path, thumbnail=img.db_thumbnail)
+                return self.image_db.add_image(url=img.url, path=img.db_path, thumbnail=img.db_thumbnail)
         return 0
 
     def update_record_with_page_element(self, record, element):
-        for el in ("heading", "datetime", "snippet", "image"): # No need to insert url again
+        for el in ("heading", "datetime", "snippet", "image", "category"): # No need to insert url again
             if el in dir(element):
                 record[el] = eval("element." + el)
                 if not record[el]:
@@ -132,8 +134,7 @@ class Crawler:
         self.complete = False if new_found >= self.MIN_ALLOWED_UNRECORD_NEWS_TO_CONTINUE_CRAWLING else True
 
     def crawl(self):
-        source_db = SourceDB()
-        source_name = source_db.get_source_name_by_id(self.SOURCE_ID)
+        source_name = self.source_db.get_source_name_by_id(self.SOURCE_ID)
         self.logger.info("=====================  Crawling [%s] started  =====================" % source_name)
         self.goto_main_page()
         self.complete = False

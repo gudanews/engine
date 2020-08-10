@@ -7,9 +7,8 @@ logger = logging.getLogger("DataBase.Source")
 
 class SourceDB(DataBase):
 
-    SELECT_COLUMN_CONSTRAINT = ["id", "is_crawling", "crawling_url", "name", "display_name", "image_id", "host", "bias", "quality"]
-
-    INSERT_COLUMN_CONSTRAINT = {
+    COLUMN_CONSTRAINT = {
+        "id": (int, MANDATORY),
         "is_crawling": (int, OPTIONAL),
         "crawling_url": (str, OPTIONAL),
         "name": (str, MANDATORY),
@@ -17,17 +16,11 @@ class SourceDB(DataBase):
         "image_id": (str, OPTIONAL),
         "host": (str, OPTIONAL),
         "bias": (int, OPTIONAL),
-        "quality": (int, OPTIONAL)}
-
-    UPDATE_COLUMN_CONSTRAINT = {
-        "is_crawling": int,
-        "crawling_url": str,
-        "name": str,
-        "display_name": str,
-        "image_id": str,
-        "host": str,
-        "bias": int,
-        "quality": int}
+        "quality": (int, OPTIONAL)
+    }
+    INSERT_COLUMN_CONSTRAINT = ["is_crawling", "crawling_url", "name", "display_name", "image_id", "host", "bias", "quality"]
+    UPDATE_COLUMN_CONSTRAINT = ["id", "is_crawling", "crawling_url", "name", "display_name", "image_id", "host", "bias", "quality"]
+    SELECT_COLUMN_CONSTRAINT = ["id", "is_crawling", "crawling_url", "name", "display_name", "image_id", "host", "bias", "quality"]
 
     def __init__(self, user=None, password=None, host=None, database=None):
         super(SourceDB, self).__init__("source", user=user, password=password, host=host, database=database)
@@ -58,7 +51,7 @@ class TestSourceData(LoggedTestCase):
         self.data = SourceDB(user=SANDBOX_USER, password=SANDBOX_PASSWORD, host=SANDBOX_HOST, database=SANDBOX_DATABASE)
 
     def test_get_source_id_by_name(self):
-        result = self.data.get_source_id_by_name("Reuters")
+        result = self.data.get_source_id_by_name("RUT")
         self.assertEqual(result, 1)
 
     def test_get_non_exist_resource_id(self):
