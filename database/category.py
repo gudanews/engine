@@ -9,15 +9,14 @@ logger = logging.getLogger("DataBase.Image")
 
 class CategoryDB(DataBase):
 
-    SELECT_COLUMN_CONSTRAINT = ["id", "name", "alias"]
-
-    INSERT_COLUMN_CONSTRAINT = {
+    COLUMN_CONSTRAINT = {
+        "id": (int, OPTIONAL),
         "name": (str, OPTIONAL),
-        "alias": (str, OPTIONAL)}
-
-    UPDATE_COLUMN_CONSTRAINT = {
-        "name": str,
-        "alias": str}
+        "alias": (str, OPTIONAL)
+    }
+    INSERT_COLUMN_CONSTRAINT = ["name", "alias"]
+    UPDATE_COLUMN_CONSTRAINT = ["id", "name", "alias"]
+    SELECT_COLUMN_CONSTRAINT = ["id", "name", "alias"]
 
     def __init__(self, user=None, password=None, host=None, database=None):
         super(CategoryDB, self).__init__("category", user=user, password=password, host=host, database=database)
@@ -25,6 +24,10 @@ class CategoryDB(DataBase):
     def get_category_id_by_name(self, name):
         result = self.fetch_record(column="id", condition=["name = '%s'" % name])
         return result[0] if result else 0
+
+    def get_category_name_by_id(self, id):
+        result = self.fetch_record(column="name", condition=["id = %d" % id])
+        return result[0] if result else None
 
     def add_category(self, name=None, alias=None):
         record = dict()
@@ -57,6 +60,10 @@ class TestImageData(LoggedTestCase):
     def test_get_category_id_by_name(self):
         id = self.data.get_category_id_by_name('category1')
         self.assertEqual(id, self.id)
+
+    def test_get_category_name_by_id(self):
+        name = self.data.get_category_name_by_id(self.id)
+        self.assertEqual(name, "category1")
 
     def test_get_category_id_by_non_exist_name(self):
         id = self.data.get_category_id_by_name('does_not_exist')

@@ -12,35 +12,30 @@ logger = logging.getLogger("DataBase.News")
 
 class NewsDB(DataBase):
 
-    SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "is_indexed", "headline_id", "category_id", "source_id", "image_id",
-                      "heading", "snippet", "url", "datetime", "body", "likes"]
-
-    INSERT_COLUMN_CONSTRAINT = {
+    COLUMN_CONSTRAINT = {
+        "id": (int, MANDATORY),
         "uuid": (str, MANDATORY),
+        "is_valid": (int, OPTIONAL),
         "is_indexed": (int, OPTIONAL),
         "headline_id": (int, OPTIONAL),
         "category_id": (int, OPTIONAL),
         "source_id": (int, MANDATORY),
         "image_id": (int, OPTIONAL),
+        "author": (str, OPTIONAL),
         "heading": (str, MANDATORY),
         "snippet": (str, OPTIONAL),
         "url": (str, MANDATORY),
         "datetime": (datetime, OPTIONAL),
-        "body": (str, OPTIONAL),
-        "likes": (int, OPTIONAL)}
+        "body_id": (int, OPTIONAL),
+        "likes": (int, OPTIONAL)
+    }
+    INSERT_COLUMN_CONSTRAINT = ["uuid", "is_valid", "is_indexed", "headline_id", "category_id", "source_id",
+                                "image_id", "author", "heading", "snippet", "url", "datetime", "body_id", "likes"]
+    UPDATE_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_indexed", "headline_id", "category_id", "source_id",
+                                "image_id", "author", "heading", "snippet", "url", "datetime", "body_id", "likes"]
+    SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_indexed", "headline_id", "category_id", "source_id",
+                                "image_id", "author", "heading", "snippet", "url", "datetime", "body_id", "likes"]
 
-    UPDATE_COLUMN_CONSTRAINT = {
-        "is_indexed": int,
-        "headline_id": int,
-        "category_id": int,
-        "source_id": int,
-        "image_id": int,
-        "heading": str,
-        "snippet": str,
-        "url": str,
-        "datetime": datetime,
-        "body": str,
-        "likes": int}
 
     def __init__(self, user=None, password=None, host=None, database=None):
         super(NewsDB, self).__init__("news", user=user, password=password, host=host, database=database)
@@ -137,10 +132,10 @@ class TestNewsDataDB(LoggedTestCase):
     def setUp(self):
         self.data = NewsDB(user=SANDBOX_USER, password=SANDBOX_PASSWORD, host=SANDBOX_HOST, database=SANDBOX_DATABASE)
         self.data.delete_records()
-        self.data.add_news(record=dict(source_id=1, url="http://www.reuters.com/news1", heading="News heading1"))
-        self.data.add_news(record=dict(source_id=2, url="http://www.ap.com/news2", heading="News heading2"))
-        self.data.add_news(record=dict(source_id=1, url="http://www.cnn.com/news3", heading="News heading3"))
-        self.data.add_news(record=dict(source_id=3, url="http://www.foxnews.com/news4", heading="News heading4"))
+        self.data.add_news(record=dict(source_id=1, uuid="1", url="http://www.reuters.com/news1", heading="News heading1"))
+        self.data.add_news(record=dict(source_id=2, uuid="2", url="http://www.ap.com/news2", heading="News heading2"))
+        self.data.add_news(record=dict(source_id=1, uuid="3", url="http://www.cnn.com/news3", heading="News heading3"))
+        self.data.add_news(record=dict(source_id=3, uuid="4", url="http://www.foxnews.com/news4", heading="News heading4"))
         time.sleep(1.0)
 
 
@@ -160,10 +155,10 @@ class TestNewsDataDB(LoggedTestCase):
         self.assertEqual(len(results), 1)
 
     def test_add_news(self):
-        record = dict(source_id=1, heading="H1", url="http://www.reuters.com/h1news")
+        record = dict(source_id=1, uuid="5", heading="H1", url="http://www.reuters.com/h1news")
         result = self.data.add_news(record)
         self.assertGreater(result, 0)
-        record = dict(source_id=1, url="http://www.reuters.com/h1news")
+        record = dict(source_id=1, uuid="6", url="http://www.reuters.com/h1news")
         result = self.data.add_news(record)
         self.assertEqual(result, 0)
 
