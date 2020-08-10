@@ -7,7 +7,7 @@ from database.news import NewsDB
 from database.source import SourceDB
 from database.category import CategoryDB
 from util.image_util import ImageHelper
-from datetime import datetime
+from datetime import datetime, timedelta
 
 DEBUGGING_TEST = False
 
@@ -38,7 +38,7 @@ class Crawler:
         self.image_db = ImageDB()
         self.category_db = CategoryDB()
         self.source_db = SourceDB()
-        self.existing_urls = [u for (u,) in self.headline_db.get_latest_headlines_by_source(source=self.SOURCE_ID, column=["url"])]
+        self.existing_urls = [r[0] for r in self.headline_db.get_latest_headlines_by_source(source=self.SOURCE_ID, column=["url"])]
 
     def goto_main_page(self):  # goes to main page
         self.driver.get(self.homepage_url)
@@ -51,16 +51,20 @@ class Crawler:
         time.sleep(self.WAIT_FOR_PAGE_READY)
 
     def is_valid_record(self, record):
-        if not "url" in record.keys(): # element must contain url
-            self.logger.warning("Record Does NOT Contain <URL> Field.\n%s" % record)
+        if not (record.get("url") and (datetime.now() - record.get("datetime", datetime.now()) < timedelta(days=14))):
+            # element must contain url and within 14 days
+            self.logger.warning("Record is not valid.\n%s" % record)
             return False
         return True
 
     def find_alternative_image_url(self, url):
         return url
 
+    def is_valid_image_url(self, url):
+        return True
+
     def process_image(self, url):
-        if url:
+        if self.is_valid_image_url(url):
             # Change the image url to download image with better resolution
             url_alternative = self.find_alternative_image_url(url)
             image_id = self.image_db.get_image_id_by_url(url_alternative) or self.image_db.get_image_id_by_url(url)
