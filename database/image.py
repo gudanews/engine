@@ -2,6 +2,7 @@ from database import DataBase
 import unittest
 import logging
 from database import MANDATORY, OPTIONAL
+from util.image_util import ImageHelper
 
 
 logger = logging.getLogger("DataBase.Image")
@@ -32,7 +33,20 @@ class ImageDB(DataBase):
         result = self.fetch_record(column=column, condition=["id = %d" % id])
         return result if result else None
 
-    def add_image(self, url=None, path=None, thumbnail=None):
+    def add_image(self, url=None, generate_thumbnail=False):
+        image_id = 0
+        if url:
+            image_id = self.get_image_id_by_url(url)
+            if not image_id:
+                img = ImageHelper(url)
+                logger.debug("Download image with URL [%s]" % url)
+                if img.download_image(generate_thumbnail=generate_thumbnail):
+                    if generate_thumbnail:
+                        return self.add_image_db(url=img.url, path=img.db_path, thumbnail=img.db_thumbnail)
+                    return self.add_image_db(url=img.url, path=img.db_path)
+        return image_id
+
+    def add_image_db(self, url=None, path=None, thumbnail=None):
         record = dict()
         record.update({"url": url}) if url else None
         record.update({"path": path}) if path else None
