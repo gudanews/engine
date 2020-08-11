@@ -1,4 +1,4 @@
-from webpage.reuters import IndexPage as ReutersPage
+from webpage.cnn import IndexPage as ReutersPage
 from util.webdriver_util import ChromeDriver
 from database.headline import HeadlineDB
 from database.image import ImageDB
@@ -28,18 +28,21 @@ class Indexer:
         self.news_db = NewsDB()
         self.headline_db = HeadlineDB()
 
+    def is_valid_news_url(self, url):
+        return True
+    
     def go_to_page(self, url):
         self.driver.get(url)
         time.sleep(self.WAIT_FOR_PAGE_READY)
 
     def get_candidates(self):
-        return self.news_db.get_non_indexed_news_by_source(source = 1, max_count=50)
+        return self.news_db.get_non_indexed_news_by_source(source = 101, max_count=10)
         # raise NotImplementedError("Please Implement method <get_candidates> to use Indexer")
 
     def process_current_page(self):
         element = self.page
         record = dict()
-        for el in ("category", "heading", "datetime", "image", "body", "media", "contributor", "length"):  # No need to insert url again
+        for el in ("category", "heading", "datetime", "image", "body", "media", "author", "length"):  # No need to insert url again
             if el in dir(element):
                 record[el] = eval("element." + el)
                 if not record[el]:
@@ -51,9 +54,10 @@ class Indexer:
     def index(self):
         self._indexing_news = self.get_candidates()
         for (id, url) in self._indexing_news:
-            self.go_to_page(url)
-            self.logger.info("LOADING PAGE [%s]" % url)
-            self.process_current_page()
+            if self.is_valid_news_url(url):
+                self.go_to_page(url)
+                self.logger.info("LOADING PAGE [%s]" % url)
+                self.process_current_page()
 
 def main():
     import os

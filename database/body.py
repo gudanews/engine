@@ -2,6 +2,7 @@ from database import DataBase
 import unittest
 import logging
 from database import MANDATORY, OPTIONAL
+from util.text_util import TextHelper
 
 
 logger = logging.getLogger("DataBase.Image")
@@ -28,7 +29,16 @@ class BodyDB(DataBase):
         result = self.fetch_record(column="id", condition=["path = '%s'" % path])
         return result[0] if result else 0
 
-    def add_body(self, path=None):
+    def add_body(self, text=None):
+        body_id = 0
+        if text:
+            img = TextHelper(text)
+            logger.debug("Save text into path [%s]" % img.path)
+            if img.save():
+                return self.add_image_db(path=img.path)
+        return body_id
+
+    def add_body_db(self, path=None):
         record = dict(path=path)
         if self.insert_record(record=record):
             return self._db._cursor.lastrowid
