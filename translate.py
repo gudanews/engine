@@ -55,17 +55,17 @@ class _Translate:
         length = 0
         batch = ''
         for sentence in li:
-            print(sentence)
-            if length + len(sentence) < MAX_ALLOWED_TEXT_LENGTH:
+            #print(sentence)
+            if length + len(sentence + '. ') < MAX_ALLOWED_TEXT_LENGTH:
                 length += len(sentence)
                 batch += sentence
                 batch += '. '
             else:
-                print('else')
                 output.append(batch)
-                batch = ''
-                length = 0
-        print(output, len(output))
+                batch = sentence + '. '
+                length = len(sentence + '. ')
+        output.append(batch)
+        #print(output, len(output))
         return output
 
     def translate(self):
@@ -73,10 +73,8 @@ class _Translate:
         if len(self.text) < MAX_ALLOWED_TEXT_LENGTH:
             return self._fetch_translation_from_website(self.text)
         else:
-            #print(self.split_large_text_into_multiple_chunks(self.text))
-            #print(self.text)
             for i in self.split_large_text_into_multiple_chunks(self.text):
-                #print(i)
+                # print(i)
                 output += self._fetch_translation_from_website(i)
             return output
 
@@ -89,11 +87,12 @@ class TranslateGoogle(_Translate):
 if __name__ == '__main__':
     start = time.time()
     driver = ChromeDriver()
-    long = """Washington (CNN)President Donald Trump was abruptly evacuated from the White House briefing room by security on Monday after shots were fired outside the building.Trump returned to the briefing room minutes later, confirming a shooting."There was a shooting outside of the White House and it seems to be very well under control. I'd like to thank the Secret Service for doing their always quick and very effective work," Trump said when he returned.After he returned to the podium, US Secret Service tweeted: "The Secret Service can confirm there has been an officer involved shooting at 17th Street and Pennsylvania Ave. Law enforcement officials are on the scene."A senior administration official said there was an active shooter near the White House and that shooter is in custody.The incident happened just outside of the White House grounds close to Lafayette Square, the official said.Trump had been midsentence during the first attempt at a briefing when security came into the room and asked him to leave the area."Excuse me?" Trump asked when the security approached."Step outside," the agent said."""
-    t = _Translate(driver, text=long)
+    long = """(CNN)As US leaders work to control the spread of coronavirus, researchers across the country -- and globe -- are working to answer the mysteries that remain around infections.One of those mysteries: why the experience can be so different from person to person. One expert says the answer may involve looking at previous vaccines individuals have had."When we looked in the setting of Covid disease, we found that people who had prior vaccinations with a variety of vaccines -- for pneumococcus, influenza, hepatitis and others -- appeared to have a lower risk of getting Covid disease," Dr. Andrew Badley, an infectious disease specialist at Mayo Clinic told CNN's Anderson Cooper on Monday night.It's what immunologists call immune training: how your immune system creates an effective response to fight off infections, Badley says."A good analogy is to think of your immune system as being a muscle," he said. "The more you exercise that muscle, the stronger it will be when you need it."There's been no definitive evidence of any other vaccines boosting immunity against Covid-19. But some researchers have suggested it's possible.Do some people have protection against the coronavirus?Do some people have protection against the coronavirus?In June, a team of researchers in the US proposed giving a booster dose of the measles, mumps and rubella (MMR) vaccine to people to see if it helps prevent the most severe effects of coronavirus infections. And last month, researchers found that countries where many people have been given the tuberculosis vaccine Bacillus Calmette-Guerin (BCG) had less mortality from coronavirus, a finding that fits with other research suggesting the vaccine can boost people's immunity in general."""
+    t = _Translate(driver=driver,text=long)
     # print(t.split(long))
     # print(len(t.split(long)))
     print(t.translate())
+    #t.split_large_text_into_multiple_chunks(long)
     print('done')
     time.sleep(1000)
     # print(t.translate())
