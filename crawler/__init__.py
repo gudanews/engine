@@ -6,7 +6,6 @@ from database.image import ImageDB
 from database.news import NewsDB
 from database.source import SourceDB
 from database.category import CategoryDB
-from util.image_util import ImageHelper
 from datetime import datetime, timedelta
 
 DEBUGGING_TEST = False
@@ -67,22 +66,9 @@ class Crawler:
         if self.is_valid_image_url(url):
             # Change the image url to download image with better resolution
             url_alternative = self.find_alternative_image_url(url)
-            image_id = self.image_db.get_image_id_by_url(url_alternative) or self.image_db.get_image_id_by_url(url)
-            if not image_id:
-                image_id = self.save_image(url_alternative)
-                if not image_id:
-                    if url_alternative != url:
-                        self.logger.info("Alternative Image Link Failed: [%s]" % url_alternative)
-                        image_id = self.save_image(url)
-            return image_id
-        return 0
-
-    def save_image(self, url):
-        if not DEBUGGING_TEST:
-            img = ImageHelper(url)
-            self.logger.info("Download image with URL [%s]" % url)
-            if img.download_image(generate_thumbnail=True):
-                return self.image_db.add_image(url=img.url, path=img.db_path, thumbnail=img.db_thumbnail)
+            self.logger.info("Add Image into ImageDB [%s]" % url)
+            return self.image_db.add_image(url_alternative, generate_thumbnail=True) or \
+                   self.image_db.add_image(url, generate_thumbnail=True)
         return 0
 
     def update_record_with_page_element(self, record, element):
@@ -94,16 +80,12 @@ class Crawler:
                 else:
                     record[el] = record[el][:512] if el in ("snippet", "image") else \
                             record[el][:256] if el == "heading" else record[el]
-                    if DEBUGGING_TEST:
-                        self.logger.info("[%s]:\t%s" % (el.upper(), record[el]))
-                    else:
-                        self.logger.debug("[%s]:\t%s" % (el.upper(), record[el]))
+                    self.logger.info("[%s]:\t%s" % (el.upper(), record[el]))
 
     def create_database_record(self, record):
-        image_id = self.process_image(record["image"]) if "image" in record.keys() else 0
-        record["source_id"] = self.SOURCE_ID
-        record["image_id"] = image_id
+        record["image_id"] = self.process_image(record["image"]) if not DEBUGGING_TEST and "image" in record.keys() else 0
         record.pop("image", None)  # Remove image key and replace with image_id
+        record["source_id"] = self.SOURCE_ID
         news_id = self.news_db.add_news(record=record) if not DEBUGGING_TEST else 0
         self.logger.info("Inserted Into <news> DB [ID=%s] With Values: %s." % (news_id, record))
         if news_id:
@@ -113,7 +95,7 @@ class Crawler:
             if headline_id:
                 self.news_db.update_news_by_id(
                     id=record["news_id"], record=dict(headline_id=headline_id)) if not DEBUGGING_TEST else None
-                self.logger.info("Update <news> Record With [headline_id].")
+                self.logger.info("Update <news> Record With [headline_id=%d]." % headline_id)
 
     def process_current_page(self):
         new_found = 0
