@@ -15,7 +15,7 @@ class APCrawler(BaseCrawler):
     def __init__(self, driver):
         web_url = "https://apnews.com/apf-topnews"
         page = APPage(driver)
-        super(APCrawler, self).__init__(driver, web_url, page)
+        super(APCrawler, self).__init__(driver, page, web_url)
 
     def goto_next_page(self):  # AP news only checks one page
         raise Exception("American Press News Should Only Be Crawled On Home Page")

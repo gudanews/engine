@@ -20,10 +20,10 @@ WEBSITE_BASE_PATH = config.setting["website_path"]
 IMAGE_BASE_PATH = config.setting["image_path"]
 IMAGE_PATH = os.path.join(IMAGE_BASE_PATH, str(TODAY.year), "%02d" % TODAY.month, "%02d" % TODAY.day)
 
-IMAGE_WIDTH = 780
-IMAGE_HEIGHT = 439
-THUMBNAIL_WIDTH = 240
-THUMBNAIL_HEIGHT = 180
+IMAGE_WIDTH = 648
+IMAGE_HEIGHT = 365
+THUMBNAIL_WIDTH = 144
+THUMBNAIL_HEIGHT = 108
 DEFAULT_FILLING = (255, 255, 255)
 IMAGE_PIXEL_MIN = 20
 
@@ -54,8 +54,7 @@ class ImageHelper:
     def thumbnail(self):
         if not self._thumbnail:
             name, extension = os.path.splitext(self.path)
-            self._thumbnail = os.path.join(os.path.dirname(self.path),
-                                         name + '_%sX%s' % (THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT) + extension)
+            self._thumbnail = os.path.join(os.path.dirname(self.path), name + "_TIMG" + extension)
         return self._thumbnail
 
     @property
@@ -87,7 +86,7 @@ class ImageHelper:
         with Image.open(path) as img:
             return img.size # (width, height) format
 
-    def download_image(self, url=None, path=None, generate_thumbnail=False, keep_original=False, default=None):
+    def download_image(self, url=None, path=None, generate_thumbnail=False, keep_original=False):
         if not url:
             url = self.url
         if not path:
@@ -110,19 +109,17 @@ class ImageHelper:
             if generate_thumbnail:
                 self.generate_thumbnail()
             if not keep_original:
-                width, height = self.resize(IMAGE_WIDTH, IMAGE_HEIGHT)
-                if (width, height) != (IMAGE_WIDTH, IMAGE_HEIGHT):
-                    self.cropping(IMAGE_WIDTH, IMAGE_HEIGHT)
+                self.resize(IMAGE_WIDTH, IMAGE_HEIGHT)
+                self.cropping(IMAGE_WIDTH, IMAGE_HEIGHT)
             return True
         logger.warning("Image link [%s] ist invalid" % self.url)
         return False
 
     def generate_thumbnail(self):
-        (width, height) = self.resize(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT,
-                                      src_path=self.path, dst_path=self.thumbnail)
-        if (width, height) != (THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT):
-            logger.debug("Creating thumbnail image [%s]" % self.thumbnail)
-            self.cropping(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, src_path=self.thumbnail, dst_path=self.thumbnail)
+        self.resize(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, src_path=self.path, dst_path=self.thumbnail)
+        self.cropping(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, src_path=self.thumbnail, dst_path=self.thumbnail)
+        logger.debug("Creating thumbnail image [%s]" % self.thumbnail)
+
 
     def resize(self, width, height, keep_aspect_ratio=True, for_chopping=True, src_path=None, dst_path=None):
         # for_cropping if not for_padding
@@ -154,7 +151,7 @@ class ImageHelper:
         size = (width, height)
         with Image.open(src_path) as img:
             width_current, height_current = img.size # (width, height) format
-            if width < width_current or height < height_current: # cannot padding
+            if width < width_current or height < height_current or size == img.size: # cannot padding
                 return img.size
             # create a new image and paste the resized on it
             with Image.new("RGB", size, fill) as new_img:
@@ -175,7 +172,7 @@ class ImageHelper:
         size = (width, height)
         with Image.open(src_path) as img:
             width_current, height_current = img.size # (width, height) format
-            if width > width_current or height > height_current: # cannot cropping
+            if width > width_current or height > height_current or size == img.size: # cannot cropping
                 return img.size
             width_delta = width_current - width
             height_delta = height_current - height
@@ -194,12 +191,12 @@ class TestCase(LoggedTestCase):
                               path="/tmp/images/testing/testing.jpg")
         name = self.shortDescription()
         if name != "skip_setup":
-            self.image.download_image(keep_original=True, generate_thumbnail=False)
+            self.image.download_image(generate_thumbnail=False)
             self.image.resize(640, 480, keep_aspect_ratio=False)
 
     def test_download_url(self):
         """skip_setup"""
-        self.image.download_image()
+        self.image.download_image(keep_original=False, generate_thumbnail=True)
         self.assertTrue(os.path.exists(self.image.path))
         self.assertTrue(os.path.exists(self.image.thumbnail))
         self.assertEqual(self.image.get_image_size(), (IMAGE_WIDTH, IMAGE_HEIGHT))
@@ -215,6 +212,7 @@ class TestCase(LoggedTestCase):
 
     def test_resize_keep_ratio(self):
         self.image.resize(320, 320)
+        self.image.cropping(320, 320)
         self.assertEqual(self.image.get_image_size(), (320, 320))
 
     def test_resize_no_keep_ratio(self):

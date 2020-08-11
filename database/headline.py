@@ -12,11 +12,10 @@ logger = logging.getLogger("Database.Headline")
 
 class HeadlineDB(DataBase):
 
-    SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "is_processed", "is_displayable", "duplicate_id", "category_id", "source_id",
-                      "image_id", "news_id", "heading", "snippet", "url", "datetime", "quality"]
-
-    INSERT_COLUMN_CONSTRAINT = {
+    COLUMN_CONSTRAINT = {
+        "id": (int, MANDATORY),
         "uuid": (str, MANDATORY),
+        "is_valid": (int, OPTIONAL),
         "is_processed": (int, OPTIONAL),
         "is_displayable": (int, OPTIONAL),
         "duplicate_id": (int, OPTIONAL),
@@ -24,25 +23,24 @@ class HeadlineDB(DataBase):
         "source_id": (int, MANDATORY),
         "image_id": (int, OPTIONAL),
         "news_id": (int, OPTIONAL),
-        "heading": (str, MANDATORY),
+        "heading": (str, OPTIONAL),
         "snippet": (str, OPTIONAL),
         "url": (str, MANDATORY),
         "datetime": (datetime, OPTIONAL),
-        "quality": (int, OPTIONAL)}
+        "quality": (int, OPTIONAL),
+        "view": (int, OPTIONAL),
+        "likes": (int, OPTIONAL)
+    }
+    INSERT_COLUMN_CONSTRAINT = ["uuid", "is_valid", "is_processed", "is_displayable", "duplicate_id",
+                                "category_id", "source_id", "image_id", "news_id", "heading", "snippet", "url",
+                                "datetime", "quality", "view", "likes"]
+    UPDATE_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_processed", "is_displayable", "duplicate_id",
+                                "category_id", "source_id", "image_id", "news_id", "heading", "snippet", "url",
+                                "datetime", "quality", "view", "likes"]
+    SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_processed", "is_displayable", "duplicate_id",
+                                "category_id", "source_id", "image_id", "news_id", "heading", "snippet", "url",
+                                "datetime", "quality", "view", "likes"]
 
-    UPDATE_COLUMN_CONSTRAINT = {
-        "is_processed": int,
-        "is_displayable": int,
-        "duplicate_id": int,
-        "category_id": int,
-        "source_id": int,
-        "image_id": int,
-        "news_id": int,
-        "heading": str,
-        "snippet": str,
-        "url": str,
-        "datetime": datetime,
-        "quality": int}
 
     def __init__(self, user=None, password=None, host=None, database=None):
         super(HeadlineDB, self).__init__("headline", user=user, password=password, host=host, database=database)

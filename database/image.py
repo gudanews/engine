@@ -9,17 +9,15 @@ logger = logging.getLogger("DataBase.Image")
 
 class ImageDB(DataBase):
 
-    SELECT_COLUMN_CONSTRAINT = ["id", "path", "thumbnail", "url"]
-
-    INSERT_COLUMN_CONSTRAINT = {
+    COLUMN_CONSTRAINT = {
+        "id": (int, MANDATORY),
         "path": (str, OPTIONAL),
         "thumbnail": (str, OPTIONAL),
-        "url": (str, OPTIONAL)}
-
-    UPDATE_COLUMN_CONSTRAINT = {
-        "path": str,
-        "thumbnail": str,
-        "url": str}
+        "url": (str, OPTIONAL)
+    }
+    INSERT_COLUMN_CONSTRAINT = ["path", "thumbnail", "url"]
+    UPDATE_COLUMN_CONSTRAINT = ["id", "path", "thumbnail", "url"]
+    SELECT_COLUMN_CONSTRAINT = ["id", "path", "thumbnail", "url"]
 
     def __init__(self, user=None, password=None, host=None, database=None):
         super(ImageDB, self).__init__("image", user=user, password=password, host=host, database=database)
@@ -28,8 +26,18 @@ class ImageDB(DataBase):
         result = self.fetch_record(column="id", condition=["url = '%s'" % url])
         return result[0] if result else 0
 
+    def get_image_by_id(self, id, column=None):
+        if not column:
+            column = self.SELECT_COLUMN_CONSTRAINT
+        result = self.fetch_record(column=column, condition=["id = %d" % id])
+        return result if result else None
+
     def add_image(self, url=None, path=None, thumbnail=None):
-        if self.insert_record(record=dict(url=url, path=path, thumbnail=thumbnail)):
+        record = dict()
+        record.update({"url": url}) if url else None
+        record.update({"path": path}) if path else None
+        record.update({"thumbnail": thumbnail}) if thumbnail else None
+        if self.insert_record(record=record):
             return self._db._cursor.lastrowid
         return 0
 
@@ -53,9 +61,19 @@ class TestImageData(LoggedTestCase):
         self.id = self.data.add_image(url="http://www.reuters.com/image1", path="/path/to/image1", thumbnail=None)
         self.data.add_image(url="http://www.foxnews.com/image2", path="/path/to/image2", thumbnail="/path/to/image2_tn")
 
-    def test_get_image_id_by_non_exist_url(self):
+    def test_get_image_id_by_url(self):
         id = self.data.get_image_id_by_url('http://www.reuters.com/image1')
         self.assertEqual(id, self.id)
+
+    def test_get_image_by_id(self):
+        result = self.data.get_image_by_id(self.id)
+        self.assertEqual(result[3], "http://www.reuters.com/image1")
+        self.assertEqual(result[1], "/path/to/image1")
+        self.assertIsNone(result[2])
+
+    def test_get_image_columns_by_id(self):
+        result = self.data.get_image_by_id(self.id, column=["url"])
+        self.assertEqual(len(result), 1)
 
     def test_get_image_id_by_non_exist_url(self):
         id = self.data.get_image_id_by_url('does_not_exist')
