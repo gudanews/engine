@@ -1,14 +1,12 @@
 import sys
 import os
-import random
-import string
 from datetime import date
 from PIL import Image, ImageOps
 from util.common import LoggedTestCase
 import unittest
 from util.config_util import Configure
 import logging
-from math import log, floor
+from util import generate_random_alphanumeric_string, create_parent_folders, human_format
 
 logger = logging.getLogger("Util.Image")
 
@@ -27,23 +25,13 @@ THUMBNAIL_HEIGHT = 108
 DEFAULT_FILLING = (255, 255, 255)
 IMAGE_PIXEL_MIN = 20
 
-def _generate_random_alphanumeric_string(length):
-    letters_and_digits = string.ascii_letters + string.digits
-    result = ''.join((random.choice(letters_and_digits) for i in range(length)))
-    return result
-
-def human_format(number):
-    units = ['', 'K', 'M', 'G', 'T', 'P']
-    k = 1024.0
-    magnitude = int(floor(log(number, k)))
-    return '%.2f%s' % (number / k**magnitude, units[magnitude])
 
 class ImageHelper:
 
     def __init__(self, url, path=None):
         self.url = url
         if not path:
-            _name = _generate_random_alphanumeric_string(24) + ".jpg"
+            _name = generate_random_alphanumeric_string(24) + ".jpg"
             path = os.path.join(IMAGE_PATH, _name)
         elif not os.path.isabs(path):
             path = os.path.normpath(os.path.join(WEBSITE_BASE_PATH, path))
@@ -66,11 +54,6 @@ class ImageHelper:
         if self.thumbnail:
             return os.path.relpath(self.thumbnail, WEBSITE_BASE_PATH)
 
-    def _create_parent_folders(self, path):
-        folder = os.path.dirname(path)
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-
     def is_image_valid(self, path=None):
         if not path:
             path = self.path
@@ -91,7 +74,7 @@ class ImageHelper:
             url = self.url
         if not path:
             path = self.path
-        self._create_parent_folders(path)
+        create_parent_folders(path)
         result = None
         try:
             if sys.version[0] =='3':
@@ -137,7 +120,7 @@ class ImageHelper:
                     else min(float(width / width_current), float(height / height_current))
                 size = tuple([int(i*ratio) for i in img.size])
             img = img.resize(size, Image.ANTIALIAS)
-            self._create_parent_folders(dst_path)
+            create_parent_folders(dst_path)
             rgb_img = img.convert('RGB')
             rgb_img.save(dst_path)
         logger.debug("Image file [%s] resized to resolution %s" % (dst_path, str(size)))
@@ -158,7 +141,7 @@ class ImageHelper:
                 width_delta = width - width_current
                 height_delta = height - height_current
                 new_img.paste(img, (width_delta//2, height_delta//2))
-                self._create_parent_folders(dst_path)
+                create_parent_folders(dst_path)
                 rgb_img = new_img.convert('RGB')
                 rgb_img.save(dst_path)
         logger.debug("Image file [%s] padded to resolution %s" % (dst_path, str(size)))
@@ -177,7 +160,7 @@ class ImageHelper:
             width_delta = width_current - width
             height_delta = height_current - height
             img = img.crop((width_delta//2, height_delta//2, width_current-(width_delta//2), height_current-(height_delta//2)))
-            self._create_parent_folders(dst_path)
+            create_parent_folders(dst_path)
             rgb_img = img.convert('RGB')
             rgb_img.save(dst_path)
         logger.debug("Image file [%s] cropped to resolution %s" % (dst_path, str(size)))
