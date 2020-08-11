@@ -4,6 +4,11 @@ from setuptools import find_packages
 from pkgutil import iter_modules
 import logging
 from util.config_util import Configure
+import random
+import string
+import os
+from math import log, floor
+
 
 config = Configure()
 logging.basicConfig(level=int(config.setting["logging_level"]),
@@ -46,5 +51,22 @@ def find_public_classes(module):
             if inspect.isclass(dir_obj):
                 public_classes[dir_name] = dir_obj
     return public_classes
+
+def generate_random_alphanumeric_string(length):
+    letters_and_digits = string.ascii_letters + string.digits
+    result = ''.join((random.choice(letters_and_digits) for i in range(length)))
+    return result
+
+def create_parent_folders(path):
+    folder = os.path.dirname(path)
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
+def human_format(number):
+    units = ['', 'K', 'M', 'G', 'T', 'P']
+    k = 1024.0
+    magnitude = int(floor(log(number, k)))
+    return '%.2f%s' % (number / k**magnitude, units[magnitude])
+
 
 
