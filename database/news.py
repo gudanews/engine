@@ -17,6 +17,7 @@ class NewsDB(DataBase):
         "uuid": (MANDATORY, str, 36),
         "is_valid": (OPTIONAL, int, 1),
         "is_indexed": (OPTIONAL, int, 1),
+        "duplicate_id": (OPTIONAL, int, 32),
         "url": (MANDATORY, str, 512),
         "topic_id": (OPTIONAL, int, 32),
         "category_id": (OPTIONAL, int, 16),
@@ -31,15 +32,15 @@ class NewsDB(DataBase):
         "translation_id": (OPTIONAL, int, 32),
         "views": (OPTIONAL, int, 24)
     }
-    INSERT_COLUMN_CONSTRAINT = ["uuid", "is_valid", "is_indexed", "url", "topic_id", "category_id", "source_id",
-                                "image_id", "title", "snippet", "content", "author", "datetime_created",
+    INSERT_COLUMN_CONSTRAINT = ["uuid", "is_valid", "is_indexed", "duplicate_id", "url", "topic_id", "category_id",
+                                "source_id", "image_id", "title", "snippet", "content", "author", "datetime_created",
                                 "datetime_updated", "translation_id", "views"]
-    UPDATE_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_indexed", "url", "topic_id", "category_id", "source_id",
-                                "image_id", "title", "snippet", "content", "author", "datetime_created",
-                                "datetime_updated", "translation_id", "views"]
-    SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_indexed", "url", "topic_id", "category_id", "source_id",
-                                "image_id", "title", "snippet", "content", "author", "datetime_created",
-                                "datetime_updated", "translation_id", "views"]
+    UPDATE_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_indexed", "duplicate_id", "url", "topic_id",
+                                "category_id", "source_id", "image_id", "title", "snippet", "content", "author",
+                                "datetime_created", "datetime_updated", "translation_id", "views"]
+    SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_indexed", "duplicate_id", "url", "topic_id",
+                                "category_id", "source_id", "image_id", "title", "snippet", "content", "author",
+                                "datetime_created", "datetime_updated", "translation_id", "views"]
 
 
     def __init__(self, user=None, password=None, host=None, database=None):
