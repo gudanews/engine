@@ -3,6 +3,7 @@ from holmium.core.conditions import VISIBLE
 from util import datetime_util
 from furl import furl
 from database.category import CATEGORY_MAPPING
+from webpage import WAIT_FOR_ELEMENT_TIMEOUT, WAIT_FOR_SECTION_TIMEOUT, WAIT_FOR_MINIMUM_TIMEOUT
 import re
 
 
@@ -12,44 +13,44 @@ class Cards(Sections):
         Locators.CSS_SELECTOR,
         "div.CardHeadline [data-key='card-headline']",
         value=lambda el: el.text,
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     datetime_raw = Element(
         Locators.CSS_SELECTOR,
         "div.CardHeadline span.Timestamp",
         value=lambda el: el.get_attribute("data-source"),
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     url = Element(
         Locators.CSS_SELECTOR,
         "a[class*='Component']",
         value=lambda el: el.get_attribute("href"),
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     snippet = Element(
         Locators.CSS_SELECTOR,
         "a div.content",
         value=lambda el: el.text,
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     image = Element(
         Locators.CSS_SELECTOR,
         "a img",
         value=lambda el: el.get_attribute("src"),
         only_if=VISIBLE(),
-        timeout=0.5
+        timeout=WAIT_FOR_MINIMUM_TIMEOUT
     )
     author_raw = Element(
         Locators.CSS_SELECTOR,
         "div.CardHeadline span[class*='Component-bylines']",
         value=lambda el: el.text,
-        timeout=0.5
+        timeout=WAIT_FOR_MINIMUM_TIMEOUT
     )
     category_raw = Element(
         Locators.CSS_SELECTOR,
         "div.CardHeadline a.HubTag",
         value=lambda el: el.text,
-        timeout=0.5
+        timeout=WAIT_FOR_MINIMUM_TIMEOUT
     )
     @property
     def datetime_created(self):
@@ -85,7 +86,7 @@ class CrawlPage(Page):
     news = Cards(
         Locators.CSS_SELECTOR,
         "article div.FeedCard[class*='Component-wireStory']",
-        timeout=10
+        timeout=WAIT_FOR_SECTION_TIMEOUT
     )
 
 # JULY 31, 2020 / 4:03 AM / 8 DAYS AGO
@@ -100,39 +101,40 @@ class IndexPage(Page):
         Locators.CSS_SELECTOR,
         HEADER_CSS_SELECTOR + "div[data-key='card-headline'] h1",
         value=lambda el: el.text,
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     author = Element(
         Locators.CSS_SELECTOR,
         HEADER_CSS_SELECTOR + "span[class*='Component-bylines']",
         value=lambda el: el.text,
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     datetime_raw = Element(
         Locators.CSS_SELECTOR,
         HEADER_CSS_SELECTOR + "span[data-key='timestamp']",
         value=lambda el: el.get_attribute('data-source'),
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     image_open = Element(
         Locators.CSS_SELECTOR,
         BASE_CSS_SELECTOR + "a.LeadFeature",
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     image_raw = Elements(
         Locators.CSS_SELECTOR,
         BASE_CSS_SELECTOR + "div[data-key='media-placeholder'] img",
         value=lambda el: el.get_attribute('src'),
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     image_close = Element(
         Locators.CSS_SELECTOR,
         BASE_CSS_SELECTOR + "div[class*='imageModal'] svg[class*='close']",
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     content_raw = Elements(
         Locators.CSS_SELECTOR,
         BASE_CSS_SELECTOR + "div.Article p[class*='Component-root']",
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
 
     @property

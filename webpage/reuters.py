@@ -4,6 +4,7 @@ from holmium.core.conditions import VISIBLE
 from util import datetime_util
 from furl import furl
 from database.category import CATEGORY_MAPPING
+from webpage import WAIT_FOR_ELEMENT_TIMEOUT, WAIT_FOR_SECTION_TIMEOUT, WAIT_FOR_MINIMUM_TIMEOUT
 import re
 
 
@@ -17,32 +18,32 @@ class Stories(Sections):
         Locators.CSS_SELECTOR,
         "div.story-content h3.story-title",
         value=lambda el: el.text,
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     datetime_raw = Element(
         Locators.CSS_SELECTOR,
         "div.story-content > time.article-time > span",
         value=lambda el: el.text,
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     url = Element(
         Locators.CSS_SELECTOR,
         "div.story-content > a[href]",
         value=lambda el: el.get_attribute('href'),
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     snippet = Element(
         Locators.CSS_SELECTOR,
         "div.story-content > p",
         value=lambda el: el.text,
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     image_raw = Element(
         Locators.CSS_SELECTOR,
         "div.story-photo img[src]",
         value=lambda el: el.get_attribute('src'),
         only_if=VISIBLE(),
-        timeout=5,
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT,
     )
     @property
     def datetime_created(self):
@@ -78,12 +79,12 @@ class CrawlPage(Page):
     news = Stories(
         Locators.CSS_SELECTOR,
         "article.story:not(.no-border-bottom)",
-        timeout=10
+        timeout=WAIT_FOR_SECTION_TIMEOUT
     )
     next = Element(
         Locators.CSS_SELECTOR,
         "div.control-nav a.control-nav-next",
-        timeout=10
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
 
 
@@ -97,51 +98,51 @@ class IndexPage(Page):
         Locators.CSS_SELECTOR,
         HEADER_CSS_SELECTOR + "div.ArticleHeader_channel",
         value=lambda el: el.text,
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     title = Element(
         Locators.CSS_SELECTOR,
         HEADER_CSS_SELECTOR + "h1.ArticleHeader_headline",
         value=lambda el: el.text,
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     datetime_raw = Element(
         Locators.CSS_SELECTOR,
         HEADER_CSS_SELECTOR + "div.ArticleHeader_date",
         value=lambda el: el.text,
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     image_raw = Elements(
         Locators.CSS_SELECTOR,
         BODY_CSS_SELECTOR + "div.Image_container img, "
         + BODY_CSS_SELECTOR + "div.Slideshow_container img",
         value=lambda el: el.get_attribute('src'),
-        timeout=0.5
+        timeout=WAIT_FOR_MINIMUM_TIMEOUT
     )
     media_raw = Elements(
         Locators.CSS_SELECTOR,
         BODY_CSS_SELECTOR + "div.Video_container iframe[src]",
         value=lambda el: el.get_attribute('src'),
-        timeout=0.5
+        timeout=WAIT_FOR_MINIMUM_TIMEOUT
     )
     content_raw = Elements(
         Locators.CSS_SELECTOR,
         BODY_CSS_SELECTOR + "div.StandardArticleBody_body > p",
         value=lambda el:el.text,
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     author = Element(
         Locators.CSS_SELECTOR,
         HEADER_CSS_SELECTOR + "div.BylineBar_byline, "
         + HEADER_CSS_SELECTOR + "Attribution_attribution > p",
         value=lambda el:el.text,
-        timeout=0.5
+        timeout=WAIT_FOR_MINIMUM_TIMEOUT
     )
     length = Element(
         Locators.CSS_SELECTOR,
         HEADER_CSS_SELECTOR + "p.BylineBar_reading-time",
         value=lambda el:el.text,
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     @property
     def datetime_created(self):
