@@ -18,18 +18,19 @@ class TopicDB(DataBase):
         "is_valid": (OPTIONAL, int, 1),
         "is_processed": (OPTIONAL, int, 1),
         "is_displayable": (OPTIONAL, int, 1),
+        "duplicate_id": (OPTIONAL, int, 32),
         "category_id": (OPTIONAL, int, 16),
         "news_id": (MANDATORY, int, 32),
         "datetime_created": (OPTIONAL, datetime),
         "datetime_updated": (OPTIONAL, datetime),
         "quality": (OPTIONAL, int, 16)
     }
-    INSERT_COLUMN_CONSTRAINT = ["uuid", "is_valid", "is_processed", "is_displayable", "category_id", "news_id",
-                                "datetime_created", "datetime_updated", "quality"]
-    UPDATE_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_processed", "is_displayable", "category_id", "news_id",
-                                "datetime_created", "datetime_updated", "quality"]
-    SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_processed", "is_displayable", "category_id", "news_id",
-                                "datetime_created", "datetime_updated", "quality"]
+    INSERT_COLUMN_CONSTRAINT = ["uuid", "is_valid", "is_processed", "is_displayable", "duplicate_id",
+                                "category_id", "news_id", "datetime_created", "datetime_updated", "quality"]
+    UPDATE_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_processed", "is_displayable", "duplicate_id",
+                                "category_id", "news_id", "datetime_created", "datetime_updated", "quality"]
+    SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_processed", "is_displayable", "duplicate_id",
+                                "category_id", "news_id", "datetime_created", "datetime_updated", "quality"]
 
 
     def __init__(self, user=None, password=None, host=None, database=None):
