@@ -1,1 +1,5 @@
 from . import webelementmonkeypatches
+
+WAIT_FOR_ELEMENT_TIMEOUT = 2.5
+WAIT_FOR_SECTION_TIMEOUT = 5.0
+WAIT_FOR_MINIMUM_TIMEOUT = 0.5
