@@ -44,37 +44,59 @@ class DataBase:
         uid = uuid.uuid4()
         return str(uid)
 
-    def validate_insert_record(self, record):
+    def validate_insert_record(self, record, ignore_extra_keys=False):
         if not self.INSERT_COLUMN_CONSTRAINT:
             raise Exception("Please define INSERT_COLUMN_CONSTRAINT before proceed")
         extra_keys = set(record.keys()) - set(self.INSERT_COLUMN_CONSTRAINT)
         if extra_keys:
-            logger.warning("Unexpected columns %s insert to database <%s>" % (list(extra_keys), self.table))
-            return False
+            if not ignore_extra_keys:
+                logger.warning("Unexpected columns %s insert to database <%s>" % (list(extra_keys), self.table))
+                return False
+            else:
+                for k in extra_keys:
+                    record.pop(k, None)
         for k in self.INSERT_COLUMN_CONSTRAINT:
-            if not (k in record and record[k]) and self.COLUMN_CONSTRAINT[k][1] == MANDATORY:
+            if not (k in record and record[k]) and self.COLUMN_CONSTRAINT[k][0] == MANDATORY:
                 logger.warning("Missing mandatory column [%s] when insert to database <%s>" % (k, self.table))
                 return False
-            elif k in record and record[k] and not isinstance(record[k], self.COLUMN_CONSTRAINT[k][0]):
-                logger.warning("Invalid column type [%s = %s] when insert to database <%s>" % (k, record[k], self.table))
-                return False
+            elif k in record and record[k]:
+                if not isinstance(record[k], self.COLUMN_CONSTRAINT[k][1]):
+                    logger.warning("Invalid column type [%s = %s] when insert to database <%s>" % (k, record[k], self.table))
+                    return False
+                elif len(self.COLUMN_CONSTRAINT[k]) > 2:
+                    if isinstance(record[k], str) and len(record[k]) > self.COLUMN_CONSTRAINT[k][2]:
+                        record[k] = record[k][:self.COLUMN_CONSTRAINT[k][2]]
+                    elif isinstance(record[k], int) and record[k] >= 2 ** self.COLUMN_CONSTRAINT[k][2]:
+                        logger.warning("Out of bound column value [%d = %d] when insert to database <%s>" % (k, record[k], self.table))
+                        return False
         return True
 
-    def validate_update_record(self, record):
+    def validate_update_record(self, record, ignore_extra_keys=False):
         if not self.UPDATE_COLUMN_CONSTRAINT:
             raise Exception("Please define UPDATE_COLUMN_CONSTRAINT before proceed")
         extra_keys = set(record.keys()) - set(self.UPDATE_COLUMN_CONSTRAINT)
         if extra_keys:
-            logger.warning("Unexpected columns %s update database <%s>" % (list(extra_keys), self.table))
-            return False
+            if not ignore_extra_keys:
+                logger.warning("Unexpected columns %s update database <%s>" % (list(extra_keys), self.table))
+                return False
+            else:
+                for k in extra_keys:
+                    record.pop(k, None)
         for k in self.UPDATE_COLUMN_CONSTRAINT:
             if k in record:
-                if not record[k] and self.COLUMN_CONSTRAINT[k][1] == MANDATORY:
+                if not record[k] and self.COLUMN_CONSTRAINT[k][0] == MANDATORY:
                     logger.warning("Try to remove manadatory field [%s] when update database <%s>" % (k, self.table))
                     return False
-                elif record[k] and not isinstance(record[k], self.COLUMN_CONSTRAINT[k][0]):
-                    logger.warning("Invalid column type [%s = %s] when update database <%s>" % (k, record[k], self.table))
-                    return False
+                elif record[k]:
+                    if not isinstance(record[k], self.COLUMN_CONSTRAINT[k][1]):
+                        logger.warning("Invalid column type [%s = %s] when update database <%s>" % (k, record[k], self.table))
+                        return False
+                    elif len(self.COLUMN_CONSTRAINT[k]) > 2:
+                        if isinstance(record[k], str) and len(record[k]) > self.COLUMN_CONSTRAINT[k][2]:
+                            record[k] = record[k][:self.COLUMN_CONSTRAINT[k][2]]
+                        elif isinstance(record[k], int) and record[k] >= 2 ** self.COLUMN_CONSTRAINT[k][2]:
+                            logger.warning("Out of bound column value [%d = %d] when update to database <%s>" % (k, record[k], self.table))
+                            return False
         return True
 
     def validate_select_record(self, column):
@@ -94,14 +116,14 @@ class DataBase:
         count = self.fetch_record(column=column,condition=condition)
         return count[0]
 
-    def insert_record(self, record):
-        if self.validate_insert_record(record):
+    def insert_record(self, record, ignore_extra_keys=False):
+        if self.validate_insert_record(record, ignore_extra_keys=ignore_extra_keys):
             self._db.insert_table_record(self.table, record)
             return True
         return False
 
-    def update_record(self, record, condition=None):
-        if self.validate_update_record(record):
+    def update_record(self, record, condition=None, ignore_extra_keys=False):
+        if self.validate_update_record(record, ignore_extra_keys=ignore_extra_keys):
             self._db.update_table_record(self.table, record, condition)
             return True
         return False
@@ -144,50 +166,39 @@ SANDBOX_DATABASE = config.sandbox["db_schema"]
 class TestBaseData(LoggedTestCase):
 
     def setUp(self):
-        self.data = DataBase("headline",user=SANDBOX_USER,password=SANDBOX_PASSWORD,host=SANDBOX_HOST,database=SANDBOX_DATABASE)
+        self.data = DataBase("topic",user=SANDBOX_USER,password=SANDBOX_PASSWORD,host=SANDBOX_HOST,database=SANDBOX_DATABASE)
 
         self.data.COLUMN_CONSTRAINT = {
-            "id": (int, MANDATORY),
-            "uuid": (str, MANDATORY),
-            "is_valid": (int, OPTIONAL),
-            "is_processed": (int, OPTIONAL),
-            "is_displayable": (int, OPTIONAL),
-            "duplicate_id": (int, OPTIONAL),
-            "category_id": (int, OPTIONAL),
-            "source_id": (int, MANDATORY),
-            "image_id": (int, OPTIONAL),
-            "news_id": (int, OPTIONAL),
-            "heading": (str, OPTIONAL),
-            "snippet": (str, OPTIONAL),
-            "url": (str, MANDATORY),
-            "datetime": (datetime, OPTIONAL),
-            "quality": (int, OPTIONAL),
-            "view": (int, OPTIONAL),
-            "likes": (int, OPTIONAL)
+            "id": (MANDATORY, int,),
+            "uuid": (MANDATORY, str, 36),
+            "is_valid": (OPTIONAL, int),
+            "is_processed": (OPTIONAL, int),
+            "is_displayable": (OPTIONAL, int),
+            "category_id": (OPTIONAL, int),
+            "news_id": (MANDATORY, int),
+            "datetime_created": (OPTIONAL, datetime),
+            "datetime_updated": (OPTIONAL, datetime),
+            "quality": (OPTIONAL, int)
         }
-        self.data.SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_processed", "is_displayable", "duplicate_id",
-                                              "category_id", "source_id", "image_id", "news_id", "heading", "snippet", "url",
-                                              "datetime", "quality", "view", "likes"]
+        self.data.INSERT_COLUMN_CONSTRAINT = ["uuid", "is_valid", "is_processed", "is_displayable", "category_id",
+                                              "news_id", "datetime_created", "datetime_updated", "quality"]
+        self.data.UPDATE_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_processed", "is_displayable", "category_id",
+                                              "news_id", "datetime_created", "datetime_updated", "quality"]
+        self.data.SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_processed", "is_displayable", "category_id",
+                                              "news_id", "datetime_created", "datetime_updated", "quality"]
 
-        self.data.INSERT_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_processed", "is_displayable", "duplicate_id",
-                                              "category_id", "source_id", "image_id", "news_id", "heading", "snippet", "url",
-                                              "datetime", "quality", "view", "likes"]
-
-        self.data.UPDATE_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_processed", "is_displayable", "duplicate_id",
-                                              "category_id", "source_id", "image_id", "news_id", "heading", "snippet", "url",
-                                              "datetime", "quality", "view", "likes"]
 
         self.data.delete_records()
-        self.data.insert_record(record=dict(id=120, uuid="120", source_id=1, url="http://www.reuters.com/news1", heading="News heading1"))
-        self.data.insert_record(record=dict(id=121, uuid="121", source_id=2, url="http://www.ap.com/news2", heading="News heading2"))
-        self.data.insert_record(record=dict(id=122, uuid="122", source_id=1, url="http://www.cnn.com/news3", heading="News heading3"))
-        self.data.insert_record(record=dict(id=123, uuid="123", source_id=3, url="http://www.foxnews.com/news4", heading="News heading4"))
+        self.data.insert_record(record=dict(id=120, uuid="120", news_id=1))
+        self.data.insert_record(record=dict(id=121, uuid="121", news_id=2))
+        self.data.insert_record(record=dict(id=122, uuid="122", news_id=1))
+        self.data.insert_record(record=dict(id=123, uuid="123", news_id=3))
         time.sleep(1.0)
 
 
     def test_retrieve_record(self):
         # Test single record
-        columns = ["id", "heading", "datetime", "source_id"]
+        columns = ["id", "news_id", "datetime_created", "category_id"]
         result = self.data.fetch_record(column=columns)
         self.assertIsNotNone(result)
         self.assertEqual(len(result), 4)
@@ -196,58 +207,59 @@ class TestBaseData(LoggedTestCase):
         self.assertGreater(len(results), 1)
         self.assertEqual(len(results[0]), 4)
         # Test retrieval partial record
-        conditions = ["source_id = 1"]
+        conditions = ["news_id = 1"]
         results_1 = self.data.fetch_records(column=columns)
         results_2 = self.data.fetch_records(column=columns, condition=conditions)
         self.assertGreater(len(results_1), len(results_2))
         # Test retrieval non exist record
-        results = self.data.fetch_records(column=columns, condition="source_id = 999")
+        results = self.data.fetch_records(column=columns, condition="news_id = 999")
         self.assertEqual(len(results), 0)
         # Test retrieve with non-existing column
-        columns = ["id", "headings", "datetime", "source_id"]
-        results = self.data.fetch_records(column=columns)
-        self.assertIsNone(results)
-        # Test retrieve with extra column
-        columns = ["id", "heading", "datetime", "source_id", "extra"]
+        columns = ["id", "uuids", "datetime_created", "news_id"]
         results = self.data.fetch_records(column=columns)
         self.assertIsNone(results)
 
     def test_count_records(self):
         results = self.data.count_records()
         self.assertEqual(results, 4)
-        results = self.data.count_records(condition="source_id = 1")
+        results = self.data.count_records(condition="news_id = 1")
         self.assertEqual(results, 2)
-        results = self.data.count_records(condition="source_id = 999")
+        results = self.data.count_records(condition="news_id = 999")
         self.assertEqual(results, 0)
 
     def test_insert_record(self):
-        columns = ["id", "heading", "datetime", "source_id"]
+        columns = ["id", "uuid", "datetime_created", "news_id"]
         # with mandatory column
-        record = dict(id=124, uuid="124", source_id=1, url="http://www.foxnews.com/news5", heading="News heading5")
+        record = dict(id=124, uuid="124", news_id=1)
         self.assertTrue(self.data.insert_record(record=record))
         result = self.data.fetch_record(column=columns, condition="id = 124")
         self.assertEqual(result[0], 124)
         # missing mandatory column
-        record = dict(id=125, uuid="125", url="http://www.foxnews.com/news5", heading="News heading5")
+        record = dict(id=125, uuid="125")
         self.assertFalse(self.data.insert_record(record=record))
         result = self.data.fetch_record(column=columns, condition="id = 125")
         self.assertIsNone(result)
         # extra column
-        record = dict(id=126, uuid="126", source_id=1, url="http://www.foxnews.com/news5", heading="News heading5", extra="Extra")
+        record = dict(id=126, uuid="126", news=1, extra="Extra")
         self.assertFalse(self.data.insert_record(record=record))
         results = self.data.fetch_records(column=columns, condition="id = 126")
         self.assertEqual(len(results), 0)
+        # ignore extra column
+        record = dict(id=127, uuid="127", news=1, extra="Extra")
+        self.assertTrue(self.data.insert_record(record=record, ignore_extra_keys=True))
+        result = self.data.fetch_records(column=columns, condition="id = 127")
+        self.assertEqual(len(results), 1)
 
 
     def test_update_record(self):
-        columns = ["id", "heading", "datetime", "source_id"]
+        columns = ["id", "uuid", "datetime_created", "news_id"]
         conditions = ["id = 121"]
-        record = dict(source_id=5, url="http://www.foxnews.com/news5", heading="News heading5")
+        record = dict(news_id=5)
         self.assertTrue(self.data.update_record(record=record, condition="id = 121"))
         result = self.data.fetch_record(column=columns, condition=conditions)
         self.assertEqual(result[3], 5)
         # extra column
-        record = dict(source_id=6, url="http://www.foxnews.com/news5", heading="News heading5", extra="Extra")
+        record = dict(news_id=6, extra="Extra")
         results = self.data.update_record(record=record, condition=conditions)
         self.assertFalse(results)
         self.assertNotEqual(result[3], 6)

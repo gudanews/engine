@@ -1,7 +1,6 @@
 from util.webdriver_util import ChromeDriver
 import logging
 import time
-from database.headline import HeadlineDB
 from database.image import ImageDB
 from database.news import NewsDB
 from database.source import SourceDB
@@ -32,12 +31,11 @@ class Crawler:
         self.start_time = datetime.now()
         if not self.SOURCE_ID:
             raise NotImplementedError("Please Provide A Valid SOURCE_ID Before Proceed......")
-        self.headline_db = HeadlineDB()
         self.news_db = NewsDB()
         self.image_db = ImageDB()
         self.category_db = CategoryDB()
         self.source_db = SourceDB()
-        self.existing_urls = [r[0] for r in self.headline_db.get_latest_headlines_by_source(source=self.SOURCE_ID, column=["url"])]
+        self.existing_urls = [r[0] for r in self.news_db.get_latest_news_by_source_id(source_id=self.SOURCE_ID, column=["url"])]
 
     def goto_main_page(self):  # goes to main page
         self.driver.get(self.homepage_url)
@@ -50,57 +48,40 @@ class Crawler:
         time.sleep(self.WAIT_FOR_PAGE_READY)
 
     def is_valid_record(self, record):
-        if not (record.get("url") and (datetime.now() - record.get("datetime", datetime.now()) < timedelta(days=14))):
+        if not record.get("url", None) or (datetime.now() - record.get("datetime_created", datetime.now()) >= timedelta(days=14)):
             # element must contain url and within 14 days
             self.logger.warning("Record is not valid.\n%s" % record)
             return False
         return True
 
-    def find_alternative_image_url(self, url):
-        return url
-
-    def is_valid_image_url(self, url):
-        return True
-
-    def process_image(self, url):
-        if self.is_valid_image_url(url):
-            # Change the image url to download image with better resolution
-            url_alternative = self.find_alternative_image_url(url)
-            self.logger.info("Add Image into ImageDB [%s]" % url)
-            return self.image_db.add_image(url_alternative, generate_thumbnail=True) or \
-                   self.image_db.add_image(url, generate_thumbnail=True)
+    def process_image(self, record):
+        if "image" in record.keys():
+            image_url = record.get("image_full", None)
+            self.logger.info("Add Image into ImageDB [%s]" % image_url)
+            return self.image_db.add_image(image_url, generate_thumbnail=True) or \
+                   self.image_db.add_image(record.get("image", None), generate_thumbnail=True)
         return 0
 
     def update_record_with_page_element(self, record, element):
-        for el in ("heading", "datetime", "snippet", "image", "category"): # No need to insert url again
+        for el in ("title", "datetime_created", "snippet", "image", "image_full", "category", "author"): # No need to insert url again
             if el in dir(element):
                 record[el] = eval("element." + el)
                 if not record[el]:
                     record.pop(el)
                 else:
-                    record[el] = record[el][:512] if el in ("snippet", "image") else \
-                            record[el][:256] if el == "heading" else record[el]
                     self.logger.info("[%s]:\t%s" % (el.upper(), record[el]))
 
     def create_database_record(self, record):
-        record["image_id"] = self.process_image(record["image"]) if not DEBUGGING_TEST and "image" in record.keys() else 0
-        record.pop("image", None)  # Remove image key and replace with image_id
+        record["image_id"] = self.process_image(record) if not DEBUGGING_TEST else 0
+        record["category_id"] = self.category_db.get_category_id_by_name(record.get("category", None))
         record["source_id"] = self.SOURCE_ID
-        news_id = self.news_db.add_news(record=record) if not DEBUGGING_TEST else 0
+        news_id = self.news_db.add_news_use_record(record=record) if not DEBUGGING_TEST else 0
         self.logger.info("Inserted Into <news> DB [ID=%s] With Values: %s." % (news_id, record))
-        if news_id:
-            record["news_id"] = news_id
-            headline_id = self.headline_db.add_headline(record=record) if not DEBUGGING_TEST else 0
-            self.logger.info("Inserted Into <headline> DB [ID=%s] With Values: %s." % (headline_id, record))
-            if headline_id:
-                self.news_db.update_news_by_id(
-                    id=record["news_id"], record=dict(headline_id=headline_id)) if not DEBUGGING_TEST else None
-                self.logger.info("Update <news> Record With [headline_id=%d]." % headline_id)
 
     def process_current_page(self):
         new_found = 0
         for np in self.page.news:
-            record = dict(url=np.url[:512])
+            record = dict(url=np.url)
             if not record["url"] in self.existing_urls:  # ("abc",) is different than ("abc")
                 np.root.scroll_to()
                 time.sleep(self.WAIT_FOR_ELEMENT_READY)

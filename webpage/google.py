@@ -4,13 +4,13 @@ from holmium.core.conditions import VISIBLE
 from util import datetime_util
 
 class Stories(Sections):
-    heading = Element(
+    title = Element(
         Locators.CSS_SELECTOR,
         "div[role='heading']",
         value=lambda el: el.text,
         timeout=5
     )
-    datetime = Element(
+    datetime_raw = Element(
         Locators.CSS_SELECTOR,
         "span.WG9SHc span",
         value=lambda el: el.text,
@@ -43,8 +43,21 @@ class GoogleNewsPage(Page):
         "g-card a",
         timeout=10
     )
-    #next = Element(
-    #    Locators.CSS_SELECTOR,
-    #    "div.control-nav a.control-nav-next",
-    #    timeout=10
-    #)
+
+
+class GoogleTranslationPage(Page):
+    input = Element(
+        Locators.CSS_SELECTOR,
+        "textarea#source",
+        timeout=5
+    )
+    output = Element(
+        Locators.CSS_SELECTOR,
+        "span.translation[lang]",
+        value=lambda el: el.text,
+        timeout=5
+    )
+
+    def build_translation_url(self, language="zh-CN"):
+        return "https://translate.google.com/#view=home&op=translate&sl=en&tl=%s" % language
+

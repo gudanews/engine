@@ -3,11 +3,17 @@ from holmium.core import Page
 from holmium.core.conditions import VISIBLE
 from util import datetime_util
 from furl import furl
+from database.category import CATEGORY_MAPPING
 import re
 
 
+# JULY 31, 2020 / 4:03 AM / 8 DAYS AGO
+DATETIME_PATTERN = r'^(?P<month>%s) (?P<day>\d{1,2})(\,{0,1}) (?P<year>\d{2,4}) / (?P<hour>\d{1,2}):(?P<minute>\d{2}) (?P<period>AM|PM)' % datetime_util.ANY_MONTHS
+
+
 class Stories(Sections):
-    heading = Element(
+
+    title = Element(
         Locators.CSS_SELECTOR,
         "div.story-content h3.story-title",
         value=lambda el: el.text,
@@ -31,7 +37,7 @@ class Stories(Sections):
         value=lambda el: el.text,
         timeout=5
     )
-    image = Element(
+    image_raw = Element(
         Locators.CSS_SELECTOR,
         "div.story-photo img[src]",
         value=lambda el: el.get_attribute('src'),
@@ -39,8 +45,33 @@ class Stories(Sections):
         timeout=5,
     )
     @property
-    def datetime(self):
+    def datetime_created(self):
         return datetime_util.str2datetime(self.datetime_raw)
+
+    @property
+    def image(self):
+        # Invalid image urls:
+        # https://s2.reutersmedia.net/resources_v2/images/core-placeholder-featured.png
+        # https://s1.reutersmedia.net/resources_v2/images/1x1.png
+        image = self.image_raw
+        if image:
+            f = furl(image)
+            return None if f.path.segments[-1] in ("1x1.png", "core-placeholder-featured.png") else image
+        return None
+
+    @property
+    def image_full(self):
+        # Expected https://s4.reutersmedia.net/resources/r/?m=02&d=20200728&t=2&i=1527461013&w=370&fh=&fw=&ll=&pl=&sq=&r=LYNXNPEG6R1MZ
+        # Full image URL https://s4.reutersmedia.net/resources/r/?m=02&d=20200728&t=2&i=1527461013&w=800&r=LYNXNPEG6R1MZ
+        f = furl(self.image)
+        if f.url:
+            if "w" in f.args.keys():
+                f.args["w"] = "800"
+            for k in f.args.keys():
+                if not f.args[k]:
+                    f.args.pop(k)
+            return f.url
+        return None
 
 
 class CrawlPage(Page):
@@ -55,24 +86,6 @@ class CrawlPage(Page):
         timeout=10
     )
 
-CATEGORY_MAPPING = {
-    "top": [],
-    "local": [],
-    "national": [],
-    "world": ["WORLD NEWS"],
-    "opinion": [],
-    "politics": ["POLITICS"],
-    "business": ["DEALS", "BUSINESS NEWS", "U.S. LEGAL NEWS"],
-    "technology & science": ["TECHNOLOGY NEWS", "ENVIRONMENT", "CYBER RISK"],
-    "entertainment & art": [],
-    "health": [],
-    "sport": [],
-    "weather": [],
-    "lifestyle & culture": [],
-    "multimedia": [],
-}
-# JULY 31, 2020 / 4:03 AM / 8 DAYS AGO
-DATETIME_PATTERN = r'^(?P<month>%s) (?P<day>\d{1,2})(\,{0,1}) (?P<year>\d{2,4}) / (?P<hour>\d{1,2}):(?P<minute>\d{2}) (?P<period>AM|PM)' % datetime_util.ANY_MONTHS
 
 class IndexPage(Page):
 
@@ -86,7 +99,7 @@ class IndexPage(Page):
         value=lambda el: el.text,
         timeout=5
     )
-    heading = Element(
+    title = Element(
         Locators.CSS_SELECTOR,
         HEADER_CSS_SELECTOR + "h1.ArticleHeader_headline",
         value=lambda el: el.text,
@@ -111,7 +124,7 @@ class IndexPage(Page):
         value=lambda el: el.get_attribute('src'),
         timeout=0.5
     )
-    body_raw = Elements(
+    content_raw = Elements(
         Locators.CSS_SELECTOR,
         BODY_CSS_SELECTOR + "div.StandardArticleBody_body > p",
         value=lambda el:el.text,
@@ -131,19 +144,20 @@ class IndexPage(Page):
         timeout=5
     )
     @property
-    def datetime(self):
+    def datetime_created(self):
         return datetime_util.get_datetime_use_pattern(DATETIME_PATTERN, self.datetime_raw)
 
     @property
     def category(self):
+        category = self.category_raw
         for (k,v) in CATEGORY_MAPPING.items():
-            if self.category_raw in v:
+            if category and any(c in category.lower() for c in v):
                 return k
         return None
 
     @property
-    def body(self):
-        return "\n".join([b for b in self.body_raw])
+    def content(self):
+        return "\n".join([b for b in self.content_raw])
 
     @property
     def media(self):

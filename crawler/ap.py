@@ -2,31 +2,28 @@ from crawler import Crawler as BaseCrawler
 from util.webdriver_util import ChromeDriver
 from webpage.ap import CrawlPage as APPage
 import logging
-from furl import furl
-import re
+import time
 
 
 class APCrawler(BaseCrawler):
 
-    MAX_CRAWLING_PAGES = 1
+    MAX_CRAWLING_PAGES = 2
+    WAIT_FOR_ELEMENT_READY = 2.0
     SOURCE_ID = 2
     logger = logging.getLogger("Crawler.AP")
 
     def __init__(self, driver):
-        web_url = "https://apnews.com/apf-topnews"
+        web_url = "https://apnews.com"
         page = APPage(driver)
         super(APCrawler, self).__init__(driver, page, web_url)
 
-    def goto_next_page(self):  # AP news only checks one page
-        raise Exception("American Press News Should Only Be Crawled On Home Page")
+    def goto_next_page(self):  # AP news only checks home page and top news page
+        self.current_page_number += 1
+        web_url = "https://apnews.com/apf-topnews"
+        self.driver.get(web_url)
+        self.logger.info("Checking AP Top News......\n")
+        time.sleep(self.WAIT_FOR_PAGE_READY)
 
-    def find_alternative_image_url(self, url):
-        # Expected https://storage.googleapis.com/afs-prod/media/8814cee91eef4fce825bfc90e6ddccf8/400.jpeg
-        # Alternative https://storage.googleapis.com/afs-prod/media/8814cee91eef4fce825bfc90e6ddccf8/800.jpeg
-        f = furl(url)
-        pixel = f.path.segments[-1]
-        f.path.segments[-1] = "800.jpeg" if re.search(r"^\d{3,4}.jpeg", pixel) else pixel
-        return f.url
 
 if __name__ == "__main__":
     driver = ChromeDriver()

@@ -11,10 +11,10 @@ logger = logging.getLogger("DataBase.Image")
 class ImageDB(DataBase):
 
     COLUMN_CONSTRAINT = {
-        "id": (int, MANDATORY),
-        "path": (str, OPTIONAL),
-        "thumbnail": (str, OPTIONAL),
-        "url": (str, OPTIONAL)
+        "id": (MANDATORY, int, 32),
+        "path": (OPTIONAL, str, 128),
+        "thumbnail": (OPTIONAL, str, 128),
+        "url": (OPTIONAL, str, 512)
     }
     INSERT_COLUMN_CONSTRAINT = ["path", "thumbnail", "url"]
     UPDATE_COLUMN_CONSTRAINT = ["id", "path", "thumbnail", "url"]

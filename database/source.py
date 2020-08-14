@@ -8,29 +8,29 @@ logger = logging.getLogger("DataBase.Source")
 class SourceDB(DataBase):
 
     COLUMN_CONSTRAINT = {
-        "id": (int, MANDATORY),
-        "is_crawling": (int, OPTIONAL),
-        "crawling_url": (str, OPTIONAL),
-        "name": (str, MANDATORY),
-        "display_name": (str, OPTIONAL),
-        "image_id": (str, OPTIONAL),
-        "host": (str, OPTIONAL),
-        "bias": (int, OPTIONAL),
-        "quality": (int, OPTIONAL)
+        "id": (MANDATORY, int, MANDATORY),
+        "short_name": (MANDATORY, str, 8),
+        "full_name": (OPTIONAL, str, 32),
+        "color": (OPTIONAL, str, 8),
+        "image_id": (OPTIONAL, int, 32),
+        "website": (OPTIONAL, str, 128),
+        "bias": (OPTIONAL, int, 8),
+        "quality": (OPTIONAL, int, 16),
+        "popularity": (OPTIONAL, float)
     }
-    INSERT_COLUMN_CONSTRAINT = ["is_crawling", "crawling_url", "name", "display_name", "image_id", "host", "bias", "quality"]
-    UPDATE_COLUMN_CONSTRAINT = ["id", "is_crawling", "crawling_url", "name", "display_name", "image_id", "host", "bias", "quality"]
-    SELECT_COLUMN_CONSTRAINT = ["id", "is_crawling", "crawling_url", "name", "display_name", "image_id", "host", "bias", "quality"]
+    INSERT_COLUMN_CONSTRAINT = ["short_name", "full_name", "color", "image_id", "website", "bias", "quality", "popularity"]
+    UPDATE_COLUMN_CONSTRAINT = ["id", "short_name", "full_name", "color", "image_id", "website", "bias", "quality", "popularity"]
+    SELECT_COLUMN_CONSTRAINT = ["id", "short_name", "full_name", "color", "image_id", "website", "bias", "quality", "popularity"]
 
     def __init__(self, user=None, password=None, host=None, database=None):
         super(SourceDB, self).__init__("source", user=user, password=password, host=host, database=database)
 
     def get_source_id_by_name(self, name):
-        result = self.fetch_record(column="id", condition=["name = '%s'" % name])
+        result = self.fetch_record(column="id", condition=["short_name = '%s'" % name])
         return result[0] if result else 0
 
     def get_source_name_by_id(self, id):
-        result = self.fetch_record(column="name", condition=["id = %d" % id])
+        result = self.fetch_record(column="short_name", condition=["id = %d" % id])
         return result[0] if result else None
 
 
