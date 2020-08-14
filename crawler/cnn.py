@@ -3,6 +3,7 @@ from util.webdriver_util import ChromeDriver
 from webpage.cnn import CrawlPage as CNNPage
 import logging
 
+
 logger = logging.getLogger("Crawler.CNN")
 
 
@@ -21,10 +22,11 @@ class CNNCrawler(BaseCrawler):
     def goto_next_page(self):  # CNN news only checks one page
         raise Exception("CNN News Should Only Be Crawled On Home Page")
 
-    def find_alternative_image_url(self, url):
-        # Expected //cdn.cnn.com/cnnnext/dam/assets/200806183042-02-trump-0806-full-169.jpg
-        # Alternative cdn.cnn.com/cnnnext/dam/assets/200806183042-02-trump-0806-full-169.jpg
-        return "http:" + url if url.startswith("//") else url
+    # def is_valid_record(self, record):
+    #     f = furl(record.get("url", None))
+    #     if f.url and f.path.segments[0] == "videos":
+    #         return False
+    #     return super(CNNCrawler, self).is_valid_record(record)
 
 
 if __name__ == "__main__":
