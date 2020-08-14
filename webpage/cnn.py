@@ -4,6 +4,7 @@ from holmium.core.conditions import VISIBLE
 from util import datetime_util
 from furl import furl
 from database.category import CATEGORY_MAPPING
+from webpage import WAIT_FOR_ELEMENT_TIMEOUT, WAIT_FOR_SECTION_TIMEOUT, WAIT_FOR_MINIMUM_TIMEOUT
 import re
 
 
@@ -17,26 +18,26 @@ class News(Sections):
         Locators.CSS_SELECTOR,
         "h3 a span.cd__headline-text",
         value=lambda el: el.text,
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     url = Element(
         Locators.CSS_SELECTOR,
         "h3 a[href]",
         value=lambda el: el.get_attribute('href'),
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     image_raw = Element(
         Locators.CSS_SELECTOR,
         "div.media a img",
         value=lambda el: el.get_attribute('data-src-full16x9'),
         only_if=VISIBLE(),
-        timeout=0.5
+        timeout=WAIT_FOR_MINIMUM_TIMEOUT
     )
     category_raw = Element(
         Locators.XPATH,
         "../article",
         value=lambda el: el.get_attribute('data-section-name'),
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     @property
     def image(self):
@@ -69,7 +70,7 @@ class CrawlPage(Page):
     news = News(
         Locators.CSS_SELECTOR,
         "section.zn-has-multiple-containers div.zn__containers li > article.cd--card.cd--article",
-        timeout=10
+        timeout=WAIT_FOR_SECTION_TIMEOUT
     )
 
 
@@ -82,31 +83,31 @@ class IndexPage(Page):
         Locators.CSS_SELECTOR,
         BASE_CSS_SELECTOR + "h1.pg-headline",
         value=lambda el: el.text,
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     author_raw = Elements(
         Locators.CSS_SELECTOR,
         BASE_CSS_SELECTOR + "div.metadata p.metadata__byline a",
         value=lambda el: el.text,
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     datetime_raw = Element(
         Locators.CSS_SELECTOR,
         BASE_CSS_SELECTOR + "div.metadata p.update-time",
         value=lambda el: el.text,
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     image = Element(
         Locators.CSS_SELECTOR,
         MAIN_CSS_SELECTOR + ".pg-rail-tall__head img",
         value=lambda el: el.get_attribute("data-src-full16x9"),
-        timeout=0.5
+        timeout=WAIT_FOR_MINIMUM_TIMEOUT
     )
     content_raw = Elements(
         Locators.CSS_SELECTOR,
         MAIN_CSS_SELECTOR + ".pg-rail-tall__body .zn-body__paragraph",
         value=lambda el: el.text,
-        timeout=5
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
 
     @property
