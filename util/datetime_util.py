@@ -67,9 +67,8 @@ def _adjust_timezone(zone):
 def str2datetime(p_time):
     if p_time: # Return current time if p_time is None
         for _, pattern in DATETIME_REGEX.items():
-            r_time = get_datetime_use_pattern(pattern, p_time)
-            if r_time:
-                return r_time
+            if re.match(pattern, p_time, re.IGNORECASE):
+                return get_datetime_use_pattern(pattern, p_time)
     logger.warning("Cannot find the expected time format [%s]" % p_time)
     return NOW
 

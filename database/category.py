@@ -7,16 +7,37 @@ from database import MANDATORY, OPTIONAL
 logger = logging.getLogger("DataBase.Image")
 
 
+CATEGORY_MAPPING = {
+    "top": ["top", "hot", "trend"],
+    "local": ["local", "city", "town"],
+    "national": ["us", "u.s.", "nation"],
+    "world": ["world", "international", "asia", "europe", "africa", "australia", "america"],
+    "opinion": ["opinion"],
+    "politics": ["politic", "law", "religion", "court"],
+    "business": ["business", "trade", "legal", "deal", "car", "money", "financ"],
+    "technology & science": ["tech", "environ", "cyber", "science"],
+    "entertainment & art": ["entertain", "art"],
+    "health": ["health"],
+    "sport": ["sport", "mlb", "nba", "race", "ball"],
+    "weather": ["climate", "weather"],
+    "lifestyle & culture": ["animal","relationship", "fashion", "culture", "life", "style", "architecture",
+                            "beauty", "design", "food", "drink", "travel"],
+    "multimedia": ["video", "audio"],
+    "ads": ["sponsor"]
+}
+
+
 class CategoryDB(DataBase):
 
     COLUMN_CONSTRAINT = {
-        "id": (int, OPTIONAL),
-        "name": (str, OPTIONAL),
-        "alias": (str, OPTIONAL)
+        "id": (MANDATORY, int, 32),
+        "name": (MANDATORY, str, 32),
+        "display": (OPTIONAL, str, 64),
+        "color": (OPTIONAL, str, 8)
     }
-    INSERT_COLUMN_CONSTRAINT = ["name", "alias"]
-    UPDATE_COLUMN_CONSTRAINT = ["id", "name", "alias"]
-    SELECT_COLUMN_CONSTRAINT = ["id", "name", "alias"]
+    INSERT_COLUMN_CONSTRAINT = ["name", "display", "color"]
+    UPDATE_COLUMN_CONSTRAINT = ["id", "name", "display", "color"]
+    SELECT_COLUMN_CONSTRAINT = ["id", "name", "display", "color"]
 
     def __init__(self, user=None, password=None, host=None, database=None):
         super(CategoryDB, self).__init__("category", user=user, password=password, host=host, database=database)
@@ -55,7 +76,7 @@ class TestImageData(LoggedTestCase):
         self.data = CategoryDB(user=SANDBOX_USER, password=SANDBOX_PASSWORD, host=SANDBOX_HOST, database=SANDBOX_DATABASE)
         self.data.delete_records()
         self.id = self.data.add_category(name="category1")
-        self.data.add_category(name="category2", alias="alias2")
+        self.data.add_category(name="category2", display_name="display_name2")
 
     def test_get_category_id_by_name(self):
         id = self.data.get_category_id_by_name('category1')

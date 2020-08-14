@@ -1,6 +1,5 @@
-from webpage.cnn import IndexPage as ReutersPage
 from util.webdriver_util import ChromeDriver
-from database.headline import HeadlineDB
+from database.topic import HeadlineDB
 from database.image import ImageDB
 from database.news import NewsDB
 from database.source import SourceDB
@@ -19,14 +18,19 @@ logger = logging.getLogger("Indexer")
 class Indexer:
 
     WAIT_FOR_PAGE_READY = 2.0
+    SOURCE_ID = None
     logger = logging.getLogger("Indexer")
 
     def __init__(self, driver, page):
         self.driver = driver
         self.page = page
         self._indexing_news = []
+        if not self.SOURCE_ID:
+            raise NotImplementedError("Please Provide A Valid SOURCE_ID Before Proceed......")
         self.news_db = NewsDB()
         self.headline_db = HeadlineDB()
+        self.source_db = SourceDB()
+        self.start_time = datetime.now()
 
     def is_valid_news_url(self, url):
         return True
@@ -36,7 +40,7 @@ class Indexer:
         time.sleep(self.WAIT_FOR_PAGE_READY)
 
     def get_candidates(self):
-        return self.news_db.get_non_indexed_news_by_source(source = 101, max_count=10)
+        return self.news_db.get_non_indexed_news_by_source(source = self.SOURCE_ID, max_count=3)
         # raise NotImplementedError("Please Implement method <get_candidates> to use Indexer")
 
     def process_current_page(self):
@@ -52,6 +56,9 @@ class Indexer:
                     self.logger.info("[%s]:\t%s" % (el.upper(), record[el]))
 
     def index(self):
+        source_name = self.source_db.get_source_name_by_id(self.SOURCE_ID)
+        self.logger.info("=====================  Indexing [%s] started  =====================" % source_name)
+
         self._indexing_news = self.get_candidates()
         for (id, url) in self._indexing_news:
             if self.is_valid_news_url(url):
@@ -59,10 +66,15 @@ class Indexer:
                 self.logger.info("LOADING PAGE [%s]" % url)
                 self.process_current_page()
 
+        self.logger.info("---------------------  Total New Records  ---------------------")
+        self.logger.info("===========  Indexing [%s] completed in [%s]  ===========\n" %
+                         (source_name, str(datetime.now() - self.start_time)))
+
+
 def main():
     import os
     from util import find_modules, find_public_classes
-    from crawler import Crawler
+    from indexer import Indexer
     logger.info("=" * 40)
     logger.info("Started Indexing ......")
     logger.info("=" * 40 + "\n")
@@ -70,7 +82,7 @@ def main():
     for module in modules:
         classes = find_public_classes(module)
         for _,cls in classes.items():
-            if issubclass(cls, Crawler) and not issubclass(Crawler, cls):
+            if issubclass(cls, Indexer) and not issubclass(Indexer, cls):
                 try:
                     driver = ChromeDriver()
                     obj = cls(driver)
@@ -86,8 +98,4 @@ def main():
 
 
 if __name__ == "__main__":
-    driver = ChromeDriver()
-    page = ReutersPage(driver)
-    obj = Indexer(driver=driver, page=page)
-    obj.index()
-    driver.close()
+    main()

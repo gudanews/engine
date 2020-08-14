@@ -13,28 +13,33 @@ logger = logging.getLogger("DataBase.News")
 class NewsDB(DataBase):
 
     COLUMN_CONSTRAINT = {
-        "id": (int, MANDATORY),
-        "uuid": (str, MANDATORY),
-        "is_valid": (int, OPTIONAL),
-        "is_indexed": (int, OPTIONAL),
-        "headline_id": (int, OPTIONAL),
-        "category_id": (int, OPTIONAL),
-        "source_id": (int, MANDATORY),
-        "image_id": (int, OPTIONAL),
-        "author": (str, OPTIONAL),
-        "heading": (str, MANDATORY),
-        "snippet": (str, OPTIONAL),
-        "url": (str, MANDATORY),
-        "datetime": (datetime, OPTIONAL),
-        "body_id": (int, OPTIONAL),
-        "likes": (int, OPTIONAL)
+        "id": (MANDATORY, int, 32),
+        "uuid": (MANDATORY, str, 36),
+        "is_valid": (OPTIONAL, int, 1),
+        "is_indexed": (OPTIONAL, int, 1),
+        "url": (MANDATORY, str, 512),
+        "topic_id": (OPTIONAL, int, 32),
+        "category_id": (OPTIONAL, int, 16),
+        "source_id": (MANDATORY, int, 16),
+        "image_id": (OPTIONAL, int, 32),
+        "title": (MANDATORY, str, 256),
+        "snippet": (OPTIONAL, str, 512),
+        "content": (OPTIONAL, str, 128),
+        "author": (OPTIONAL, str, 64),
+        "datetime_created": (OPTIONAL, datetime),
+        "datetime_updated": (OPTIONAL, datetime),
+        "translation_id": (OPTIONAL, int, 32),
+        "views": (OPTIONAL, int, 24)
     }
-    INSERT_COLUMN_CONSTRAINT = ["uuid", "is_valid", "is_indexed", "headline_id", "category_id", "source_id",
-                                "image_id", "author", "heading", "snippet", "url", "datetime", "body_id", "likes"]
-    UPDATE_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_indexed", "headline_id", "category_id", "source_id",
-                                "image_id", "author", "heading", "snippet", "url", "datetime", "body_id", "likes"]
-    SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_indexed", "headline_id", "category_id", "source_id",
-                                "image_id", "author", "heading", "snippet", "url", "datetime", "body_id", "likes"]
+    INSERT_COLUMN_CONSTRAINT = ["uuid", "is_valid", "is_indexed", "url", "topic_id", "category_id", "source_id",
+                                "image_id", "title", "snippet", "content", "author", "datetime_created",
+                                "datetime_updated", "translation_id", "views"]
+    UPDATE_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_indexed", "url", "topic_id", "category_id", "source_id",
+                                "image_id", "title", "snippet", "content", "author", "datetime_created",
+                                "datetime_updated", "translation_id", "views"]
+    SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_indexed", "url", "topic_id", "category_id", "source_id",
+                                "image_id", "title", "snippet", "content", "author", "datetime_created",
+                                "datetime_updated", "translation_id", "views"]
 
 
     def __init__(self, user=None, password=None, host=None, database=None):
@@ -55,7 +60,7 @@ class NewsDB(DataBase):
     def get_latest_news(self, column=None, condition=None, max_count=0):
         if not column:
             column = self.SELECT_COLUMN_CONSTRAINT
-        conditions = ["datetime > '%s'" % (datetime.strftime(datetime.now() - timedelta(days=14), "%Y-%m-%d %H:%M:%S"))]
+        conditions = ["datetime_created > '%s'" % (datetime.strftime(datetime.now() - timedelta(days=14), "%Y-%m-%d %H:%M:%S"))]
         if isinstance(condition, str):
             conditions.append(condition)
         elif isinstance(condition, list):
@@ -65,11 +70,8 @@ class NewsDB(DataBase):
             limit = max_count
         return self.fetch_records(column=column, condition=conditions, limit=limit)
 
-    def get_latest_news_by_source(self, source, column=None, max_count=0):
-        if not source or not (isinstance(source, int) or isinstance(source, str)):
-            raise Exception("Please specify <source> to use get_latest_news_by_source method")
-        source = SourceDB().get_source_id_by_name(source) if isinstance(source, str) else source
-        condition = ["source_id = %d" % source]
+    def get_latest_news_by_source_id(self, source_id, column=None, max_count=0):
+        condition = ["source_id = %d" % source_id]
         return self.get_latest_news(column=column, condition=condition, max_count=max_count)
 
     def get_non_indexed_news(self, column=None, condition=None, max_count=0):
@@ -85,27 +87,22 @@ class NewsDB(DataBase):
             limit = max_count
         return self.fetch_records(column=column, condition=conditions, limit=limit)
 
-    def get_non_indexed_news_by_source(self, source, column=None, max_count=0):
-        if not source or not (isinstance(source, int) or isinstance(source, str)):
-            raise Exception("Please specify <source> to use get_latest_news_by_source method")
-        source = SourceDB().get_source_id_by_name(source) if isinstance(source, str) else source
-        condition = ["source_id = %d" % source]
+    def get_non_indexed_news_by_source_id(self, source_id, column=None, max_count=0):
+        condition = ["source_id = %d" % source_id]
         return self.get_non_indexed_news(column=column, condition=condition, max_count=max_count)
 
-    def get_news_by_headline(self, headline, column=None):
-        if not headline or not (isinstance(headline, int) or isinstance(headline, str)):
-            raise Exception("Please specify <headline> to use get_latest_news_by_source method")
-        if isinstance(headline, str): #uuid
-            adv_query = "INNER JOIN headline ON headline.id = news.headline_id where headline.uuid='%s'" % headline
+    def get_news_by_topic_id(self, topic_id, column=None):
+        if isinstance(topic_id, str): #uuid
+            adv_query = "INNER JOIN topic ON topic.id = news.topic_id where topic.uuid='%s'" % topic_id
             return self.fetch_advanced_records(column=column, advanced=adv_query)
         else: #id
-            conditions = "headline_id = %d" % id
+            conditions = "topic_id = %d" % topic_id
             return self.fetch_records(column=column, condition=conditions)
 
-    def add_news(self, record):
+    def add_news_use_record(self, record, ignore_extra_keys=True):
         uid = self.generate_uuid()
         record["uuid"] = uid
-        if self.insert_record(record=record):
+        if self.insert_record(record=record, ignore_extra_keys=ignore_extra_keys):
             return self._db._cursor.lastrowid
         return 0
 
@@ -132,44 +129,42 @@ class TestNewsDataDB(LoggedTestCase):
     def setUp(self):
         self.data = NewsDB(user=SANDBOX_USER, password=SANDBOX_PASSWORD, host=SANDBOX_HOST, database=SANDBOX_DATABASE)
         self.data.delete_records()
-        self.data.add_news(record=dict(source_id=1, uuid="1", url="http://www.reuters.com/news1", heading="News heading1"))
-        self.data.add_news(record=dict(source_id=2, uuid="2", url="http://www.ap.com/news2", heading="News heading2"))
-        self.data.add_news(record=dict(source_id=1, uuid="3", url="http://www.cnn.com/news3", heading="News heading3"))
-        self.data.add_news(record=dict(source_id=3, uuid="4", url="http://www.foxnews.com/news4", heading="News heading4"))
+        self.data.add_news_use_record(record=dict(source_id=1, uuid="1", url="http://www.reuters.com/news1", title="News title1"),
+                                      datetime_created=datetime.now() - timedelta(days=28))
+        self.data.add_news_use_record(record=dict(source_id=2, uuid="2", url="http://www.ap.com/news2", title="News title2"))
+        self.data.add_news_use_record(record=dict(source_id=1, uuid="3", url="http://www.cnn.com/news3", title="News title3"))
+        self.data.add_news_use_record(record=dict(source_id=3, uuid="4", url="http://www.foxnews.com/news4", title="News title4"))
         time.sleep(1.0)
 
 
     def test_get_latest_news(self):
-        columns = ["id", "uuid", "datetime", "heading", "source_id"]
+        columns = ["id", "uuid", "datetime_created", "title", "source_id"]
         results = self.data.get_latest_news(column=columns)
-        self.assertEqual(len(results), 4)
+        self.assertEqual(len(results), 3)
         first_news_date = results[0][2]
-        start_date = datetime.now() - timedelta(hours=96)
+        start_date = datetime.now() - timedelta(days=14)
         end_date = datetime.now()
         self.assertTrue(start_date <= first_news_date <= end_date)
 
-    def test_get_latest_news_by_source(self):
-        results = self.data.get_latest_news_by_source(source=1)
+    def test_get_latest_news_by_source_id(self):
+        results = self.data.get_latest_news_by_source_id(source_id=1)
         self.assertEqual(len(results), 2)
-        results = self.data.get_latest_news_by_source(source="AP")
-        self.assertEqual(len(results), 1)
 
     def test_add_news(self):
-        record = dict(source_id=1, uuid="5", heading="H1", url="http://www.reuters.com/h1news")
-        result = self.data.add_news(record)
+        record = dict(source_id=1, uuid="5", title="H1", url="http://www.reuters.com/h1news")
+        result = self.data.add_news_use_record(record)
         self.assertGreater(result, 0)
-        record = dict(source_id=1, uuid="6", url="http://www.reuters.com/h1news")
-        result = self.data.add_news(record)
+        record = dict(source_id=1, uuid="6", title="H1", url="http://www.reuters.com/h1news",
+                      datetime_created=datetime.now() - timedelta(days=28))
+        result = self.data.add_news_use_record(record)
         self.assertEqual(result, 0)
 
-    def _test_update_news_by_id(self):
-        columns = ["id", "uuid", "heading"]
-        record = dict(heading="Heading123")
+    def test_update_news_by_id(self):
+        columns = ["id", "uuid", "title"]
+        record = dict(title="Title123")
         id = self.data.fetch_record(column="id", condition="source_id=1")[0]
-        self.data.update_headline_by_id(id=id, record=record)
-        result = self.data.get_headline_by_id(id=id, column=columns)
-        self.assertEqual(result[2], "Heading123")
-        record = dict(heading="Heading456")
+        result = self.data.get_news_by_id(id=id, column=columns)
+        self.assertEqual(result[2], "Title123")
 
 
 if __name__ == "__main__":
