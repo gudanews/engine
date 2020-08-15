@@ -16,6 +16,7 @@ ANY_MONTHS = "JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBE
 ANY_WEEK_DAYS_2L = "MO|TU|WE|TH|FR|SA|SU"
 ANY_WEEK_DAYS_3L = "MON|TUE|WED|THU|FRI|SAT|SUN"
 ANY_WEEK_DAYS = "MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY"
+ANY_DAYS = "DAY|DAYS|D|DS"
 ANY_HOURS = "HOUR|HOURS|HR|HRS|H|HS"
 ANY_MINUTES = "MIN|MINS|M|MS"
 ANY_TIMEZONE = "UTC|GMT|Z|EDT|EST|ET|CDT|CST|CT|MDT|MST|MT|PDT|PST|PT|AKDT|AKST|HST"
@@ -28,9 +29,10 @@ DATETIME_REGEX = dict(
     mon_day_year = r'^(?P<month>%s)(\.|)(\s{0,1})(?P<day>\d{1,2})(\,{0,1}) (?P<year>\d{2,4})$' % ANY_MONTHS,  # JUL 7 2020
     month_day=r'^(?P<month>%s)(\.{0,1})(\s|)(?P<day>\d{1,2})(\,{0,1})$' % ANY_MONTHS_3L,  # JUL 7
     mon_day = r'^(?P<month>%s)(\.{0,1})(\s|)(?P<day>\d{1,2})(\,{0,1})$' % ANY_MONTHS,  # JUL 7
-    min_ago = r'^(?P<ago_minute>\d{1,2})(\s|)(%s) (?P<ago>AGO)$' % ANY_MINUTES,  # 4mins ago
-    hour_ago = r'^(?P<ago_hour>\d{1,2})(\s|)(%s) (?P<ago>AGO)$' % ANY_HOURS,  # 10 hours ago
+    day_ago = r'^(?P<ago_day>\d{1,2})(\s|)(%s) (?P<ago>AGO)$' % ANY_DAYS,  # 2 days ago
     hour_min_ago = r'^(?P<ago_hour>\d{1,2})(\s|)(%s)(?P<ago_minute>\d{1,2})(\s|)(%s) (?P<ago>AGO)$' % (ANY_HOURS, ANY_MINUTES),  # 2h30m ago
+    hour_ago = r'^(?P<ago_hour>\d{1,2})(\s|)(%s) (?P<ago>AGO)$' % ANY_HOURS,  # 10 hours ago
+    min_ago = r'^(?P<ago_minute>\d{1,2})(\s|)(%s) (?P<ago>AGO)$' % ANY_MINUTES,  # 4mins ago
     year_month_day_hh_mm_ss = r'^(?P<year>\d{2,4})-(?P<month>\d{1,2})-(?P<day>\d{1,2})(T| )(?P<hour>\d{1,2}):(?P<minute>\d{2}):(?P<second>\d{2})$', # 2020-07-26T16:23:55
     year_month_day_hh_mm_ss_zone = r'^(?P<year>\d{2,4})-(?P<month>\d{1,2})-(?P<day>\d{1,2})(T| )(?P<hour>\d{1,2}):(?P<minute>\d{2}):(?P<second>\d{2})(\s|)(?P<zone>\S+)$'  # 2020-07-26T16:23:55-04:00
 )
@@ -75,6 +77,7 @@ def str2datetime(p_time):
 def get_datetime_use_pattern(pattern, p_time):
     m = re.match(pattern, p_time, re.IGNORECASE)
     if m:
+        adj_day = 0  # Adjust days
         adj_hour = 0  # Adjust hours due to time zone and period and ago
         adj_minute = 0  # Adjust minutes
         ic_time = m.groupdict()
@@ -105,18 +108,25 @@ def get_datetime_use_pattern(pattern, p_time):
                 adj_hour += 12
             del ic_time["period"]
         if "ago" in ic_time:  # Adjust time deltas
+            if "ago_day" in ic_time:
+                adj_day -= int(ic_time.pop("ago_day"))
             if "ago_hour" in ic_time:
                 adj_hour -= int(ic_time.pop("ago_hour"))
             if "ago_minute" in ic_time:
                 adj_minute -= int(ic_time.pop("ago_minute"))
             del ic_time["ago"]
-        r_time = datetime(**ic_time) + timedelta(hours=adj_hour, minutes=adj_minute)
+        r_time = datetime(**ic_time) + timedelta(days=adj_day, hours=adj_hour, minutes=adj_minute)
         logger.debug("Convert [%s] to standardized datetime [%s]" % (p_time, r_time))
         return r_time
     return None
 
 
 class TestDateTime(LoggedTestCase):
+
+    def test_string_to_datetime0(self):
+        result = str2datetime("10 days ago")
+        self.assertEqual(str(result), str(
+            datetime(TODAY.year, TODAY.month, TODAY.day, NOW.hour, NOW.minute, NOW.second) - timedelta(days=10)))
 
     def test_string_to_datetime1(self):
         result = str2datetime("2h30m ago")
