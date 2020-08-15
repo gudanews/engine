@@ -3,13 +3,22 @@ from holmium.core import Page
 from holmium.core.conditions import VISIBLE
 from util import datetime_util
 from furl import furl
-from database.category import CATEGORY_MAPPING
+from database.category import category_mapping
 from webpage import WAIT_FOR_ELEMENT_TIMEOUT, WAIT_FOR_SECTION_TIMEOUT, WAIT_FOR_MINIMUM_TIMEOUT
 import re
 
 
 # Updated 11:48 AM ET, Sat August 8, 2020
 DATETIME_PATTERN = r'.* (?P<hour>\d{1,2}):(?P<minute>\d{2}) (?P<period>AM|PM) (?P<zone>%s)(\,{0,1}) (%s) (?P<month>%s) (?P<day>\d{1,2})(\,{0,1}) (?P<year>\d{2,4})$' % (datetime_util.ANY_TIMEZONE, datetime_util.ANY_WEEK_DAYS_3L, datetime_util.ANY_MONTHS)
+
+def get_full_image_url(url):
+    # Expected cdn.cnn.com/cnnnext/dam/assets/200806183042-02-trump-0806-full-169.jpg
+    # Normalized Image URL cdn.cnn.com/cnnnext/dam/assets/200806183042-02-trump-0806.jpg
+    if url:
+        m = re.match(r'(.*)\-full\-\d{2,4}.jpg$', url, re.IGNORECASE)
+        if m:
+            return m.group(1) + ".jpg"
+    return url
 
 
 class News(Sections):
@@ -46,24 +55,11 @@ class News(Sections):
 
     @property
     def image_full(self):
-        # Expected cdn.cnn.com/cnnnext/dam/assets/200806183042-02-trump-0806-full-169.jpg
-        # Normalized Image URL cdn.cnn.com/cnnnext/dam/assets/200806183042-02-trump-0806.jpg
-        image = self.image
-        if image:
-            m = re.match(r'(.*)\-full\-\d{2,4}.jpg$', image, re.IGNORECASE)
-            if m:
-                return m.group(1) + ".jpg"
-        return None
+        return get_full_image_url(self.image)
 
     @property
     def category(self):
-        category = self.category_raw
-        if category:
-            for (k,v) in CATEGORY_MAPPING.items():
-                if category and any(c in category.lower() for c in v):
-                    return k
-        return None
-
+        return category_mapping(self.category_raw)
 
 
 class CrawlPage(Page):
@@ -97,9 +93,9 @@ class IndexPage(Page):
         value=lambda el: el.text,
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
-    image = Element(
+    image_raw = Element(
         Locators.CSS_SELECTOR,
-        MAIN_CSS_SELECTOR + ".pg-rail-tall__head img",
+        MAIN_CSS_SELECTOR + ".pg-rail-tall__head div.l-container img[data-src-full16x9]",
         value=lambda el: el.get_attribute("data-src-full16x9"),
         timeout=WAIT_FOR_MINIMUM_TIMEOUT
     )
@@ -111,11 +107,20 @@ class IndexPage(Page):
     )
 
     @property
+    def image(self):
+        image = self.image_raw
+        return "https:" + image if image and image.startswith("//") else image
+
+    @property
+    def image_full(self):
+        return get_full_image_url(self.image)
+
+    @property
     def author(self):
         return ", ".join(self.author_raw)
 
     @property
-    def datetime_updated(self):
+    def datetime_created(self):
         return datetime_util.get_datetime_use_pattern(DATETIME_PATTERN, self.datetime_raw) if self.datetime_raw else None
 
     @property

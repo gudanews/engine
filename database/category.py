@@ -23,9 +23,15 @@ CATEGORY_MAPPING = {
     "lifestyle & culture": ["animal","relationship", "fashion", "culture", "life", "style", "architecture",
                             "beauty", "design", "food", "drink", "travel"],
     "multimedia": ["video", "audio"],
-    "ads": ["sponsor"]
+    "ads": ["sponsor"],
 }
 
+def category_mapping(phrase):
+    if phrase:
+        for (k, v) in CATEGORY_MAPPING.items():
+            if phrase and any(c in phrase.lower() for c in v):
+                return k
+    return None
 
 class CategoryDB(DataBase):
 

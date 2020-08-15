@@ -4,10 +4,22 @@ from util import datetime_util
 from datetime import datetime
 from furl import furl
 from util.image_util import IMAGE_HEIGHT, IMAGE_WIDTH
-from database.category import CATEGORY_MAPPING
+from database.category import category_mapping
 from webpage import WAIT_FOR_ELEMENT_TIMEOUT, WAIT_FOR_SECTION_TIMEOUT, WAIT_FOR_MINIMUM_TIMEOUT
 import re
 
+
+def get_full_image_url(url):
+    # Expected https://a57.foxnews.com/static.foxnews.com/foxnews.com/content/uploads/2020/07/640/360/jasmine-Daniels-.jpg?tl=1&ve=1
+    # Full Image URL https://a57.foxnews.com/static.foxnews.com/foxnews.com/content/uploads/2020/07/648/365/jasmine-Daniels-.jpg
+    if url:
+        f = furl(url)
+        width, height = f.path.segments[-3:-1]
+        f.args = None
+        f.path.segments[-3:-1] = (IMAGE_WIDTH, IMAGE_HEIGHT) \
+            if re.search(r"^\d{3,4}$", width) and re.search(r"^\d{3,4}$", height) else (width, height)
+        return f.url
+    return url
 
 class Articles(Sections):
 
@@ -48,25 +60,11 @@ class Articles(Sections):
 
     @property
     def image_full(self):
-        # Expected https://a57.foxnews.com/static.foxnews.com/foxnews.com/content/uploads/2020/07/640/360/jasmine-Daniels-.jpg?tl=1&ve=1
-        # Full Image URL https://a57.foxnews.com/static.foxnews.com/foxnews.com/content/uploads/2020/07/648/365/jasmine-Daniels-.jpg
-        f = furl(self.image)
-        if f.url:
-            width, height = f.path.segments[-3:-1]
-            f.args = None
-            f.path.segments[-3:-1] = (IMAGE_WIDTH, IMAGE_HEIGHT) \
-                if re.search(r"^\d{3,4}$", width) and re.search(r"^\d{3,4}$", height) else (width, height)
-            return f.url
-        return None
+        return get_full_image_url(self.image)
 
     @property
     def category(self):
-        category = self.category_raw
-        if category:
-            for (k,v) in CATEGORY_MAPPING.items():
-                if category and any(c in category.lower() for c in v):
-                    return k
-        return None
+        return category_mapping(self.category_raw)
 
 
 class CrawlPage(Page):
@@ -93,7 +91,7 @@ class IndexPage(Page):
         value=lambda el:el.text,
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
-    author = Element(
+    author_raw = Element(
         Locators.CSS_SELECTOR,
         BASE_CSS_SELECTOR + "div.author-byline > span",
         value=lambda el: el.text,
@@ -107,8 +105,17 @@ class IndexPage(Page):
     )
 
     @property
+    def author(self):
+        author = self.author_raw
+        if author:
+            m = re.match(r'By (.*)( \| Fox News)', author)
+            if m:
+                return m.group(1)
+        return None
+
+    @property
     def datetime_created(self):
-        return self.datetime_raw
+        return datetime_util.str2datetime(self.datetime_raw)
 
     @property
     def content(self):
