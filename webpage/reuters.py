@@ -82,7 +82,7 @@ class Stories(Sections):
 class CrawlPage(Page):
     news = Stories(
         Locators.CSS_SELECTOR,
-        "article.story:not(.no-border-bottom)",
+        "div.column1 div.news-headline-list article.story",
         timeout=WAIT_FOR_SECTION_TIMEOUT
     )
     next = Element(
