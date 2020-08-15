@@ -27,6 +27,7 @@ class Crawler:
         self.page = page
         self.homepage_url = web_url
         self.current_page_number = 1
+        self.total_checked = 0
         self.total_found = 0
         self.start_time = datetime.now()
         if not self.SOURCE_ID:
@@ -82,6 +83,7 @@ class Crawler:
     def process_current_page(self):
         new_found = 0
         for np in self.page.news:
+            self.total_checked += 1
             record = dict(url=np.url)
             if not record["url"] in self.existing_urls:  # ("abc",) is different than ("abc")
                 np.root.scroll_to()
@@ -103,20 +105,21 @@ class Crawler:
 
     def crawl(self):
         source_name = self.source_db.get_source_name_by_id(self.SOURCE_ID)
-        self.logger.info("=====================  Crawling [%s] started  =====================" % source_name)
+        self.logger.info("==========================  Crawler [%s] started  ==========================" % source_name)
         self.goto_main_page()
         self.complete = False
         for i in range(self.MAX_CRAWLING_PAGES):
             try:
                 self.process_current_page()
-            except:
-                pass
+            except Exception as e:
+                self.logger.warning("%s" % e)
+                self.logger.warning("Error when crawling page [%d/%d], skipping the page......" %
+                                    (self.current_page_number, self.MAX_CRAWLING_PAGES))
             if self.complete or i == self.MAX_CRAWLING_PAGES - 1:
                 break
             self.goto_next_page()
-        self.logger.info("---------------------  Total [%s] New Records  ---------------------" % self.total_found)
-        self.logger.info("===========  Crawling [%s] completed in [%s]  ===========\n" %
-                         (source_name, str(datetime.now() - self.start_time)))
+        self.logger.info("===========  Crawler [%s] completed in [%s] found [%s/%s] new records  ===========\n" %
+                         (source_name, str(datetime.now() - self.start_time), self.total_found, self.total_checked))
 
 
 def main():
