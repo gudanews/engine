@@ -22,6 +22,7 @@ class UPICrawler(BaseCrawler):
     def goto_next_page(self):  # goes to next page
         self.current_page_number += 1
         web_url = "https://www.upi.com/Top_News/p%s/" % self.current_page_number
+        self.driver.switch_to_new_tab()
         self.driver.get(web_url)
         self.logger.info("Go To Page [%s/%s]......\n" % (self.current_page_number, self.MAX_CRAWLING_PAGES))
         time.sleep(self.WAIT_FOR_PAGE_READY)

@@ -22,6 +22,7 @@ class APCrawler(BaseCrawler):
     def goto_next_page(self):  # AP news only checks home page and top news page
         self.current_page_number += 1
         web_url = "https://apnews.com/apf-topnews"
+        self.driver.switch_to_new_tab()
         self.driver.get(web_url)
         self.logger.info("Checking AP Top News......\n")
         time.sleep(self.WAIT_FOR_PAGE_READY)
