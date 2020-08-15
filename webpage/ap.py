@@ -2,10 +2,20 @@ from holmium.core import Element, Elements, Locators, Section, Sections, Page
 from holmium.core.conditions import VISIBLE
 from util import datetime_util
 from furl import furl
-from database.category import CATEGORY_MAPPING
+from database.category import category_mapping
 from webpage import WAIT_FOR_ELEMENT_TIMEOUT, WAIT_FOR_SECTION_TIMEOUT, WAIT_FOR_MINIMUM_TIMEOUT
 import re
 
+
+def get_full_image_url(url):
+    # Expected https://storage.googleapis.com/afs-prod/media/8814cee91eef4fce825bfc90e6ddccf8/400.jpeg
+    # Image Full https://storage.googleapis.com/afs-prod/media/8814cee91eef4fce825bfc90e6ddccf8/800.jpeg
+    if url:
+        f = furl(url)
+        pixel = f.path.segments[-1]
+        f.path.segments[-1] = "800.jpeg" if re.search(r"^\d{3,4}.jpeg", pixel) else pixel
+        return f.url
+    return url
 
 class Cards(Sections):
 
@@ -58,14 +68,7 @@ class Cards(Sections):
 
     @property
     def image_full(self):
-        # Expected https://storage.googleapis.com/afs-prod/media/8814cee91eef4fce825bfc90e6ddccf8/400.jpeg
-        # Image Full https://storage.googleapis.com/afs-prod/media/8814cee91eef4fce825bfc90e6ddccf8/800.jpeg
-        f = furl(self.image)
-        if f.url:
-            pixel = f.path.segments[-1]
-            f.path.segments[-1] = "800.jpeg" if re.search(r"^\d{3,4}.jpeg", pixel) else pixel
-            return f.url
-        return None
+        return get_full_image_url(self.image)
 
     @property
     def author(self):
@@ -74,12 +77,7 @@ class Cards(Sections):
 
     @property
     def category(self):
-        category = self.category_raw
-        if category:
-            for (k,v) in CATEGORY_MAPPING.items():
-                if category and any(c in category.lower() for c in v):
-                    return k
-        return None
+        return category_mapping(self.category_raw)
 
 
 class CrawlPage(Page):

@@ -3,14 +3,28 @@ from holmium.core import Page
 from holmium.core.conditions import VISIBLE
 from util import datetime_util
 from furl import furl
-from database.category import CATEGORY_MAPPING
+from database.category import category_mapping
 from webpage import WAIT_FOR_ELEMENT_TIMEOUT, WAIT_FOR_SECTION_TIMEOUT, WAIT_FOR_MINIMUM_TIMEOUT
-import re
 
 
 # JULY 31, 2020 / 4:03 AM / 8 DAYS AGO
 DATETIME_PATTERN = r'^(?P<month>%s) (?P<day>\d{1,2})(\,{0,1}) (?P<year>\d{2,4}) / (?P<hour>\d{1,2}):(?P<minute>\d{2}) (?P<period>AM|PM)' % datetime_util.ANY_MONTHS
 
+def get_full_image_url(url):
+    # Expected https://s4.reutersmedia.net/resources/r/?m=02&d=20200728&t=2&i=1527461013&w=370&fh=&fw=&ll=&pl=&sq=&r=LYNXNPEG6R1MZ
+    # Full image URL https://s4.reutersmedia.net/resources/r/?m=02&d=20200728&t=2&i=1527461013&w=800&r=LYNXNPEG6R1MZ
+    if url:
+        f = furl(url)
+        parameters = dict(f.args)
+        if "w" in parameters.keys():
+            parameters["w"] = "800"
+        keys = sorted(parameters.keys())
+        f.args = None
+        for k in keys:
+            if parameters[k]:
+                f.args[k] = parameters[k]
+        return f.url
+    return url
 
 class Stories(Sections):
 
@@ -62,17 +76,7 @@ class Stories(Sections):
 
     @property
     def image_full(self):
-        # Expected https://s4.reutersmedia.net/resources/r/?m=02&d=20200728&t=2&i=1527461013&w=370&fh=&fw=&ll=&pl=&sq=&r=LYNXNPEG6R1MZ
-        # Full image URL https://s4.reutersmedia.net/resources/r/?m=02&d=20200728&t=2&i=1527461013&w=800&r=LYNXNPEG6R1MZ
-        f = furl(self.image)
-        if f.url:
-            if "w" in f.args.keys():
-                f.args["w"] = "800"
-            for k in f.args.keys():
-                if not f.args[k]:
-                    f.args.pop(k)
-            return f.url
-        return None
+        return get_full_image_url(self.image)
 
 
 class CrawlPage(Page):
@@ -150,11 +154,7 @@ class IndexPage(Page):
 
     @property
     def category(self):
-        category = self.category_raw
-        for (k,v) in CATEGORY_MAPPING.items():
-            if category and any(c in category.lower() for c in v):
-                return k
-        return None
+        return category_mapping(self.category_raw)
 
     @property
     def content(self):
