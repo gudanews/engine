@@ -1,9 +1,8 @@
 from util.webdriver_util import ChromeDriver
-from database.topic import HeadlineDB
+from database.topic import TopicDB
 from database.image import ImageDB
 from database.news import NewsDB
 from database.source import SourceDB
-from util.image_util import ImageHelper
 from datetime import datetime
 import logging
 import time
@@ -24,12 +23,13 @@ class Indexer:
     def __init__(self, driver, page):
         self.driver = driver
         self.page = page
-        self._indexing_news = []
+        self.indexing_news = []
         if not self.SOURCE_ID:
             raise NotImplementedError("Please Provide A Valid SOURCE_ID Before Proceed......")
         self.news_db = NewsDB()
-        self.headline_db = HeadlineDB()
+        self.topic_db = TopicDB()
         self.source_db = SourceDB()
+        self.image_db = ImageDB()
         self.start_time = datetime.now()
 
     def is_valid_news_url(self, url):
@@ -40,13 +40,13 @@ class Indexer:
         time.sleep(self.WAIT_FOR_PAGE_READY)
 
     def get_candidates(self):
-        return self.news_db.get_non_indexed_news_by_source(source = self.SOURCE_ID, max_count=3)
+        return self.news_db.get_non_indexed_news_by_source_id(source_id = self.SOURCE_ID, max_count=1)
         # raise NotImplementedError("Please Implement method <get_candidates> to use Indexer")
 
     def process_current_page(self):
         element = self.page
         record = dict()
-        for el in ("category", "heading", "datetime", "image", "body", "media", "author", "length"):  # No need to insert url again
+        for el in ("category", "title", "datetime_created", "image", "content", "media", "author"):  # No need to insert url again
             if el in dir(element):
                 record[el] = eval("element." + el)
                 if not record[el]:
@@ -59,8 +59,8 @@ class Indexer:
         source_name = self.source_db.get_source_name_by_id(self.SOURCE_ID)
         self.logger.info("=====================  Indexing [%s] started  =====================" % source_name)
 
-        self._indexing_news = self.get_candidates()
-        for (id, url) in self._indexing_news:
+        self.indexing_news = self.get_candidates()
+        for (id, url) in self.indexing_news:
             if self.is_valid_news_url(url):
                 self.go_to_page(url)
                 self.logger.info("LOADING PAGE [%s]" % url)

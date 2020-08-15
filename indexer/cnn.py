@@ -2,8 +2,6 @@ from indexer import Indexer as BaseIndexer
 from util.webdriver_util import ChromeDriver
 from webpage.cnn import IndexPage as CNNPage
 import logging
-from furl import furl
-import re
 
 
 class CNNIndexer(BaseIndexer):
