@@ -11,7 +11,7 @@ from util.webdriver_util import ChromeDriver
 import time
 from nltk.tokenize import sent_tokenize
 from util.common import MetaClassSingleton
-
+import difflib
 
 logger = logging.getLogger("Util.Text")
 
@@ -26,6 +26,17 @@ TEXT_PATH = os.path.join(TEXT_BASE_PATH, str(TODAY.year), "%02d" % TODAY.month, 
 MAX_ALLOWED_API_TEXT_LENGTH = 512
 MAX_ALLOWED_WEB_TEXT_LENGTH = 4980
 DELIMITER = "%%"
+
+def checksimilarity(a, b):
+    sim = difflib.get_close_matches
+    s = 0
+    wa = a.split()
+    wb = b.split()
+    for i in wb:
+        if sim(i, wa):
+            s += 1
+    n = float(s) / float(len(wb))
+    return n
 
 class Translation(metaclass=MetaClassSingleton):
 
@@ -137,13 +148,13 @@ class TextHelper:
         try:
             create_parent_folders(self.path)
             with open(self.path, "w") as fh:
-                fh.write(self._text)
+                fh.write(self.text)
             return self.path
         except:
             return None
 
     def translate(self, language="zh-CN"):
-        tl = GoogleTranslation(self._text)
+        tl = GoogleTranslation(self.text)
         return tl.translate(language=language)
 
     def save_translation(self, language="zh-CN"):
