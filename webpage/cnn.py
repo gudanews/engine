@@ -65,7 +65,7 @@ class News(Sections):
 class CrawlPage(Page):
     news = News(
         Locators.CSS_SELECTOR,
-        "section.zn-has-multiple-containers div.zn__containers li > article.cd--card.cd--article",
+        "section.zn-has-multiple-containers article.cd--article",
         timeout=WAIT_FOR_SECTION_TIMEOUT
     )
 
