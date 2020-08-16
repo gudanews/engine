@@ -41,7 +41,7 @@ class ImageHelper:
     @property
     def thumbnail(self):
         if not self._thumbnail:
-            name, extension = os.path.splitext(self.path)
+            name, extension = os.path.splitext(os.path.basename(self.path))
             self._thumbnail = os.path.join(os.path.dirname(self.path), name + "_TIMG" + extension)
         return self._thumbnail
 

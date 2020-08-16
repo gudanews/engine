@@ -97,6 +97,7 @@ class IndexPage(Page):
     BASE_CSS_SELECTOR = "div.StandardArticle_inner-container "
     HEADER_CSS_SELECTOR = BASE_CSS_SELECTOR + "div.ArticleHeader_content-container "
     BODY_CSS_SELECTOR = BASE_CSS_SELECTOR + "div.StandardArticleBody_container "
+    LIGHTBOX_CSS_SELECTOR = "div.Lightbox_content-container "
 
     category_raw = Element(
         Locators.CSS_SELECTOR,
@@ -116,10 +117,22 @@ class IndexPage(Page):
         value=lambda el: el.text,
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
-    image_raw = Elements(
+    image_expand_button = Element(
+        Locators.CSS_SELECTOR,
+        BODY_CSS_SELECTOR + "div.Image_expand-button[role='button']",
+        timeout=WAIT_FOR_MINIMUM_TIMEOUT
+    )
+    image_close_button = Element(
+        Locators.CSS_SELECTOR,
+        LIGHTBOX_CSS_SELECTOR + "button.SlideshowLightbox_back-button, "
+        + LIGHTBOX_CSS_SELECTOR + "button.SlideshowLightbox_close-button",
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
+    )
+    images_raw = Elements(
         Locators.CSS_SELECTOR,
         BODY_CSS_SELECTOR + "div.Image_container img, "
-        + BODY_CSS_SELECTOR + "div.Slideshow_container img",
+        + BODY_CSS_SELECTOR + "div.Graphic_container img, "
+        + LIGHTBOX_CSS_SELECTOR + "div.Carousel_container img",
         value=lambda el: el.get_attribute('src'),
         timeout=WAIT_FOR_MINIMUM_TIMEOUT
     )
@@ -142,12 +155,6 @@ class IndexPage(Page):
         value=lambda el:el.text,
         timeout=WAIT_FOR_MINIMUM_TIMEOUT
     )
-    length = Element(
-        Locators.CSS_SELECTOR,
-        HEADER_CSS_SELECTOR + "p.BylineBar_reading-time",
-        value=lambda el:el.text,
-        timeout=WAIT_FOR_ELEMENT_TIMEOUT
-    )
     @property
     def datetime_created(self):
         return datetime_util.get_datetime_use_pattern(DATETIME_PATTERN, self.datetime_raw)
@@ -165,13 +172,14 @@ class IndexPage(Page):
         return [m for m in self.media_raw]
 
     @property
-    def image(self):
-        normalized_results = []
-        results = []
-        for img in self.image_raw:
-            f = furl(img)
-            f.args.pop("w", None)
-            if not f.url in normalized_results: # Remove duplicate images.
-                normalized_results.append(f.url)
-                results.append(img)
-        return results
+    def images(self):
+        _images = []
+        if self.image_expand_button:
+            self.image_expand_button.click()
+        for image in self.images_raw:
+            full_image = get_full_image_url(image)
+            if not full_image in _images:
+                _images.append(full_image)
+        if self.image_close_button:
+            self.image_close_button.click()
+        return _images
