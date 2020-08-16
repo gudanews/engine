@@ -83,10 +83,11 @@ class NewsDB(DataBase):
             conditions.append(condition)
         elif isinstance(condition, list):
             conditions.extend(condition)
+        order_by = "datetime_created"
         limit = None
         if max_count:
             limit = max_count
-        return self.fetch_records(column=column, condition=conditions, limit=limit)
+        return self.fetch_records(column=column, condition=conditions, order_by=order_by, limit=limit)
 
     def get_non_indexed_news_by_source_id(self, source_id, column=None, max_count=0):
         condition = ["source_id = %d" % source_id]
@@ -112,6 +113,28 @@ class NewsDB(DataBase):
 
     def update_news_by_uuid(self, uuid, record):
         return self.update_record(record=record, condition="uuid = '%s'" % uuid)
+
+
+class NewsImageDB(DataBase):
+
+    COLUMN_CONSTRAINT = {
+        "news_id": (MANDATORY, int, 32),
+        "image_id": (MANDATORY, int, 32)
+    }
+    INSERT_COLUMN_CONSTRAINT = ["news_id", "image_id"]
+    UPDATE_COLUMN_CONSTRAINT = ["news_id", "image_id"]
+    SELECT_COLUMN_CONSTRAINT = ["news_id", "image_id"]
+
+
+    def __init__(self, user=None, password=None, host=None, database=None):
+        super(NewsDB, self).__init__("news_image", user=user, password=password, host=host, database=database)
+
+    def get_all_image_id_by_news_id(self, news_id):
+        return [r[0] for r in self.fetch_records(column=["image_id"], condition=["news_id = %d" % news_id])]
+
+    def add_news_image(self, news_id, image_id):
+        record = dict(news_id=news_id, image_id=image_id)
+        self.insert_record(record=record)
 
 
 from util.config_util import Configure

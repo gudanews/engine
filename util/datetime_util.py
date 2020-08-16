@@ -72,7 +72,7 @@ def str2datetime(p_time):
             if re.match(pattern, p_time, re.IGNORECASE):
                 return get_datetime_use_pattern(pattern, p_time)
     logger.warning("Cannot find the expected time format [%s]" % p_time)
-    return NOW
+    return None
 
 def get_datetime_use_pattern(pattern, p_time):
     m = re.match(pattern, p_time, re.IGNORECASE)

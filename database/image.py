@@ -3,6 +3,7 @@ import unittest
 import logging
 from database import MANDATORY, OPTIONAL
 from util.image_util import ImageHelper
+from datetime import datetime, timedelta
 
 
 logger = logging.getLogger("DataBase.Image")
@@ -23,6 +24,11 @@ class ImageDB(DataBase):
     def __init__(self, user=None, password=None, host=None, database=None):
         super(ImageDB, self).__init__("image", user=user, password=password, host=host, database=database)
 
+    def get_recent_image_id_by_url(self, url):
+        result = self.fetch_record(column="id", condition=["url = '%s'" % url,
+            "datetime_created > '%s'" % (datetime.strftime(datetime.now() - timedelta(days=60), "%Y-%m-%d %H:%M:%S"))])
+        return result[0] if result else 0
+
     def get_image_id_by_url(self, url):
         result = self.fetch_record(column="id", condition=["url = '%s'" % url])
         return result[0] if result else 0
@@ -33,10 +39,19 @@ class ImageDB(DataBase):
         result = self.fetch_record(column=column, condition=["id = %d" % id])
         return result if result else None
 
+    def get_image_url_by_news_id(self, news_id):
+        adv_query = "INNER JOIN news ON news.image_id = image.id where news.id='%d'" % news_id
+        result = self.fetch_advanced_record(column=["url"], advanced=adv_query)
+        return result[0] if result else None
+
+    def get_additional_image_url_by_news_id(self, news_id):
+        adv_query = "INNER JOIN news_image ON news_image.image_id = image.id where news_image.news_id='%d'" % news_id
+        return [r[0] for r in self.fetch_advanced_records(column=["url"], advanced=adv_query)]
+
     def add_image(self, url=None, generate_thumbnail=False):
         image_id = 0
         if url:
-            image_id = self.get_image_id_by_url(url)
+            image_id = self.get_recent_image_id_by_url(url)
             if not image_id:
                 img = ImageHelper(url)
                 logger.debug("Download image with URL [%s]" % url)
