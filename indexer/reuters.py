@@ -8,7 +8,7 @@ from furl import furl
 class ReutersIndexer(BaseIndexer):
 
     SOURCE_ID = 1
-    logger = logging.getLogger("Crawler.REU")
+    logger = logging.getLogger("Indexer.REU")
 
     def __init__(self, driver):
         page = ReutersPage(driver)
