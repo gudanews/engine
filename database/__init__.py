@@ -3,6 +3,7 @@ import logging
 import unittest
 from util.config_util import Configure
 import uuid
+from typing import List, Dict, Tuple, Optional, Any
 
 
 logger = logging.getLogger("Database")
@@ -26,6 +27,7 @@ class DataBase:
     SPECIAL_MYSQL_KEYWORDS = ["COUNT", "DISTINCT", "LENGTH"]
 
     def __init__(self, table, user=None, password=None, host=None, database=None):
+        # type: (str, Optional[str], Optional[str], Optional[str], Optional[str]) -> None
         user = user or DEFAULT_USER
         password = password or DEFAULT_PASSWORD
         host = host or DEFAULT_HOST
@@ -41,10 +43,12 @@ class DataBase:
         return self._table_schema
 
     def generate_uuid(self):
+        # type: () -> str
         uid = uuid.uuid4()
         return str(uid)
 
     def validate_insert_record(self, record, ignore_extra_keys=False):
+        # type: (Dict, Optional[bool]) -> bool
         if not self.INSERT_COLUMN_CONSTRAINT:
             raise Exception("Please define INSERT_COLUMN_CONSTRAINT before proceed")
         extra_keys = set(record.keys()) - set(self.INSERT_COLUMN_CONSTRAINT)
@@ -72,6 +76,7 @@ class DataBase:
         return True
 
     def validate_update_record(self, record, ignore_extra_keys=False):
+        # type: (Dict, Optional[bool]) -> bool
         if not self.UPDATE_COLUMN_CONSTRAINT:
             raise Exception("Please define UPDATE_COLUMN_CONSTRAINT before proceed")
         extra_keys = set(record.keys()) - set(self.UPDATE_COLUMN_CONSTRAINT)
@@ -100,6 +105,7 @@ class DataBase:
         return True
 
     def validate_select_record(self, column):
+        # type: (List) -> bool
         if not self.SELECT_COLUMN_CONSTRAINT:
             raise Exception("Please define SELECT_COLUMN_CONSTRAINT before proceed")
         if isinstance(column, str):
@@ -112,46 +118,62 @@ class DataBase:
         return True
 
     def count_records(self, condition=None):
-        column = "COUNT(*)"
+        # type: (Optional[List]) -> int
+        column = ["COUNT(*)"]
         count = self.fetch_record(column=column,condition=condition)
         return count[0]
 
     def insert_record(self, record, ignore_extra_keys=False):
+        # type: (Dict, Optional[bool]) -> bool
         if self.validate_insert_record(record, ignore_extra_keys=ignore_extra_keys):
             self._db.insert_table_record(self.table, record)
             return True
         return False
 
     def update_record(self, record, condition=None, ignore_extra_keys=False):
+        # type: (Dict, Optional[List], Optional[bool]) -> bool
         if self.validate_update_record(record, ignore_extra_keys=ignore_extra_keys):
             self._db.update_table_record(self.table, record, condition)
             return True
         return False
 
-    def fetch_records(self, column=None, condition=None, group_by=None, order_by=None, limit=None):
+    def fetch_records(self, column=None, condition=None, group_by=None, order_by=None,
+                      limit=None, record_as_dict=False):
+        # type: (Optional[List], Optional[List], Optional[str], Optional[str], Optional[int], Optional[bool]) -> List
         if not column or self.validate_select_record(column):
-            return self._db.fetch_table_records(table=self.table, column=column, condition=condition,
-                                                group_by=group_by, order_by=order_by, limit=limit)
+            return self._db.fetch_table_records(table=self.table, column=column, condition=condition, group_by=group_by,
+                                                order_by=order_by, limit=limit, record_as_dict=record_as_dict)
         return None
 
-    def fetch_advanced_records(self, column=None, advanced=None):
+    def fetch_advanced_records(self, column=None, advanced=None, record_as_dict=False):
+        # type: (Optional[List], Optional[List], Optional[str], Optional[str], Optional[int], Optional[bool]) -> List
         if not column or self.validate_select_record(column):
-            return self._db.fetch_advanced_table_records(table=self.table, column=column, advanced=advanced)
+            return self._db.fetch_advanced_table_records(table=self.table, column=column, advanced=advanced,
+                                                         record_as_dict=record_as_dict)
         return None
 
-    def fetch_record(self, column=None, condition=None, group_by=None, order_by=None):
+    def fetch_record(self, column=None, condition=None, group_by=None, order_by=None,
+                     record_as_dict=False):
+        # type: (Optional[List], Optional[List], Optional[str], Optional[str], Optional[int], Optional[bool]) -> List
         if not column or self.validate_select_record(column):
             return self._db.fetch_table_record(table=self.table, column=column, condition=condition,
-                                               group_by=group_by, order_by=order_by)
+                                               group_by=group_by, order_by=order_by, record_as_dict=record_as_dict)
         return None
 
-    def fetch_advanced_record(self, column=None, advanced=None):
+    def fetch_advanced_record(self, column=None, advanced=None, record_as_dict=False):
+        # type: (Optional[List], Optional[List], Optional[str], Optional[str], Optional[int], Optional[bool]) -> List
         if not column or self.validate_select_record(column):
-            return self._db.fetch_advanced_table_record(table=self.table, column=column, advanced=advanced)
+            return self._db.fetch_advanced_table_record(table=self.table, column=column, advanced=advanced,
+                                                        record_as_dict=record_as_dict)
         return None
 
     def delete_records(self, condition=None):
-        return self._db.delete_table_record(self.table, condition)
+        # type: (Optional[List]) -> bool
+        try:
+            self._db.delete_table_record(self.table, condition)
+            return True
+        except:
+            return False
 
 
 from util.common import LoggedTestCase
@@ -180,7 +202,7 @@ class TestBaseData(LoggedTestCase):
             "datetime_updated": (OPTIONAL, datetime),
             "quality": (OPTIONAL, int)
         }
-        self.data.INSERT_COLUMN_CONSTRAINT = ["uuid", "is_valid", "is_processed", "is_displayable", "category_id",
+        self.data.INSERT_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_processed", "is_displayable", "category_id",
                                               "news_id", "datetime_created", "datetime_updated", "quality"]
         self.data.UPDATE_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_processed", "is_displayable", "category_id",
                                               "news_id", "datetime_created", "datetime_updated", "quality"]
@@ -212,7 +234,7 @@ class TestBaseData(LoggedTestCase):
         results_2 = self.data.fetch_records(column=columns, condition=conditions)
         self.assertGreater(len(results_1), len(results_2))
         # Test retrieval non exist record
-        results = self.data.fetch_records(column=columns, condition="news_id = 999")
+        results = self.data.fetch_records(column=columns, condition=["news_id = 999"])
         self.assertEqual(len(results), 0)
         # Test retrieve with non-existing column
         columns = ["id", "uuids", "datetime_created", "news_id"]
@@ -222,9 +244,9 @@ class TestBaseData(LoggedTestCase):
     def test_count_records(self):
         results = self.data.count_records()
         self.assertEqual(results, 4)
-        results = self.data.count_records(condition="news_id = 1")
+        results = self.data.count_records(condition=["news_id = 1"])
         self.assertEqual(results, 2)
-        results = self.data.count_records(condition="news_id = 999")
+        results = self.data.count_records(condition=["news_id = 999"])
         self.assertEqual(results, 0)
 
     def test_insert_record(self):
@@ -232,22 +254,22 @@ class TestBaseData(LoggedTestCase):
         # with mandatory column
         record = dict(id=124, uuid="124", news_id=1)
         self.assertTrue(self.data.insert_record(record=record))
-        result = self.data.fetch_record(column=columns, condition="id = 124")
+        result = self.data.fetch_record(column=columns, condition=["id = 124"])
         self.assertEqual(result[0], 124)
         # missing mandatory column
         record = dict(id=125, uuid="125")
         self.assertFalse(self.data.insert_record(record=record))
-        result = self.data.fetch_record(column=columns, condition="id = 125")
+        result = self.data.fetch_record(column=columns, condition=["id = 125"])
         self.assertIsNone(result)
         # extra column
-        record = dict(id=126, uuid="126", news=1, extra="Extra")
+        record = dict(id=126, uuid="126", news_id=1, extra="Extra")
         self.assertFalse(self.data.insert_record(record=record))
-        results = self.data.fetch_records(column=columns, condition="id = 126")
+        results = self.data.fetch_records(column=columns, condition=["id = 126"])
         self.assertEqual(len(results), 0)
         # ignore extra column
-        record = dict(id=127, uuid="127", news=1, extra="Extra")
+        record = dict(id=127, uuid="127", news_id=1, extra="Extra")
         self.assertTrue(self.data.insert_record(record=record, ignore_extra_keys=True))
-        result = self.data.fetch_records(column=columns, condition="id = 127")
+        results = self.data.fetch_records(column=columns, condition=["id = 127"])
         self.assertEqual(len(results), 1)
 
 
@@ -255,7 +277,7 @@ class TestBaseData(LoggedTestCase):
         columns = ["id", "uuid", "datetime_created", "news_id"]
         conditions = ["id = 121"]
         record = dict(news_id=5)
-        self.assertTrue(self.data.update_record(record=record, condition="id = 121"))
+        self.assertTrue(self.data.update_record(record=record, condition=["id = 121"]))
         result = self.data.fetch_record(column=columns, condition=conditions)
         self.assertEqual(result[3], 5)
         # extra column

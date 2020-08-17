@@ -2,6 +2,7 @@ from database import DataBase
 import unittest
 import logging
 from database import MANDATORY, OPTIONAL
+from typing import List, Dict, Tuple, Optional, Any
 
 
 logger = logging.getLogger("DataBase.Image")
@@ -46,20 +47,24 @@ class CategoryDB(DataBase):
     SELECT_COLUMN_CONSTRAINT = ["id", "name", "display", "color"]
 
     def __init__(self, user=None, password=None, host=None, database=None):
+        # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
         super(CategoryDB, self).__init__("category", user=user, password=password, host=host, database=database)
 
     def get_category_id_by_name(self, name):
-        result = self.fetch_record(column="id", condition=["name = '%s'" % name])
+        # type: (str) -> int
+        result = self.fetch_record(column=["id"], condition=["name = '%s'" % name])
         return result[0] if result else 0
 
     def get_category_name_by_id(self, id):
-        result = self.fetch_record(column="name", condition=["id = %d" % id])
+        # type: (int) -> str
+        result = self.fetch_record(column=["name"], condition=["id = %d" % id])
         return result[0] if result else None
 
-    def add_category(self, name=None, alias=None):
+    def add_category(self, name=None, display_name=None):
+        # type: (Optional[str], Optional[str]) -> int
         record = dict()
         record.update({"name": name}) if name else None
-        record.update({"alias": alias}) if alias else None
+        record.update({"display_name": display_name}) if display_name else None
         if self.insert_record(record=record):
             return self._db._cursor.lastrowid
         return 0
