@@ -15,8 +15,9 @@ class NewsDB(DataBase):
     COLUMN_CONSTRAINT = {
         "id": (MANDATORY, int, 32),
         "uuid": (MANDATORY, str, 36),
-        "is_valid": (OPTIONAL, int, 1),
-        "is_indexed": (OPTIONAL, int, 1),
+        "debug": (OPTIONAL, bool),
+        "is_valid": (OPTIONAL, bool),
+        "is_indexed": (OPTIONAL, bool),
         "duplicate_id": (OPTIONAL, int, 32),
         "url": (MANDATORY, str, 512),
         "topic_id": (OPTIONAL, int, 32),
@@ -32,13 +33,13 @@ class NewsDB(DataBase):
         "translation_id": (OPTIONAL, int, 32),
         "views": (OPTIONAL, int, 24)
     }
-    INSERT_COLUMN_CONSTRAINT = ["uuid", "is_valid", "is_indexed", "duplicate_id", "url", "topic_id", "category_id",
+    INSERT_COLUMN_CONSTRAINT = ["uuid", "is_valid", "debug", "is_indexed", "duplicate_id", "url", "topic_id", "category_id",
                                 "source_id", "image_id", "title", "snippet", "content", "author", "datetime_created",
                                 "datetime_updated", "translation_id", "views"]
-    UPDATE_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_indexed", "duplicate_id", "url", "topic_id",
+    UPDATE_COLUMN_CONSTRAINT = ["id", "uuid", "debug", "is_valid", "is_indexed", "duplicate_id", "url", "topic_id",
                                 "category_id", "source_id", "image_id", "title", "snippet", "content", "author",
                                 "datetime_created", "datetime_updated", "translation_id", "views"]
-    SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "is_valid", "is_indexed", "duplicate_id", "url", "topic_id",
+    SELECT_COLUMN_CONSTRAINT = ["id", "uuid", "debug", "is_valid", "is_indexed", "duplicate_id", "url", "topic_id",
                                 "category_id", "source_id", "image_id", "title", "snippet", "content", "author",
                                 "datetime_created", "datetime_updated", "translation_id", "views"]
 
@@ -82,10 +83,10 @@ class NewsDB(DataBase):
         # type: (Optional[List], Optional[List], Optional[int], Optional[bool]) -> List
         if not column:
             column = self.SELECT_COLUMN_CONSTRAINT
-        conditions = ["is_indexed = 0"]
+        conditions = ["is_indexed is False"]
         if condition:
             conditions.extend(condition)
-        order_by = "datetime_created"
+        order_by = "datetime_created DESC"
         return self.fetch_records(column=column, condition=conditions, order_by=order_by,
                                   limit=max_count, record_as_dict=record_as_dict)
 

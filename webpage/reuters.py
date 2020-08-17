@@ -4,7 +4,8 @@ from holmium.core.conditions import VISIBLE
 from util import datetime_util
 from furl import furl
 from database.category import category_mapping
-from webpage import WAIT_FOR_ELEMENT_TIMEOUT, WAIT_FOR_SECTION_TIMEOUT, WAIT_FOR_MINIMUM_TIMEOUT
+from webpage import WAIT_FOR_ELEMENT_TIMEOUT, WAIT_FOR_SECTION_TIMEOUT, WAIT_FOR_MINIMUM_TIMEOUT, WAIT_FOR_PAGE_LOADING
+import time
 
 
 # JULY 31, 2020 / 4:03 AM / 8 DAYS AGO
@@ -15,15 +16,15 @@ def get_full_image_url(url):
     # Full image URL https://s4.reutersmedia.net/resources/r/?m=02&d=20200728&t=2&i=1527461013&w=800&r=LYNXNPEG6R1MZ
     if url:
         f = furl(url)
-        parameters = dict(f.args)
-        if "w" in parameters.keys():
+        if "reutersmedia.net" in f.host:
+            parameters = dict(f.args)
             parameters["w"] = "800"
-        keys = sorted(parameters.keys())
-        f.args = None
-        for k in keys:
-            if parameters[k]:
-                f.args[k] = parameters[k]
-        return f.url
+            keys = sorted(parameters.keys())
+            f.args = None
+            for k in keys:
+                if parameters[k]:
+                    f.args[k] = parameters[k]
+            return f.url
     return url
 
 class Stories(Sections):
@@ -176,6 +177,7 @@ class IndexPage(Page):
         _images = []
         if self.image_expand_button:
             self.image_expand_button.click()
+            time.sleep(WAIT_FOR_PAGE_LOADING)
         for image in self.images_raw:
             full_image = get_full_image_url(image)
             if not full_image in _images:
