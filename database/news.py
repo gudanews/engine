@@ -5,7 +5,7 @@ import logging
 from database.source import SourceDB
 from database import MANDATORY, OPTIONAL
 import time
-
+from typing import List, Dict, Tuple, Optional, Any
 
 logger = logging.getLogger("DataBase.News")
 
@@ -43,65 +43,78 @@ class NewsDB(DataBase):
                                 "datetime_created", "datetime_updated", "translation_id", "views"]
 
 
-    def __init__(self, user=None, password=None, host=None, database=None):
+    def __init__(self, user:str=None, password:str=None, host=None, database=None):
+        # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
         super(NewsDB, self).__init__("news", user=user, password=password, host=host, database=database)
 
-    def get_news_by_id(self, id, column=None):
+    def get_news_by_id(self, id, column=None, record_as_dict=False):
+        # type: (int, Optional[List], Optional[bool]) -> Any
         if not column:
             column = self.SELECT_COLUMN_CONSTRAINT
-        conditions = "id = %d" % id
-        return self.fetch_record(column=column, condition=conditions)
+        conditions = ["id = %d" % id]
+        return self.fetch_record(column=column, condition=conditions, record_as_dict=record_as_dict)
 
-    def get_news_by_uuid(self, uuid, column=None):
+    def get_news_by_uuid(self, uuid, column=None, record_as_dict=False):
+        # type: (str, Optional[List], Optional[bool]) -> Any
         if not column:
             column = self.SELECT_COLUMN_CONSTRAINT
-        conditions = "uuid = '%s'" % uuid
-        return self.fetch_record(column=column, condition=conditions)
+        conditions = ["uuid = '%s'" % uuid]
+        return self.fetch_record(column=column, condition=conditions, record_as_dict=record_as_dict)
 
-    def get_latest_news(self, column=None, condition=None, max_count=0):
+    def get_latest_news(self, column=None, condition=None, max_count=0, record_as_dict=False):
+        # type: (Optional[List], Optional[List], Optional[int], Optional[bool]) -> List
         if not column:
             column = self.SELECT_COLUMN_CONSTRAINT
         conditions = ["datetime_created > '%s'" % (datetime.strftime(datetime.now() - timedelta(days=14), "%Y-%m-%d %H:%M:%S"))]
-        if isinstance(condition, str):
-            conditions.append(condition)
-        elif isinstance(condition, list):
+        if condition:
             conditions.extend(condition)
-        limit = None
-        if max_count:
-            limit = max_count
-        return self.fetch_records(column=column, condition=conditions, limit=limit)
+        return self.fetch_records(column=column, condition=conditions, limit=max_count, record_as_dict=record_as_dict)
 
-    def get_latest_news_by_source_id(self, source_id, column=None, max_count=0):
-        condition = ["source_id = %d" % source_id]
-        return self.get_latest_news(column=column, condition=condition, max_count=max_count)
-
-    def get_non_indexed_news(self, column=None, condition=None, max_count=0):
+    def get_latest_news_by_source_id(self, source_id, column=None, max_count=0, record_as_dict=False):
+        # type: (int, Optional[List], Optional[int], Optional[bool]) -> List
         if not column:
-            column = ["id", "url"]
+            column = self.SELECT_COLUMN_CONSTRAINT
+        condition = ["source_id = %d" % source_id]
+        return self.get_latest_news(column=column, condition=condition, max_count=max_count,
+                                    record_as_dict=record_as_dict)
+
+    def get_non_indexed_news(self, column=None, condition=None, max_count=0, record_as_dict=True):
+        # type: (Optional[List], Optional[List], Optional[int], Optional[bool]) -> List
+        if not column:
+            column = self.SELECT_COLUMN_CONSTRAINT
         conditions = ["is_indexed = 0"]
-        if isinstance(condition, str):
-            conditions.append(condition)
-        elif isinstance(condition, list):
+        if condition:
             conditions.extend(condition)
         order_by = "datetime_created"
-        limit = None
-        if max_count:
-            limit = max_count
-        return self.fetch_records(column=column, condition=conditions, order_by=order_by, limit=limit)
+        return self.fetch_records(column=column, condition=conditions, order_by=order_by,
+                                  limit=max_count, record_as_dict=record_as_dict)
 
-    def get_non_indexed_news_by_source_id(self, source_id, column=None, max_count=0):
+    def get_non_indexed_news_by_source_id(self, source_id, column=None, max_count=0, record_as_dict=True):
+        # type: (int, Optional[List], Optional[int], Optional[bool]) -> List
+        if not column:
+            column = self.SELECT_COLUMN_CONSTRAINT
         condition = ["source_id = %d" % source_id]
-        return self.get_non_indexed_news(column=column, condition=condition, max_count=max_count)
+        return self.get_non_indexed_news(column=column, condition=condition,
+                                         max_count=max_count, record_as_dict=record_as_dict)
 
-    def get_news_by_topic_id(self, topic_id, column=None):
-        if isinstance(topic_id, str): #uuid
-            adv_query = "INNER JOIN topic ON topic.id = news.topic_id where topic.uuid='%s'" % topic_id
-            return self.fetch_advanced_records(column=column, advanced=adv_query)
-        else: #id
-            conditions = "topic_id = %d" % topic_id
-            return self.fetch_records(column=column, condition=conditions)
+    def get_news_by_topic_uuid(self, topic_uuid, column=None, max_count=0, record_as_dict=True):
+        # type: (str, Optional[List], Optional[int], Optional[bool]) -> List
+        if not column:
+            column = self.SELECT_COLUMN_CONSTRAINT
+        adv_query = "INNER JOIN topic ON topic.id = news.topic_id where topic.uuid='%s'" % topic_uuid
+        return self.fetch_advanced_records(column=column, advanced=adv_query,
+                                           max_count=max_count, record_as_dict=record_as_dict)
+
+    def get_news_by_topic_id(self, topic_id, column=None, max_count=0, record_as_dict=True):
+        # type: (int, Optional[List], Optional[int], Optional[bool]) -> List
+        if not column:
+            column = self.SELECT_COLUMN_CONSTRAINT
+        conditions = ["topic_id = %d" % topic_id]
+        return self.fetch_records(column=column, condition=conditions,
+                                  max_count=max_count, record_as_dict=record_as_dict)
 
     def add_news_use_record(self, record, ignore_extra_keys=True):
+        # type: (Dict, Optional[bool]) -> int
         uid = self.generate_uuid()
         record["uuid"] = uid
         if self.insert_record(record=record, ignore_extra_keys=ignore_extra_keys):
@@ -109,10 +122,12 @@ class NewsDB(DataBase):
         return 0
 
     def update_news_by_id(self, id, record):
-        return self.update_record(record=record, condition="id = %d" % id)
+        # type: (int, Dict) -> bool
+        return self.update_record(record=record, condition=["id = %d" % id])
 
     def update_news_by_uuid(self, uuid, record):
-        return self.update_record(record=record, condition="uuid = '%s'" % uuid)
+        # type: (str, Dict) -> bool
+        return self.update_record(record=record, condition=["uuid = '%s'" % uuid])
 
 
 class NewsImageDB(DataBase):
@@ -127,12 +142,15 @@ class NewsImageDB(DataBase):
 
 
     def __init__(self, user=None, password=None, host=None, database=None):
+        # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
         super(NewsDB, self).__init__("news_image", user=user, password=password, host=host, database=database)
 
     def get_all_image_id_by_news_id(self, news_id):
+        # type: (int) -> List
         return [r[0] for r in self.fetch_records(column=["image_id"], condition=["news_id = %d" % news_id])]
 
     def add_news_image(self, news_id, image_id):
+        # type: (int, int) -> None
         record = dict(news_id=news_id, image_id=image_id)
         self.insert_record(record=record)
 
@@ -153,8 +171,8 @@ class TestNewsDataDB(LoggedTestCase):
     def setUp(self):
         self.data = NewsDB(user=SANDBOX_USER, password=SANDBOX_PASSWORD, host=SANDBOX_HOST, database=SANDBOX_DATABASE)
         self.data.delete_records()
-        self.data.add_news_use_record(record=dict(source_id=1, uuid="1", url="http://www.reuters.com/news1", title="News title1"),
-                                      datetime_created=datetime.now() - timedelta(days=28))
+        self.data.add_news_use_record(record=dict(source_id=1, uuid="1", url="http://www.reuters.com/news1", title="News title1",
+                                      datetime_created=datetime.now() - timedelta(days=28)))
         self.data.add_news_use_record(record=dict(source_id=2, uuid="2", url="http://www.ap.com/news2", title="News title2"))
         self.data.add_news_use_record(record=dict(source_id=1, uuid="3", url="http://www.cnn.com/news3", title="News title3"))
         self.data.add_news_use_record(record=dict(source_id=3, uuid="4", url="http://www.foxnews.com/news4", title="News title4"))
@@ -172,7 +190,7 @@ class TestNewsDataDB(LoggedTestCase):
 
     def test_get_latest_news_by_source_id(self):
         results = self.data.get_latest_news_by_source_id(source_id=1)
-        self.assertEqual(len(results), 2)
+        self.assertEqual(len(results), 1)
 
     def test_add_news(self):
         record = dict(source_id=1, uuid="5", title="H1", url="http://www.reuters.com/h1news")
@@ -181,14 +199,15 @@ class TestNewsDataDB(LoggedTestCase):
         record = dict(source_id=1, uuid="6", title="H1", url="http://www.reuters.com/h1news",
                       datetime_created=datetime.now() - timedelta(days=28))
         result = self.data.add_news_use_record(record)
-        self.assertEqual(result, 0)
+        self.assertGreater(result, 0)
 
     def test_update_news_by_id(self):
         columns = ["id", "uuid", "title"]
         record = dict(title="Title123")
-        id = self.data.fetch_record(column="id", condition="source_id=1")[0]
-        result = self.data.get_news_by_id(id=id, column=columns)
-        self.assertEqual(result[2], "Title123")
+        id = self.data.fetch_record(column=["id"], condition=["source_id=2"])[0]
+        self.data.update_news_by_id(id, record)
+        title = self.data.fetch_record(column=["title"], condition=["id=%d" % id])[0]
+        self.assertEqual(title, "Title123")
 
 
 if __name__ == "__main__":

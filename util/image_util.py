@@ -7,6 +7,8 @@ import unittest
 from util.config_util import Configure
 import logging
 from util import generate_random_alphanumeric_string, create_parent_folders, human_format
+from typing import List, Dict, Tuple, Optional, Any
+
 
 logger = logging.getLogger("Util.Image")
 
@@ -29,6 +31,7 @@ IMAGE_PIXEL_MIN = 20
 class ImageHelper:
 
     def __init__(self, url, path=None):
+        # type: (str, Optional[str]) -> None
         self.url = url
         if not path:
             _name = generate_random_alphanumeric_string(24) + ".jpg"
@@ -55,6 +58,7 @@ class ImageHelper:
             return os.path.relpath(self.thumbnail, WEBSITE_BASE_PATH)
 
     def is_image_valid(self, path=None):
+        # type: (Optional[str]) -> bool
         if not path:
             path = self.path
         size = self.get_image_size(path)
@@ -64,12 +68,14 @@ class ImageHelper:
         return True
 
     def get_image_size(self, path=None):
+        # type: (Optional[str]) -> Tuple
         if not path:
             path = self.path
         with Image.open(path) as img:
             return img.size # (width, height) format
 
     def download_image(self, url=None, path=None, generate_thumbnail=False, keep_original=False):
+        # type: (Optional[str], Optional[str], Optional[bool], Optional[bool]) -> bool
         if not url:
             url = self.url
         if not path:
@@ -99,12 +105,14 @@ class ImageHelper:
         return False
 
     def generate_thumbnail(self):
+        # type: () -> None
         self.resize(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, src_path=self.path, dst_path=self.thumbnail)
         self.cropping(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, src_path=self.thumbnail, dst_path=self.thumbnail)
         logger.debug("Creating thumbnail image [%s]" % self.thumbnail)
 
 
     def resize(self, width, height, keep_aspect_ratio=True, for_chopping=True, src_path=None, dst_path=None):
+        # type: (int, int, Optional[bool], Optional[bool], Optional[str], Optional[str]) -> Tuple
         # for_cropping if not for_padding
         if not src_path:
             src_path = self.path
@@ -127,6 +135,7 @@ class ImageHelper:
         return size
 
     def padding(self, width, height, src_path=None, dst_path=None, fill=DEFAULT_FILLING):
+        # type: (int, int, Optional[str], Optional[str], Optional[str]) -> Tuple
         if not src_path:
             src_path = self.path
         if not dst_path:
@@ -148,6 +157,7 @@ class ImageHelper:
         return size
 
     def cropping(self, width, height, src_path=None, dst_path=None):
+        # type: (int, int, Optional[str], Optional[str]) -> Tuple
         if not src_path:
             src_path = self.path
         if not dst_path:

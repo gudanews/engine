@@ -5,6 +5,7 @@ import logging
 from database.source import SourceDB
 from database import MANDATORY, OPTIONAL
 import time
+from typing import List, Dict, Tuple, Optional, Any
 
 
 logger = logging.getLogger("Database.Topic")
@@ -34,34 +35,34 @@ class TopicDB(DataBase):
 
 
     def __init__(self, user=None, password=None, host=None, database=None):
+        # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
         super(TopicDB, self).__init__("topic", user=user, password=password, host=host, database=database)
 
-    def get_topic_by_id(self, id, column=None):
+    def get_topic_by_id(self, id, column=None, record_as_dict=False):
+        # type: (int, Optional[List], Optional[bool]) -> Any
         if not column:
             column = self.SELECT_COLUMN_CONSTRAINT
-        conditions = "id = %d" % id
-        return self.fetch_record(column=column, condition=conditions)
+        conditions = ["id = %d" % id]
+        return self.fetch_record(column=column, condition=conditions, record_as_dict=record_as_dict)
 
-    def get_topic_by_uuid(self, uuid, column=None):
+    def get_topic_by_uuid(self, uuid, column=None, record_as_dict=False):
+        # type: (str, Optional[List], Optional[bool]) -> Any
         if not column:
             column = self.SELECT_COLUMN_CONSTRAINT
-        conditions = "uuid = '%s'" % uuid
-        return self.fetch_record(column=column, condition=conditions)
+        conditions = ["uuid = '%s'" % uuid]
+        return self.fetch_record(column=column, condition=conditions, record_as_dict=record_as_dict)
 
-    def get_latest_topics(self, column=None, condition=None, max_count=0):
+    def get_latest_topics(self, column=None, condition=None, max_count=0, record_as_dict=False):
+        # type: (Optional[List], Optional[List], Optional[int], Optional[bool]) -> List
         if not column:
             column = self.SELECT_COLUMN_CONSTRAINT
         conditions = ["datetime_created > '%s'" % (datetime.strftime(datetime.now() - timedelta(days=14), "%Y-%m-%d %H:%M:%S"))]
-        if isinstance(condition, str):
-            conditions.append(condition)
-        elif isinstance(condition, list):
+        if condition:
             conditions.extend(condition)
-        limit = None
-        if max_count:
-            limit = max_count
-        return self.fetch_records(column=column, condition=conditions, limit=limit)
+        return self.fetch_records(column=column, condition=conditions, limit=max_count, record_as_dict=record_as_dict)
 
     def add_topic(self, record):
+        # type: (List) -> int
         uid = self.generate_uuid()
         record["uuid"] = uid
         if self.insert_record(record=record, ignore_extra_keys=True):
@@ -69,10 +70,12 @@ class TopicDB(DataBase):
         return 0
 
     def update_topic_by_id(self, id, record):
-        return self.update_record(record=record, condition="id = %d" % id)
+        # type: (int, List) -> bool
+        return self.update_record(record=record, condition=["id = %d" % id])
 
     def update_topic_by_uuid(self, uuid, record):
-        return self.update_record(record=record, condition="uuid = '%s'" % uuid)
+        # type: (str, List) -> bool
+        return self.update_record(record=record, condition=["uuid = '%s'" % uuid])
 
 
 from util.config_util import Configure
@@ -97,8 +100,8 @@ class TestTopicDB(LoggedTestCase):
         time.sleep(1.0)
 
     def test_get_latest_topics(self):
-        columns = ["id", "uuid", "datetime_created", "news_id", "source_id"]
-        results = self.data.get_latest_headlines(column=columns)
+        columns = ["id", "uuid", "datetime_created", "news_id"]
+        results = self.data.get_latest_topics(column=columns)
         self.assertEqual(len(results), 2)
         first_news_date = results[0][2]
         start_date = datetime.now() - timedelta(days=14)
@@ -113,12 +116,12 @@ class TestTopicDB(LoggedTestCase):
     def test_update_topic_by_id(self):
         columns = ["id", "uuid", "news_id"]
         record = dict(news_id=10)
-        id = self.data.fetch_record(column="id")[0]
+        id = self.data.fetch_record(column=["id"])[0]
         self.data.update_topic_by_id(id=id, record=record)
         result = self.data.get_topic_by_id(id=id, column=columns)
         self.assertEqual(result[2], 10)
         record = dict(news_id=20)
-        uid = self.data.fetch_record(column="uuid")[0]
+        uid = self.data.fetch_record(column=["uuid"])[0]
         self.data.update_topic_by_uuid(uuid=uid, record=record)
         result = self.data.get_topic_by_uuid(uuid=uid, column=columns)
         self.assertEqual(result[2], 20)
