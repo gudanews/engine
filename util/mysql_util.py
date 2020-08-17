@@ -164,11 +164,7 @@ class MySQLDB(metaclass=MetaClassSingleton):
             val.append(v)
         sql = "UPDATE %s SET %s" % (table, ",".join(col))
         if condition:
-            sql += " WHERE "
-            if isinstance(condition, str):
-                sql += condition
-            elif isinstance(condition, list):
-                sql += " AND ".join(condition)
+            sql += " WHERE " + " AND ".join(condition)
         logger.debug("Update table using SQL query:\t%s" % sql)
         self._commit(sql, val=tuple(val))
 
@@ -178,11 +174,7 @@ class MySQLDB(metaclass=MetaClassSingleton):
         val = []
         sql = "DELETE FROM %s" % table
         if condition:
-            sql += " WHERE "
-            if isinstance(condition, str):
-                sql += condition
-            elif isinstance(condition, list):
-                sql += " AND ".join(condition)
+            sql += " WHERE " + " AND ".join(condition)
         logger.debug("Update table using SQL query:\t%s" % sql)
         self._commit(sql)
 

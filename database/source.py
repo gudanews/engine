@@ -10,7 +10,7 @@ logger = logging.getLogger("DataBase.Source")
 class SourceDB(DataBase):
 
     COLUMN_CONSTRAINT = {
-        "id": (MANDATORY, int, MANDATORY),
+        "id": (MANDATORY, int, 16),
         "short_name": (MANDATORY, str, 8),
         "full_name": (OPTIONAL, str, 32),
         "color": (OPTIONAL, str, 8),
