@@ -37,6 +37,9 @@ class Indexer:
         self.translation_db = TranslationDB()
         self.category_db = CategoryDB()
         self.start_time = datetime.now()
+        self.total_indexed = 0
+        self.total_invalid = 0
+        self.total_record = 0
 
     def is_valid_news_url(self, url):
         return True
@@ -97,24 +100,32 @@ class Indexer:
         return record
 
     def is_valid_indexing_record(self, record_indexing, record_existing):
+        news_id = record_existing["id"]
         # Check if the title is similar to existing record
         title_indexing = record_indexing.get("title", "")
         title_existing = record_existing.get("title", "")
-        if not title_indexing or (title_existing and checksimilarity(title_indexing, title_existing) < 0.5):
-            return False
+        if not title_indexing or (title_existing and checksimilarity(title_indexing, title_existing) < 0.4):
+            self.logger.warning("<news> [ID=%s] found different title\n[EXSITING]\t%s\n[INDEXING]\t%s"
+                                % (news_id, title_existing, title_indexing))
+            # return False
         # Check if the datetime created is similar to existing record
         datetime_indexing = record_indexing.get("datetime_created", None)
         datetime_existing = record_existing.get("datetime_created", None)
-        if datetime_indexing and datetime_existing and abs(datetime_indexing - datetime_existing) > timedelta(days=1):
-            return False
+        if datetime_indexing and datetime_existing and abs(datetime_indexing - datetime_existing) > timedelta(hours=24):
+            self.logger.warning("<news> [ID=%s] found different timestamp\n[EXSITING]\t%s\n[INDEXING]\t%s"
+                                % (news_id, datetime_existing, datetime_indexing))
+            # return False
         # Check if the content can be found
         if not record_indexing.get("content", None):
+            self.logger.warning("<news> [ID=%s] cannot find content during indexing" % news_id)
             return False
         # Check if the category is the same as existing record
         if "category" in record_indexing:
             record_indexing["category_id"] = self.category_db.get_category_id_by_name(record_indexing.pop("category"))
-        if record_existing.get("category_id") != record_indexing.get("category_id"):
-            return False
+            if record_existing.get("category_id") and record_existing.get("category_id") != record_indexing.get("category_id"):
+                self.logger.warning("<news> [ID=%s] found different category\n[EXSITING]\t%s\n[INDEXING]\t%s"
+                                    % (news_id, record_existing["category_id"], record_indexing["category_id"]))
+                return False
         return True
 
     def index(self):
@@ -122,19 +133,34 @@ class Indexer:
         self.logger.info("=====================  Indexing [%s] started  =====================" % source_name)
         self.indexing_news = self.get_candidates()
         for record_existing in self.indexing_news:
-            if self.is_valid_news_url(record_existing.get("url")):
-                self.go_to_page(record_existing.get("url"))
-                self.logger.info("LOADING PAGE [%s]" % record_existing.get("url"))
-                record_indexing = self.create_record_with_page_element()
-                if self.is_valid_indexing_record(record_indexing, record_existing):
-                    news_id = record_existing.get("id")
-                    if not DEBUGGING_TEST:
-                        self.process_image(record_indexing, news_id)
-                        self.process_text(record_indexing, record_existing)
-                        if self.news_db.update_news_by_id(id=news_id, record=record_indexing):
-                            self.logger.info("Updted <news> DB [ID=%s] With Values" % (news_id))
+            news_id = record_existing.get("id")
+            try:
+                if self.is_valid_news_url(record_existing.get("url")):
+                    self.go_to_page(record_existing.get("url"))
+                    self.logger.info("LOADING PAGE [%s]" % record_existing.get("url"))
+                    record_indexing = self.create_record_with_page_element()
+                    if self.is_valid_indexing_record(record_indexing, record_existing):
+                        if not DEBUGGING_TEST:
+                            self.process_image(record_indexing, news_id)
+                            self.process_text(record_indexing, record_existing)
+                            record_indexing["is_indexed"] = True
+                            if self.news_db.update_news_by_id(id=news_id, record=record_indexing):
+                                self.logger.info("Completed <news> [ID=%s] indexing" % news_id)
+                                self.total_indexed += 1
+                                continue
+                if self.news_db.update_news_by_id(id=news_id, record=dict(is_valid=False, is_indexed=True)):
+                    self.logger.warning("Mark <news> [ID=%s] invalid" % news_id)
+                    self.total_invalid += 1
+            except Exception as e:
+                self.logger.warning("%s" % e)
+                self.logger.warning("Error when indexing record[%d], skip to the next record......" % news_id)
+                if self.news_db.update_news_by_id(id=news_id, record=dict(debug=True, is_indexed=True)):
+                    self.logger.warning("Mark <news> [ID=%s] as debug" % news_id)
+            finally:
+                self.total_record += 1
 
-        self.logger.info("---------------------  Total New Records  ---------------------")
+        self.logger.info("-------------  Total [%d/%d/%d] (indexed/invalid/total) Records  -----------" %
+                         (self.total_indexed, self.total_invalid, self.total_record))
         self.logger.info("===========  Indexing [%s] completed in [%s]  ===========\n" %
                          (source_name, str(datetime.now() - self.start_time)))
 
