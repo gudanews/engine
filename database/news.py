@@ -121,13 +121,13 @@ class NewsDB(DataBase):
             return self._db._cursor.lastrowid
         return 0
 
-    def update_news_by_id(self, id, record):
+    def update_news_by_id(self, id, record, ignore_extra_keys=True):
         # type: (int, Dict) -> bool
-        return self.update_record(record=record, condition=["id = %d" % id])
+        return self.update_record(record=record, condition=["id = %d" % id], ignore_extra_keys=ignore_extra_keys)
 
-    def update_news_by_uuid(self, uuid, record):
+    def update_news_by_uuid(self, uuid, record, ignore_extra_keys=True):
         # type: (str, Dict) -> bool
-        return self.update_record(record=record, condition=["uuid = '%s'" % uuid])
+        return self.update_record(record=record, condition=["uuid = '%s'" % uuid], ignore_extra_keys=ignore_extra_keys)
 
 
 class NewsImageDB(DataBase):
@@ -143,7 +143,7 @@ class NewsImageDB(DataBase):
 
     def __init__(self, user=None, password=None, host=None, database=None):
         # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
-        super(NewsDB, self).__init__("news_image", user=user, password=password, host=host, database=database)
+        super(NewsImageDB, self).__init__("news_image", user=user, password=password, host=host, database=database)
 
     def get_all_image_id_by_news_id(self, news_id):
         # type: (int) -> List

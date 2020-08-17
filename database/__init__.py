@@ -108,8 +108,6 @@ class DataBase:
         # type: (List) -> bool
         if not self.SELECT_COLUMN_CONSTRAINT:
             raise Exception("Please define SELECT_COLUMN_CONSTRAINT before proceed")
-        if isinstance(column, str):
-            column = [column]
         extra_keys = set(column) - set(self.SELECT_COLUMN_CONSTRAINT)
         for key in extra_keys:
             if not any([k in key for k in self.SPECIAL_MYSQL_KEYWORDS]):
@@ -143,14 +141,14 @@ class DataBase:
         if not column or self.validate_select_record(column):
             return self._db.fetch_table_records(table=self.table, column=column, condition=condition, group_by=group_by,
                                                 order_by=order_by, limit=limit, record_as_dict=record_as_dict)
-        return None
+        return []
 
     def fetch_advanced_records(self, column=None, advanced=None, record_as_dict=False):
         # type: (Optional[List], Optional[List], Optional[str], Optional[str], Optional[int], Optional[bool]) -> List
-        if not column or self.validate_select_record(column):
+        if advanced:
             return self._db.fetch_advanced_table_records(table=self.table, column=column, advanced=advanced,
                                                          record_as_dict=record_as_dict)
-        return None
+        return []
 
     def fetch_record(self, column=None, condition=None, group_by=None, order_by=None,
                      record_as_dict=False):
@@ -162,7 +160,7 @@ class DataBase:
 
     def fetch_advanced_record(self, column=None, advanced=None, record_as_dict=False):
         # type: (Optional[List], Optional[List], Optional[str], Optional[str], Optional[int], Optional[bool]) -> List
-        if not column or self.validate_select_record(column):
+        if advanced:
             return self._db.fetch_advanced_table_record(table=self.table, column=column, advanced=advanced,
                                                         record_as_dict=record_as_dict)
         return None

@@ -6,7 +6,7 @@ from furl import furl
 import re
 
 
-class APIndexer(BaseIndexer):
+class _APIndexer(BaseIndexer):
 
     MAX_CRAWLING_PAGES = 1
     SOURCE_ID = 2
@@ -14,11 +14,11 @@ class APIndexer(BaseIndexer):
 
     def __init__(self, driver):
         page = APPage(driver)
-        super(APIndexer, self).__init__(driver, page)
+        super(_APIndexer, self).__init__(driver, page)
 
 
 if __name__ == "__main__":
     driver = ChromeDriver()
-    indexer = APIndexer(driver)
+    indexer = _APIndexer(driver)
     indexer.index()
     driver.close()
