@@ -16,9 +16,9 @@ class TopicDB(DataBase):
     COLUMN_CONSTRAINT = {
         "id": (MANDATORY, int, 32),
         "uuid": (MANDATORY, str, 36),
-        "is_valid": (OPTIONAL, int, 1),
-        "is_processed": (OPTIONAL, int, 1),
-        "is_displayable": (OPTIONAL, int, 1),
+        "is_valid": (OPTIONAL, bool),
+        "is_processed": (OPTIONAL, bool),
+        "is_displayable": (OPTIONAL, bool),
         "duplicate_id": (OPTIONAL, int, 32),
         "category_id": (OPTIONAL, int, 16),
         "news_id": (MANDATORY, int, 32),

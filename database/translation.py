@@ -15,7 +15,7 @@ class TranslationDB(DataBase):
         "language_id": (MANDATORY, int, 8),
         "title": (OPTIONAL, str, 256),
         "snippet": (OPTIONAL, str, 512),
-        "content": (OPTIONAL, int, 128)
+        "content": (OPTIONAL, str, 128)
     }
     INSERT_COLUMN_CONSTRAINT = ["language_id", "title", "snippet", "content"]
     UPDATE_COLUMN_CONSTRAINT = ["id", "language_id", "title", "snippet", "content"]
@@ -31,7 +31,7 @@ class TranslationDB(DataBase):
             column = self.SELECT_COLUMN_CONSTRAINT
         return self.fetch_record(column=column, condition=["id = %d" % id], record_as_dict=record_as_dict)
 
-    def add_translation(self, text_helper, title=None, snippet=None, content=None, language="zh_CN"):
+    def add_translation(self, text_helper, title=None, snippet=None, content=None, language="zh-CN"):
         # type: (Any, Optional[str], Optional[str], Optional[str], Optional[int]) -> int
         translation_id = 0
         if not isinstance(text_helper, TextHelper):
@@ -40,13 +40,10 @@ class TranslationDB(DataBase):
         if title or snippet or content:
             text_helper.set_text(text=content)
             text_helper.set_language(language=language)
-            if title:
-                title = text_helper.translate(text=title, language=language)
-            if snippet:
-                snippet = text_helper.translate(text=snippet, language=language)
-            if content:
-                content = text_helper.save_translation(language=language)
-            translation_id = self.add_translation_db(title=title, snippet=snippet, content=content)
+            title = text_helper.translate(text=title, language=language)
+            snippet = text_helper.translate(text=snippet, language=language)
+            content = text_helper.save_translation(language=language)
+            translation_id = self.add_translation_db(title=title, snippet=snippet, content=content, language_id=1)
             logger.debug("Added translation [ID=%d]" % translation_id)
         return translation_id
 
