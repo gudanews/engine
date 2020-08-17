@@ -42,7 +42,7 @@ class Translation(metaclass=MetaClassSingleton):
 
     __metaclass__ = MetaClassSingleton
 
-    def __init__(self, text=None, language=None):
+    def __init__(self, text=None, language="zh_CN"):
         self.driver = None
         self.page = None
         self.last = None
@@ -55,12 +55,15 @@ class Translation(metaclass=MetaClassSingleton):
     def set_language(self, language):
         self.language = language
 
-    def translate(self, language=None):
-        if len(self.text) < MAX_ALLOWED_API_TEXT_LENGTH:
-            return self.translate_use_googletrans(language=language)
-        return self.translate_use_website(language=language)
+    def translate(self, text=None, language=None):
+        text = text or self.text
+        language = language or self.language
+        if len(text) < MAX_ALLOWED_API_TEXT_LENGTH:
+            return self.translate_use_googletrans(text=text, language=language)
+        return self.translate_use_website(text=text, language=language)
 
-    def translate_use_googletrans(self, language=None): # Limitation of length and usage frequency
+    def translate_use_googletrans(self, text=None, language=None): # Limitation of length and usage frequency
+        text = text or self.text
         language = language or self.language
         if language:
             translator = Translator(service_urls=[
@@ -74,21 +77,22 @@ class Translation(metaclass=MetaClassSingleton):
             if self.last and (datetime.now() - self.last < timedelta(seconds=2)):
                 time.sleep(2.0)
             self.last = datetime.now()
-            return translator.translate(self.text, dest=language).text
-        return self.text
+            return translator.translate(text=text, dest=language).text
+        return text
 
-    def translate_use_website(self, language=None):
+    def translate_use_website(self, text=None, language=None):
+        text = text or self.text
         language = language or self.language
         if language:
             self.driver.get(self.page.build_translation_url(language=language))
-            paragraphs = self.split_into_paragraphs(self.text)
+            paragraphs = self.split_into_paragraphs(text)
             translation = ""
             for p in paragraphs:
                 time.sleep(2.0) if translation else None
                 self.page.input.send_keys(p)
                 translation += self.page.output
             return translation
-        return self.text
+        return text
 
     def split_into_paragraphs(self, text=None):
         text = text or self.text
@@ -111,11 +115,12 @@ class GoogleTranslation(Translation):
     def __init__(self, text=None, language="zh-CN"):
         super(GoogleTranslation, self).__init__(text=text, language=language)
 
-    def translate_use_website(self, language=None):
+    def translate_use_website(self, text=None, language=None):
         from webpage.google import GoogleTranslationPage
-        self.driver = ChromeDriver()
+        if not self.driver:
+            self.driver = ChromeDriver()
         self.page = GoogleTranslationPage(self.driver)
-        return super(GoogleTranslation, self).translate_use_website(language=language)
+        return super(GoogleTranslation, self).translate_use_website(text=text, language=language)
 
 
 class TextHelper:
@@ -124,6 +129,7 @@ class TextHelper:
         self.text = text
         self._path = path
         self.language = language
+        self.translation = GoogleTranslation(text=text, language=language)
 
     def set_text(self, text):
         self.text = text
@@ -153,9 +159,10 @@ class TextHelper:
         except:
             return None
 
-    def translate(self, language="zh-CN"):
-        tl = GoogleTranslation(self.text)
-        return tl.translate(language=language)
+    def translate(self, text=None, language=None):
+        text = text or self.text
+        language = language or self.language
+        return self.translation.translate(text=text, language=language)
 
     def save_translation(self, language="zh-CN"):
         try:

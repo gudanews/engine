@@ -4,7 +4,7 @@ from webpage.cnn import IndexPage as CNNPage
 import logging
 
 
-class CNNIndexer(BaseIndexer):
+class _CNNIndexer(BaseIndexer):
 
     MAX_CRAWLING_PAGES = 1
     SOURCE_ID = 101
@@ -12,11 +12,11 @@ class CNNIndexer(BaseIndexer):
 
     def __init__(self, driver):
         page = CNNPage(driver)
-        super(CNNIndexer, self).__init__(driver, page)
+        super(_CNNIndexer, self).__init__(driver, page)
 
 
 if __name__ == "__main__":
     driver = ChromeDriver()
-    indexer = CNNIndexer(driver)
+    indexer = _CNNIndexer(driver)
     indexer.index()
     driver.close()

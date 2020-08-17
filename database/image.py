@@ -16,11 +16,12 @@ class ImageDB(DataBase):
         "id": (MANDATORY, int, 32),
         "path": (OPTIONAL, str, 128),
         "thumbnail": (OPTIONAL, str, 128),
-        "url": (OPTIONAL, str, 512)
+        "url": (OPTIONAL, str, 512),
+        "datetime_created": (OPTIONAL, datetime)
     }
-    INSERT_COLUMN_CONSTRAINT = ["path", "thumbnail", "url"]
-    UPDATE_COLUMN_CONSTRAINT = ["id", "path", "thumbnail", "url"]
-    SELECT_COLUMN_CONSTRAINT = ["id", "path", "thumbnail", "url"]
+    INSERT_COLUMN_CONSTRAINT = ["path", "thumbnail", "url", "datetime_created"]
+    UPDATE_COLUMN_CONSTRAINT = ["id", "path", "thumbnail", "url", "datetime_created"]
+    SELECT_COLUMN_CONSTRAINT = ["id", "path", "thumbnail", "url", "datetime_created"]
 
     def __init__(self, user=None, password=None, host=None, database=None):
         # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
@@ -46,14 +47,14 @@ class ImageDB(DataBase):
 
     def get_image_url_by_news_id(self, news_id):
         # type: (int) -> str
-        adv_query = "INNER JOIN news ON news.image_id = image.id where news.id='%d'" % news_id
-        result = self.fetch_advanced_record(column=["url"], advanced=adv_query)
-        return result[0] if result else None
+        adv_query = "INNER JOIN news ON news.image_id = image.id where news.id=%d" % news_id
+        result = self.fetch_advanced_record(column=["image.url"], advanced=adv_query)
+        return result[0] if result[0] else None
 
     def get_additional_image_url_by_news_id(self, news_id):
         # type: (int) -> List
-        adv_query = "INNER JOIN news_image ON news_image.image_id = image.id where news_image.news_id='%d'" % news_id
-        return [r[0] for r in self.fetch_advanced_records(column=["url"], advanced=adv_query)]
+        adv_query = "INNER JOIN news_image ON news_image.image_id = image.id where news_image.news_id=%d" % news_id
+        return [r[0] for r in self.fetch_advanced_records(column=["image.url"], advanced=adv_query)]
 
     def add_image(self, url=None, generate_thumbnail=False):
         # type: (Optional[str], Optional[bool]) -> int

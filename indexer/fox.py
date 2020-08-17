@@ -6,7 +6,7 @@ from furl import furl
 import re
 
 
-class FoxIndexer(BaseIndexer):
+class _FoxIndexer(BaseIndexer):
 
     MAX_CRAWLING_PAGES = 1
     SOURCE_ID = 104
@@ -14,11 +14,11 @@ class FoxIndexer(BaseIndexer):
 
     def __init__(self, driver):
         page = FoxPage(driver)
-        super(FoxIndexer, self).__init__(driver, page)
+        super(_FoxIndexer, self).__init__(driver, page)
 
 
 if __name__ == "__main__":
     driver = ChromeDriver()
-    indexer = FoxIndexer(driver)
+    indexer = _FoxIndexer(driver)
     indexer.index()
     driver.close()
