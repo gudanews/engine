@@ -148,13 +148,13 @@ class Indexer:
                                 self.logger.info("Completed <news> [ID=%s] indexing" % news_id)
                                 self.total_indexed += 1
                                 continue
-                if self.news_db.update_news_by_id(id=news_id, record=dict(is_valid=False, is_indexed=True)):
+                if self.news_db.update_news_by_id(id=news_id, record=dict(is_valid=False)):
                     self.logger.warning("Mark <news> [ID=%s] invalid" % news_id)
                     self.total_invalid += 1
             except Exception as e:
                 self.logger.warning("%s" % e)
                 self.logger.warning("Error when indexing record[%d], skip to the next record......" % news_id)
-                if self.news_db.update_news_by_id(id=news_id, record=dict(debug=True, is_indexed=True)):
+                if self.news_db.update_news_by_id(id=news_id, record=dict(debug=True)):
                     self.logger.warning("Mark <news> [ID=%s] as debug" % news_id)
             finally:
                 self.total_record += 1
