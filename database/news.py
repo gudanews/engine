@@ -83,7 +83,7 @@ class NewsDB(DataBase):
         # type: (Optional[List], Optional[List], Optional[int], Optional[bool]) -> List
         if not column:
             column = self.SELECT_COLUMN_CONSTRAINT
-        conditions = ["is_indexed is False"]
+        conditions = ["is_indexed is False", "is_valid is True", "debug is False"]
         if condition:
             conditions.extend(condition)
         order_by = "datetime_created DESC"
