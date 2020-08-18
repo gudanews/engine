@@ -95,10 +95,9 @@ class CrawlPage(Page):
 
 class IndexPage(Page):
 
-    BASE_CSS_SELECTOR = "div.StandardArticle_inner-container "
-    HEADER_CSS_SELECTOR = BASE_CSS_SELECTOR + "div.ArticleHeader_content-container "
-    BODY_CSS_SELECTOR = BASE_CSS_SELECTOR + "div.StandardArticleBody_container "
-    LIGHTBOX_CSS_SELECTOR = "div.Lightbox_content-container "
+    HEADER_CSS_SELECTOR = "div.ArticleHeader_container "
+    BODY_CSS_SELECTOR = "div.StandardArticleBody_container "
+    LIGHTBOX_CSS_SELECTOR = "div.Lightbox_container "
 
     category_raw = Element(
         Locators.CSS_SELECTOR,
