@@ -129,7 +129,7 @@ class IndexPage(Page):
         Locators.CSS_SELECTOR,
         "div.RelatedTopics li.tag",
         value=lambda el: el.text,
-        timeout=WAIT_FOR_MINIMUM_TIMEOUT
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     image_gallery_open = Element(
         Locators.CSS_SELECTOR,
