@@ -76,7 +76,7 @@ class Indexer:
         all_images = self.image_db.get_additional_image_url_by_news_id(news_id)
         for img in images_indexing:
             if img and img not in all_images:
-                img_id = self.image_db.add_image(img, generate_thumbnail=not all_images)
+                img_id = self.image_db.add_image(img, generate_thumbnail=not image_existing)
                 if not image_existing:
                     self.news_db.update_news_by_id(id=news_id, record=dict(image_id=img_id))
                 self.news_image_db.add_news_image(news_id=news_id, image_id=img_id)
