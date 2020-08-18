@@ -2,7 +2,6 @@ from indexer import Indexer as BaseIndexer
 from util.webdriver_util import ChromeDriver
 from webpage.reuters import IndexPage as ReutersPage
 import logging
-from furl import furl
 
 
 class ReutersIndexer(BaseIndexer):

@@ -47,13 +47,13 @@ class ImageDB(DataBase):
 
     def get_image_url_by_news_id(self, news_id):
         # type: (int) -> str
-        adv_query = "INNER JOIN news ON news.image_id = image.id where news.id=%d" % news_id
+        adv_query = "INNER JOIN news ON news.image_id = image.id WHERE news.id=%d" % news_id
         result = self.fetch_advanced_record(column=["image.url"], advanced=adv_query)
         return result[0] if result[0] else None
 
     def get_additional_image_url_by_news_id(self, news_id):
         # type: (int) -> List
-        adv_query = "INNER JOIN news_image ON news_image.image_id = image.id where news_image.news_id=%d" % news_id
+        adv_query = "INNER JOIN news_image ON news_image.image_id = image.id WHERE news_image.news_id=%d" % news_id
         return [r[0] for r in self.fetch_advanced_records(column=["image.url"], advanced=adv_query)]
 
     def add_image(self, url=None, generate_thumbnail=False):
@@ -79,6 +79,34 @@ class ImageDB(DataBase):
         if self.insert_record(record=record):
             return self._db._cursor.lastrowid
         return 0
+
+
+class NewsImageDB(DataBase):
+
+    COLUMN_CONSTRAINT = {
+        "news_id": (MANDATORY, int, 32),
+        "image_id": (MANDATORY, int, 32)
+    }
+    INSERT_COLUMN_CONSTRAINT = ["news_id", "image_id"]
+    UPDATE_COLUMN_CONSTRAINT = ["news_id", "image_id"]
+    SELECT_COLUMN_CONSTRAINT = ["news_id", "image_id"]
+
+
+    def __init__(self, user=None, password=None, host=None, database=None):
+        # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
+        super(NewsImageDB, self).__init__("news_image", user=user, password=password, host=host, database=database)
+
+    def get_all_image_id_by_news_id(self, news_id):
+        # type: (int) -> List
+        return [r[0] for r in self.fetch_records(column=["image_id"], condition=["news_id = %d" % news_id])]
+
+    def add_news_image(self, news_id, image_id):
+        # type: (int, int) -> None
+        if news_id and image_id:
+            record = dict(news_id=news_id, image_id=image_id)
+            self.insert_record(record=record)
+        else:
+            logger.warning("Trying to insert invalid <news_image> record [news_id=%s, image_id=%s]" % (news_id, image_id))
 
 
 from util.config_util import Configure
