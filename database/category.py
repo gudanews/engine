@@ -5,7 +5,7 @@ from database import MANDATORY, OPTIONAL
 from typing import List, Dict, Tuple, Optional, Any
 
 
-logger = logging.getLogger("DataBase.Image")
+logger = logging.getLogger("DataBase.Category")
 
 
 CATEGORY_MAPPING = {
@@ -60,6 +60,18 @@ class CategoryDB(DataBase):
         result = self.fetch_record(column=["name"], condition=["id = %d" % id])
         return result[0] if result else None
 
+    def get_category_name_by_news_id(self, news_id):
+        # type: (int) -> str
+        adv_query = "INNER JOIN news ON news.category_id = category.id WHERE news.id=%d" % news_id
+        result = self.fetch_advanced_record(column=["category.name"], advanced=adv_query)
+        return result[0] if result[0] else None
+
+    def get_additional_category_name_by_news_id(self, news_id):
+        # type: (int) -> List
+        adv_query = "INNER JOIN news_category ON news_category.category_id = category.id WHERE news_category.news_id=%d" % news_id
+        return [r[0] for r in self.fetch_advanced_records(column=["category.name"], advanced=adv_query)]
+
+
     def add_category(self, name=None, display_name=None):
         # type: (Optional[str], Optional[str]) -> int
         record = dict()
@@ -68,6 +80,34 @@ class CategoryDB(DataBase):
         if self.insert_record(record=record):
             return self._db._cursor.lastrowid
         return 0
+
+
+class NewsCategoryDB(DataBase):
+
+    COLUMN_CONSTRAINT = {
+        "news_id": (MANDATORY, int, 32),
+        "category_id": (MANDATORY, int, 8)
+    }
+    INSERT_COLUMN_CONSTRAINT = ["news_id", "category_id"]
+    UPDATE_COLUMN_CONSTRAINT = ["news_id", "category_id"]
+    SELECT_COLUMN_CONSTRAINT = ["news_id", "category_id"]
+
+
+    def __init__(self, user=None, password=None, host=None, database=None):
+        # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
+        super(NewsCategoryDB, self).__init__("news_category", user=user, password=password, host=host, database=database)
+
+    def get_all_category_id_by_news_id(self, news_id):
+        # type: (int) -> List
+        return [r[0] for r in self.fetch_records(column=["category_id"], condition=["news_id = %d" % news_id])]
+
+    def add_news_category(self, news_id, category_id):
+        # type: (int, int) -> None
+        if news_id and category_id:
+            record = dict(news_id=news_id, category_id=category_id)
+            self.insert_record(record=record)
+        else:
+            logger.warning("Trying to insert invalid <news_category> record [news_id=%s, category_id=%s]" % (news_id, category_id))
 
 
 from util.config_util import Configure
@@ -81,7 +121,7 @@ SANDBOX_HOST = config.sandbox["db_host"]
 SANDBOX_DATABASE = config.sandbox["db_schema"]
 
 
-class TestImageData(LoggedTestCase):
+class TestCategoryData(LoggedTestCase):
 
     def setUp(self):
         self.data = CategoryDB(user=SANDBOX_USER, password=SANDBOX_PASSWORD, host=SANDBOX_HOST, database=SANDBOX_DATABASE)

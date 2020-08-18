@@ -131,31 +131,6 @@ class NewsDB(DataBase):
         return self.update_record(record=record, condition=["uuid = '%s'" % uuid], ignore_extra_keys=ignore_extra_keys)
 
 
-class NewsImageDB(DataBase):
-
-    COLUMN_CONSTRAINT = {
-        "news_id": (MANDATORY, int, 32),
-        "image_id": (MANDATORY, int, 32)
-    }
-    INSERT_COLUMN_CONSTRAINT = ["news_id", "image_id"]
-    UPDATE_COLUMN_CONSTRAINT = ["news_id", "image_id"]
-    SELECT_COLUMN_CONSTRAINT = ["news_id", "image_id"]
-
-
-    def __init__(self, user=None, password=None, host=None, database=None):
-        # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
-        super(NewsImageDB, self).__init__("news_image", user=user, password=password, host=host, database=database)
-
-    def get_all_image_id_by_news_id(self, news_id):
-        # type: (int) -> List
-        return [r[0] for r in self.fetch_records(column=["image_id"], condition=["news_id = %d" % news_id])]
-
-    def add_news_image(self, news_id, image_id):
-        # type: (int, int) -> None
-        record = dict(news_id=news_id, image_id=image_id)
-        self.insert_record(record=record)
-
-
 from util.config_util import Configure
 from util.common import LoggedTestCase
 

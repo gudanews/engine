@@ -1,10 +1,10 @@
 from util.webdriver_util import ChromeDriver
 from database.topic import TopicDB
-from database.image import ImageDB
-from database.news import NewsDB, NewsImageDB
+from database.image import ImageDB, NewsImageDB
+from database.news import NewsDB
 from database.source import SourceDB
 from database.translation import TranslationDB
-from database.category import CategoryDB
+from database.category import CategoryDB, NewsCategoryDB
 from datetime import datetime, timedelta
 import logging
 import time
@@ -31,6 +31,7 @@ class Indexer:
             raise NotImplementedError("Please Provide A Valid SOURCE_ID Before Proceed......")
         self.news_db = NewsDB()
         self.news_image_db = NewsImageDB()
+        self.news_category_db = NewsCategoryDB()
         self.topic_db = TopicDB()
         self.source_db = SourceDB()
         self.image_db = ImageDB()
@@ -50,7 +51,25 @@ class Indexer:
         time.sleep(self.WAIT_FOR_PAGE_READY)
 
     def get_candidates(self):
-        return self.news_db.get_non_indexed_news_by_source_id(source_id = self.SOURCE_ID, max_count=10)
+        return self.news_db.get_non_indexed_news_by_source_id(source_id = self.SOURCE_ID, max_count=2)
+
+    def process_category(self, record_indexing, news_id):
+        categories_indexing = record_indexing.pop("categories", [])
+        if record_indexing.get("category", None):
+            categories_indexing.append(record_indexing.pop("category"))
+        category_existing = self.category_db.get_category_name_by_id(news_id)
+        all_categories = []
+        if category_existing:
+            all_categories.append(category_existing)
+            all_categories.extend(self.category_db.get_additional_category_name_by_news_id(news_id))
+        for cat in categories_indexing:
+            if cat and cat not in all_categories:
+                cat_id = self.category_db.get_category_id_by_name(cat)
+                if not all_categories:
+                    self.news_db.update_news_by_id(id=news_id, record=dict(category_id=cat_id))
+                else:
+                    self.news_category_db.add_news_category(news_id=news_id, category_id=cat_id)
+                all_categories.append(cat)
 
     def process_image(self, record_indexing, news_id):
         images_indexing = record_indexing.pop("images", [])
@@ -90,7 +109,9 @@ class Indexer:
 
     def create_record_with_page_element(self):
         record = dict()
-        for el in ("category", "images", "image", "media", "title", "datetime_created", "content", "author"):
+        if "popup" in dir(self.page):
+            self.page.dismiss_popup()
+        for el in ("category", "categories", "author", "title", "datetime_created", "content", "media", "image", "images"):
             if el in dir(self.page):
                 record[el] = eval("self.page." + el)
                 if not record[el]:
@@ -125,7 +146,7 @@ class Indexer:
             if record_existing.get("category_id") and record_existing.get("category_id") != record_indexing.get("category_id"):
                 self.logger.warning("<news> [ID=%s] found different category\n[EXSITING]\t%s\n[INDEXING]\t%s"
                                     % (news_id, record_existing["category_id"], record_indexing["category_id"]))
-                return False
+                # return False
         return True
 
     def index(self):
@@ -141,6 +162,7 @@ class Indexer:
                     record_indexing = self.create_record_with_page_element()
                     if self.is_valid_indexing_record(record_indexing, record_existing):
                         if not DEBUGGING_TEST:
+                            self.process_category(record_indexing, news_id)
                             self.process_image(record_indexing, news_id)
                             self.process_text(record_indexing, record_existing)
                             record_indexing["is_indexed"] = True
@@ -148,13 +170,13 @@ class Indexer:
                                 self.logger.info("Completed <news> [ID=%s] indexing" % news_id)
                                 self.total_indexed += 1
                                 continue
-                if self.news_db.update_news_by_id(id=news_id, record=dict(is_valid=False)):
+                if not DEBUGGING_TEST and self.news_db.update_news_by_id(id=news_id, record=dict(is_valid=False)):
                     self.logger.warning("Mark <news> [ID=%s] invalid" % news_id)
                     self.total_invalid += 1
             except Exception as e:
                 self.logger.warning("%s" % e)
                 self.logger.warning("Error when indexing record[%d], skip to the next record......" % news_id)
-                if self.news_db.update_news_by_id(id=news_id, record=dict(debug=True)):
+                if not DEBUGGING_TEST and self.news_db.update_news_by_id(id=news_id, record=dict(debug=True)):
                     self.logger.warning("Mark <news> [ID=%s] as debug" % news_id)
             finally:
                 self.total_record += 1
