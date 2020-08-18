@@ -172,6 +172,7 @@ class IndexPage(Page):
 
     @property
     def categories(self):
+        self.dismiss_popup(wait=False)
         _categories = []
         cat = self.category_raw
         if cat:
