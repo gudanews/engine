@@ -59,14 +59,11 @@ class Indexer:
         if record_indexing.get("category", None):
             categories_indexing.append(record_indexing.pop("category"))
         category_existing = self.category_db.get_category_name_by_news_id(news_id)
-        all_categories = []
-        if category_existing:
-            all_categories.append(category_existing)
-            all_categories.extend(self.category_db.get_additional_category_name_by_news_id(news_id))
+        all_categories = self.category_db.get_additional_category_name_by_news_id(news_id)
         for cat in categories_indexing:
             if cat and cat not in all_categories:
                 cat_id = self.category_db.get_category_id_by_name(cat)
-                if not all_categories:
+                if not category_existing:
                     self.news_db.update_news_by_id(id=news_id, record=dict(category_id=cat_id))
                 self.news_category_db.add_news_category(news_id=news_id, category_id=cat_id)
                 all_categories.append(cat)
@@ -76,14 +73,11 @@ class Indexer:
         if record_indexing.get("image", None):
             images_indexing.append(record_indexing.pop("image"))
         image_existing = self.image_db.get_image_url_by_news_id(news_id)
-        all_images = []
-        if image_existing:
-            all_images.append(image_existing)
-            all_images.extend(self.image_db.get_additional_image_url_by_news_id(news_id))
+        all_images = self.image_db.get_additional_image_url_by_news_id(news_id)
         for img in images_indexing:
             if img and img not in all_images:
                 img_id = self.image_db.add_image(img, generate_thumbnail=not all_images)
-                if not all_images:
+                if not image_existing:
                     self.news_db.update_news_by_id(id=news_id, record=dict(image_id=img_id))
                 self.news_image_db.add_news_image(news_id=news_id, image_id=img_id)
                 all_images.append(img)

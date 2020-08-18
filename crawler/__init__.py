@@ -1,10 +1,10 @@
 from util.webdriver_util import ChromeDriver
 import logging
 import time
-from database.image import ImageDB
+from database.image import ImageDB, NewsImageDB
 from database.news import NewsDB
 from database.source import SourceDB
-from database.category import CategoryDB
+from database.category import CategoryDB, NewsCategoryDB
 from datetime import datetime, timedelta
 
 DEBUGGING_TEST = False
@@ -33,6 +33,8 @@ class Crawler:
         if not self.SOURCE_ID:
             raise NotImplementedError("Please Provide A Valid SOURCE_ID Before Proceed......")
         self.news_db = NewsDB()
+        self.news_image_db = NewsImageDB()
+        self.news_category_db = NewsCategoryDB()
         self.image_db = ImageDB()
         self.category_db = CategoryDB()
         self.source_db = SourceDB()
@@ -78,6 +80,9 @@ class Crawler:
         record["category_id"] = self.category_db.get_category_id_by_name(record.get("category", None))
         record["source_id"] = self.SOURCE_ID
         news_id = self.news_db.add_news_use_record(record=record) if not DEBUGGING_TEST else 0
+        if not DEBUGGING_TEST and news_id:
+            self.news_image_db.add_news_image(news_id=news_id, image_id=record["image_id"])
+            self.news_category_db.add_news_category(news_id=news_id, category_id=record["category_id"])
         self.logger.info("Inserted Into <news> DB [ID=%s] With Values: %s." % (news_id, record))
 
     def process_current_page(self):
