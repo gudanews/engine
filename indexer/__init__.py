@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import logging
 import time
 from util.text_util import checksimilarity, TextHelper
+import re
 
 
 DEBUGGING_TEST = False
@@ -57,7 +58,7 @@ class Indexer:
         categories_indexing = record_indexing.pop("categories", [])
         if record_indexing.get("category", None):
             categories_indexing.append(record_indexing.pop("category"))
-        category_existing = self.category_db.get_category_name_by_id(news_id)
+        category_existing = self.category_db.get_category_name_by_news_id(news_id)
         all_categories = []
         if category_existing:
             all_categories.append(category_existing)
@@ -67,8 +68,7 @@ class Indexer:
                 cat_id = self.category_db.get_category_id_by_name(cat)
                 if not all_categories:
                     self.news_db.update_news_by_id(id=news_id, record=dict(category_id=cat_id))
-                else:
-                    self.news_category_db.add_news_category(news_id=news_id, category_id=cat_id)
+                self.news_category_db.add_news_category(news_id=news_id, category_id=cat_id)
                 all_categories.append(cat)
 
     def process_image(self, record_indexing, news_id):
@@ -85,8 +85,7 @@ class Indexer:
                 img_id = self.image_db.add_image(img, generate_thumbnail=not all_images)
                 if not all_images:
                     self.news_db.update_news_by_id(id=news_id, record=dict(image_id=img_id))
-                else:
-                    self.news_image_db.add_news_image(news_id=news_id, image_id=img_id)
+                self.news_image_db.add_news_image(news_id=news_id, image_id=img_id)
                 all_images.append(img)
 
     def process_text(self, record_indexing, record_existing):
@@ -98,14 +97,19 @@ class Indexer:
             content_indexing.split("\n")[0][:512] if content_indexing else None
         text_helper = TextHelper(text=content_indexing)
         translation_id = self.translation_db.add_translation(text_helper=text_helper, title=title_indexing,
-                                                             snippet=snippet_indexing, content=content_indexing)
-        content_indexing = text_helper.save()
-        record = dict(content=content_indexing, translation_id=translation_id)
+            snippet=snippet_indexing, content=content_indexing) if not record_existing.get("translation_id", None) else 0
+        content_indexing = text_helper.save() if not record_existing.get("content", None) else None
+        record = dict()
         if title_indexing != record_existing.get("title"):
             record["title"] = title_indexing
         if snippet_indexing != snippet_existing:
             record["snippet"] = snippet_indexing
-        self.news_db.update_news_by_id(id=news_id, record=record)
+        if content_indexing:
+            record["content"] = content_indexing
+        if translation_id:
+            record["translation_id"]= translation_id
+        if record:
+            self.news_db.update_news_by_id(id=news_id, record=record)
 
     def create_record_with_page_element(self):
         record = dict()
@@ -137,15 +141,16 @@ class Indexer:
                                 % (news_id, datetime_existing, datetime_indexing))
             # return False
         # Check if the content can be found
-        if not record_indexing.get("content", None):
+        content = re.sub(re.compile(r'\s+'), '', record_indexing.get("content", ""))
+        if len(content) < 20:
             self.logger.warning("<news> [ID=%s] cannot find content during indexing" % news_id)
             return False
         # Check if the category is the same as existing record
-        if "category" in record_indexing:
-            record_indexing["category_id"] = self.category_db.get_category_id_by_name(record_indexing.pop("category"))
-            if record_existing.get("category_id") and record_existing.get("category_id") != record_indexing.get("category_id"):
-                self.logger.warning("<news> [ID=%s] found different category\n[EXSITING]\t%s\n[INDEXING]\t%s"
-                                    % (news_id, record_existing["category_id"], record_indexing["category_id"]))
+        # if "category" in record_indexing:
+        #     record_indexing["category_id"] = self.category_db.get_category_id_by_name(record_indexing.pop("category"))
+        #     if record_existing.get("category_id") and record_existing.get("category_id") != record_indexing.get("category_id"):
+        #         self.logger.warning("<news> [ID=%s] found different category\n[EXSITING]\t%s\n[INDEXING]\t%s"
+        #                             % (news_id, record_existing["category_id"], record_indexing["category_id"]))
                 # return False
         return True
 
