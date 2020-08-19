@@ -15,7 +15,7 @@ class APIndexer(BaseIndexer):
 
 
 if __name__ == "__main__":
-    driver = ChromeDriver()
+    driver = ChromeDriver(light_version=False)
     indexer = APIndexer(driver)
     indexer.index()
     driver.close()

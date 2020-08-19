@@ -23,28 +23,29 @@ class ChromeDriver(webdriver.Chrome):
     """
     #__metaclass__ = MetaClassSingleton
 
-    def __init__(self):
+    def __init__(self, light_version=True):
         chrome_options = Options()
         if USE_HEADLESS_CHROME:
             chrome_options.add_argument("--headless")
+            if not light_version:
+                chrome_options.add_argument("--window-size=1366,768")
         else:
             chrome_options.add_argument("--start-maximized")
+        chrome_options.add_argument('--no-proxy-server')
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--mute-audio")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument('--disable-gpu')
-        # chrome_options.add_experimental_option("prefs", {"profile.managed_default_content_settings.images": 2})
-        # chrome_options.add_experimental_option("prefs", {"profile.managed_default_content_settings.popups": 1})
-        chrome_options.add_argument("--window-size=1366,768")
-        chrome_options.add_argument("--ignore-certificate-errors")
+        chrome_options.add_argument('--incognito')
+        chrome_options.add_argument("--no-first-run")
+        chrome_options.add_argument("--disable-extensions")
         chrome_options.add_argument("--suppress-message-center-popups")
         chrome_options.add_argument("--disable-popup-blocking")
         chrome_options.add_argument("--disable-notifications")
-        chrome_options.add_argument("--disable-extensions")
-        chrome_options.add_argument('--incognito')
-        chrome_options.add_argument("--no-first-run")
-
-
+        # chrome_options.add_experimental_option("prefs", {"profile.managed_default_content_settings.images": 2})
+        # chrome_options.add_experimental_option("prefs", {"profile.managed_default_content_settings.popups": 1})
+        if not light_version:
+            chrome_options.add_argument("--ignore-certificate-errors")
         super(ChromeDriver, self).__init__(options=chrome_options, desired_capabilities=None)
 
     def scroll_down(self):
