@@ -80,10 +80,12 @@ class Crawler:
         record["category_id"] = self.category_db.get_category_id_by_name(record.get("category", None))
         record["source_id"] = self.SOURCE_ID
         news_id = self.news_db.add_news_use_record(record=record) if not DEBUGGING_TEST else 0
-        if not DEBUGGING_TEST and news_id:
-            self.news_image_db.add_news_image(news_id=news_id, image_id=record["image_id"])
-            self.news_category_db.add_news_category(news_id=news_id, category_id=record["category_id"])
         self.logger.info("Inserted Into <news> DB [ID=%s] With Values: %s." % (news_id, record))
+        if not DEBUGGING_TEST and news_id:
+            if record["image_id"]:
+                self.news_image_db.add_news_image(news_id=news_id, image_id=record["image_id"])
+            if record["category_id"]:
+                self.news_category_db.add_news_category(news_id=news_id, category_id=record["category_id"])
 
     def process_current_page(self):
         new_found = 0
