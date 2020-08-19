@@ -52,7 +52,7 @@ class Indexer:
         time.sleep(self.WAIT_FOR_PAGE_READY)
 
     def get_candidates(self):
-        return self.news_db.get_non_indexed_news_by_source_id(source_id = self.SOURCE_ID, max_count=6)
+        return self.news_db.get_non_indexed_news_by_source_id(source_id = self.SOURCE_ID, max_count=5)
 
     def process_category(self, record_indexing, news_id):
         categories_indexing = record_indexing.pop("categories", [])
