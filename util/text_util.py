@@ -96,7 +96,7 @@ class Translation(metaclass=MetaClassSingleton):
                 self.last = datetime.now()
                 self.driver.switch_to_new_tab()
                 self.driver.get(self.page.build_translation_url(language=language))
-                self.page.input.send_keys(p)
+                self.page.input.set_text(p)
                 translation += self.page.output
                 logger.info("Translated text:\t%s" % translation)
             return translation
