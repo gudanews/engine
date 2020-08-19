@@ -162,14 +162,10 @@ class Indexer:
                     self.logger.info("LOADING PAGE [%s]" % record_existing.get("url"))
                     record_indexing = self.create_record_with_page_element()
                     if self.is_valid_indexing_record(record_indexing, record_existing):
-                        self.logger.info("TIME STAMP BEFORE UPDATE")
                         if not DEBUGGING_TEST:
                             self.process_category(record_indexing, news_id)
-                            self.logger.info("TIME STAMP AFTER CATEGORY")
                             self.process_image(record_indexing, news_id)
-                            self.logger.info("TIME STAMP AFTER IMAGE")
                             self.process_text(record_indexing, record_existing)
-                            self.logger.info("TIME STAMP AFTER TEXT")
                             record_indexing["is_indexed"] = True
                             if self.news_db.update_news_by_id(id=news_id, record=record_indexing):
                                 self.logger.info("Completed <news> [ID=%s] indexing" % news_id)
