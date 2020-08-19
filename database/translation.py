@@ -41,10 +41,13 @@ class TranslationDB(DataBase):
             text_helper.set_text(text=content)
             text_helper.set_language(language=language)
             title = text_helper.translate(text=title, language=language)
+            logger.info("Translted title\n\t[%s]" % title)
             snippet = text_helper.translate(text=snippet, language=language)
+            logger.info("Translted snippet\n\t[%s]" % snippet)
             content = text_helper.save_translation(language=language)
+            logger.info("Translted content\n\t[%s]" % content)
             translation_id = self.add_translation_db(title=title, snippet=snippet, content=content, language_id=1)
-            logger.debug("Added translation [ID=%d]" % translation_id)
+            logger.info("Added translation [ID=%d]" % translation_id)
         return translation_id
 
 
