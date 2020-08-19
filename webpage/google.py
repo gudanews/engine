@@ -2,6 +2,7 @@ from holmium.core import Element, Locators, Section, Sections
 from holmium.core import Page
 from holmium.core.conditions import VISIBLE
 from util import datetime_util
+import time
 
 class Stories(Sections):
     title = Element(
@@ -53,11 +54,16 @@ class GoogleTranslationPage(Page):
     )
     output = Element(
         Locators.CSS_SELECTOR,
-        "span.translation[lang]",
+        "div.result-shield-container span.translation",
         value=lambda el: el.text,
         timeout=10
     )
 
     def build_translation_url(self, language="zh-CN"):
         return "https://translate.google.com/#view=home&op=translate&sl=en&tl=%s" % language
+
+    def input_text(self, text):
+        script = "arguments[0].value=arguments[1];"
+        self.driver.execute_script(script, self.input, text)
+        time.sleep(3.5)
 
