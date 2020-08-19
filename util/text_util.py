@@ -24,7 +24,7 @@ TEXT_BASE_PATH = config.setting["text_path"]
 TEXT_PATH = os.path.join(TEXT_BASE_PATH, str(TODAY.year), "%02d" % TODAY.month, "%02d" % TODAY.day)
 
 MAX_ALLOWED_API_TEXT_LENGTH = 512
-MAX_ALLOWED_WEB_TEXT_LENGTH = 4980
+MAX_ALLOWED_WEB_TEXT_LENGTH = 3600
 DELIMITER = "%%"
 
 def checksimilarity(a, b):
