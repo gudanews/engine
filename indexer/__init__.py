@@ -52,7 +52,7 @@ class Indexer:
         time.sleep(self.WAIT_FOR_PAGE_READY)
 
     def get_candidates(self):
-        return self.news_db.get_non_indexed_news_by_source_id(source_id = self.SOURCE_ID, max_count=5)
+        return self.news_db.get_non_indexed_news_by_source_id(source_id = self.SOURCE_ID, max_count=6)
 
     def process_category(self, record_indexing, news_id):
         categories_indexing = record_indexing.pop("categories", [])
@@ -205,7 +205,7 @@ def main():
         for _,cls in classes.items():
             if issubclass(cls, Indexer) and not issubclass(Indexer, cls):
                 try:
-                    driver = ChromeDriver()
+                    driver = ChromeDriver(light_version=False)
                     obj = cls(driver)
                     obj.index()
                     driver.close()
