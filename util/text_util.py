@@ -93,10 +93,13 @@ class Translation(metaclass=MetaClassSingleton):
                 if translation and self.last and (datetime.now() - self.last < timedelta(seconds=2)):
                     time.sleep(2.0)
                     logger.info("Sleeping 2 seconds")
+                logger.info("Preparing translate......")
                 self.last = datetime.now()
                 self.driver.switch_to_new_tab()
                 self.driver.get(self.page.build_translation_url(language=language))
+                logger.info("Landing on translation page......")
                 self.page.input.set_text(p)
+                logger.info("Finished inputing text:\t%s" % p)
                 translation += self.page.output
                 logger.info("Translated text:\t%s" % translation)
             return translation
