@@ -55,7 +55,7 @@ class GoogleTranslationPage(Page):
         Locators.CSS_SELECTOR,
         "span.translation[lang]",
         value=lambda el: el.text,
-        timeout=5
+        timeout=10
     )
 
     def build_translation_url(self, language="zh-CN"):
