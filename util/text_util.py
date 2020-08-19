@@ -86,8 +86,6 @@ class Translation(metaclass=MetaClassSingleton):
         text = text or self.text
         language = language or self.language
         if language:
-            self.driver.switch_to_new_tab()
-            self.driver.get(self.page.build_translation_url(language=language))
             paragraphs = self.split_into_paragraphs(text)
             translation = ""
             logger.info("Find [%d] paragraphs" % len(paragraphs))
@@ -96,6 +94,8 @@ class Translation(metaclass=MetaClassSingleton):
                     time.sleep(2.0)
                     logger.info("Sleeping 2 seconds")
                 self.last = datetime.now()
+                self.driver.switch_to_new_tab()
+                self.driver.get(self.page.build_translation_url(language=language))
                 self.page.input.send_keys(p)
                 translation += self.page.output
                 logger.info("Translated text:\t%s" % translation)
