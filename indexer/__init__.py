@@ -90,8 +90,10 @@ class Indexer:
         snippet_indexing = snippet_existing if snippet_existing else \
             content_indexing.split("\n")[0][:512] if content_indexing else None
         text_helper = TextHelper(text=content_indexing)
+        self.logger.info("TIME STAMP BEFORE TRANSLATION")
         translation_id = self.translation_db.add_translation(text_helper=text_helper, title=title_indexing,
             snippet=snippet_indexing, content=content_indexing) if not record_existing.get("translation_id", None) else 0
+        self.logger.info("TIME STAMP AFTER TRANSLATION")
         content_indexing = text_helper.save() if not record_existing.get("content", None) else None
         record = dict()
         if title_indexing != record_existing.get("title"):
@@ -160,10 +162,14 @@ class Indexer:
                     self.logger.info("LOADING PAGE [%s]" % record_existing.get("url"))
                     record_indexing = self.create_record_with_page_element()
                     if self.is_valid_indexing_record(record_indexing, record_existing):
+                        self.logger.info("TIME STAMP BEFORE UPDATE")
                         if not DEBUGGING_TEST:
                             self.process_category(record_indexing, news_id)
+                            self.logger.info("TIME STAMP AFTER CATEGORY")
                             self.process_image(record_indexing, news_id)
+                            self.logger.info("TIME STAMP AFTER IMAGE")
                             self.process_text(record_indexing, record_existing)
+                            self.logger.info("TIME STAMP AFTER TEXT")
                             record_indexing["is_indexed"] = True
                             if self.news_db.update_news_by_id(id=news_id, record=record_indexing):
                                 self.logger.info("Completed <news> [ID=%s] indexing" % news_id)
