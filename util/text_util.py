@@ -98,16 +98,18 @@ class Translation(metaclass=MetaClassSingleton):
                 self.driver.get(self.page.build_translation_url(language=language))
                 self.page.input_text(p)
                 translation += self.page.output
+                if p.endswith("\n"):
+                    translation += "\n"
                 logger.info("Translated text:\t%s" % translation)
             return translation
         return text
 
     def split_into_paragraphs(self, text=None):
         text = text or self.text
-        sentences = sent_tokenize(text)
+        # text = sent_tokenize(text)
         current_paragraph = ""
         paragraphs = []
-        for s in sentences:
+        for s in text:
             if len(current_paragraph + s) <= MAX_ALLOWED_WEB_TEXT_LENGTH:
                 current_paragraph += s
             else:
