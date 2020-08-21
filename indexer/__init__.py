@@ -63,10 +63,11 @@ class Indexer:
         for cat in categories_indexing:
             if cat and cat not in all_categories:
                 cat_id = self.category_db.get_category_id_by_name(cat)
-                if not category_existing:
-                    self.news_db.update_news_by_id(id=news_id, record=dict(category_id=cat_id))
-                self.news_category_db.add_news_category(news_id=news_id, category_id=cat_id)
-                all_categories.append(cat)
+                if cat_id:
+                    if not category_existing:
+                        self.news_db.update_news_by_id(id=news_id, record=dict(category_id=cat_id))
+                    self.news_category_db.add_news_category(news_id=news_id, category_id=cat_id)
+                    all_categories.append(cat)
 
     def process_image(self, record_indexing, news_id):
         images_indexing = record_indexing.pop("images", [])
@@ -77,10 +78,11 @@ class Indexer:
         for img in images_indexing:
             if img and img not in all_images:
                 img_id = self.image_db.add_image(img, generate_thumbnail=not image_existing)
-                if not image_existing:
-                    self.news_db.update_news_by_id(id=news_id, record=dict(image_id=img_id))
-                self.news_image_db.add_news_image(news_id=news_id, image_id=img_id)
-                all_images.append(img)
+                if img_id:
+                    if not image_existing:
+                        self.news_db.update_news_by_id(id=news_id, record=dict(image_id=img_id))
+                    self.news_image_db.add_news_image(news_id=news_id, image_id=img_id)
+                    all_images.append(img)
 
     def process_text(self, record_indexing, record_existing):
         news_id = record_existing.get("id")
