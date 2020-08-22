@@ -72,7 +72,8 @@ class Stories(Sections):
         image = self.image_raw
         if image:
             f = furl(image)
-            return None if f.path.segments[-1] in ("1x1.png", "core-placeholder-featured.png") else image
+            if not f.path.segments[-1] in ("1x1.png", "core-placeholder-featured.png"):
+                return image
         return None
 
     @property
