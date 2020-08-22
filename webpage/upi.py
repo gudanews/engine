@@ -161,6 +161,7 @@ class IndexPage(Page):
             self.content_expand.scroll_to()
             time.sleep(WAIT_FOR_ELEMENT_TIMEOUT)
             self.content_expand.click()
+            time.sleep(WAIT_FOR_MINIMUM_TIMEOUT)
         return "\n".join([b for b in self.content_raw])
 
     @property
