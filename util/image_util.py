@@ -91,7 +91,8 @@ class ImageHelper:
                 result = urllib.urlretrieve(url, path)
             file_size = int(result[1]["Content-Length"]) if "Content-Length" in result[1] else 0
             logger.info("Image file [%s] downloaded size [%s]" % (path, human_format(file_size)))
-        except:
+        except Exception as e:
+            logger.warning("%s" % e)
             logger.warning("Error when download image [%s]" % url)
             return False
         if self.is_image_valid():

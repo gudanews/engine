@@ -52,7 +52,7 @@ class Indexer:
         time.sleep(self.WAIT_FOR_PAGE_READY)
 
     def get_candidates(self):
-        return self.news_db.get_non_indexed_news_by_source_id(source_id = self.SOURCE_ID, max_count=10)
+        return self.news_db.get_non_indexed_news_by_source_id(source_id = self.SOURCE_ID, max_count=8)
 
     def process_category(self, record_indexing, news_id):
         categories_indexing = record_indexing.pop("categories", [])
@@ -140,7 +140,7 @@ class Indexer:
             # return False
         # Check if the content can be found
         content = re.sub(re.compile(r'\s+'), '', record_indexing.get("content", ""))
-        if len(content) < 20:
+        if len(content) < 100:
             self.logger.warning("<news> [ID=%s] cannot find content during indexing" % news_id)
             return False
         # Check if the category is the same as existing record
@@ -167,6 +167,7 @@ class Indexer:
                         if not DEBUGGING_TEST:
                             self.process_category(record_indexing, news_id)
                             self.process_image(record_indexing, news_id)
+                            # (TODO:) self.process_media(record_indexing, news_id)
                             self.process_text(record_indexing, record_existing)
                             record_indexing["is_indexed"] = True
                             if self.news_db.update_news_by_id(id=news_id, record=record_indexing):
