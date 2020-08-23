@@ -11,9 +11,10 @@ import time
 # JULY 31, 2020 / 4:03 AM / 8 DAYS AGO
 DATETIME_PATTERN = r'^(?P<month>%s) (?P<day>\d{1,2})(\,{0,1}) (?P<year>\d{2,4}) / (?P<hour>\d{1,2}):(?P<minute>\d{2}) (?P<period>AM|PM)' % datetime_util.ANY_MONTHS
 
-def get_full_image_url(url):
+def create_image_urls(url):
     # Expected https://s4.reutersmedia.net/resources/r/?m=02&d=20200728&t=2&i=1527461013&w=370&fh=&fw=&ll=&pl=&sq=&r=LYNXNPEG6R1MZ
     # Full image URL https://s4.reutersmedia.net/resources/r/?m=02&d=20200728&t=2&i=1527461013&w=800&r=LYNXNPEG6R1MZ
+    # Normalized URL https://s4.reutersmedia.net/resources/r/?m=02&d=20200728&t=2&i=1527461013&w=800&r=LYNXNPEG6R1MZ
     if url:
         f = furl(url)
         if "reutersmedia.net" in f.host:
@@ -24,8 +25,9 @@ def get_full_image_url(url):
             for k in keys:
                 if parameters[k]:
                     f.args[k] = parameters[k]
-            return f.url
-    return url
+            return [f.url, url]
+        return [url]
+    return None
 
 class Stories(Sections):
 
@@ -73,12 +75,8 @@ class Stories(Sections):
         if image:
             f = furl(image)
             if not f.path.segments[-1] in ("1x1.png", "core-placeholder-featured.png"):
-                return image
+                return create_image_urls(image)
         return None
-
-    @property
-    def image_full(self):
-        return get_full_image_url(self.image)
 
 
 class CrawlPage(Page):
@@ -174,14 +172,15 @@ class IndexPage(Page):
 
     @property
     def images(self):
-        _images = []
+        all_images = []
         if self.image_expand_button:
             self.image_expand_button.click()
             time.sleep(WAIT_FOR_PAGE_LOADING)
-        for image in self.images_raw:
-            full_image = get_full_image_url(image)
-            if not full_image in _images:
-                _images.append(full_image)
+        images = self.images_raw
+        for img in images:
+            urls = create_image_urls(img)
+            if urls and not urls in all_images:
+                all_images.append(urls)
         if self.image_close_button:
             self.image_close_button.click()
-        return _images
+        return all_images

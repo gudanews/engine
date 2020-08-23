@@ -11,15 +11,16 @@ import re
 # Updated 11:48 AM ET, Sat August 8, 2020
 DATETIME_PATTERN = r'.* (?P<hour>\d{1,2}):(?P<minute>\d{2}) (?P<period>AM|PM) (?P<zone>%s)(\,{0,1}) (%s) (?P<month>%s) (?P<day>\d{1,2})(\,{0,1}) (?P<year>\d{2,4})$' % (datetime_util.ANY_TIMEZONE, datetime_util.ANY_WEEK_DAYS_3L, datetime_util.ANY_MONTHS)
 
-def get_full_image_url(url):
+def create_image_urls(url):
     # Expected cdn.cnn.com/cnnnext/dam/assets/200806183042-02-trump-0806-full-169.jpg
+    # Full Image URL cdn.cnn.com/cnnnext/dam/assets/200806183042-02-trump-0806.jpg
     # Normalized Image URL cdn.cnn.com/cnnnext/dam/assets/200806183042-02-trump-0806.jpg
     if url:
         m = re.match(r'(.*)\-full\-\d{2,4}.jpg$', url, re.IGNORECASE)
         if m:
-            return m.group(1) + ".jpg"
-    return url
-
+            return [m.group(1) + ".jpg", url]
+        return [url]
+    return None
 
 class News(Sections):
 
@@ -51,11 +52,9 @@ class News(Sections):
     @property
     def image(self):
         image = self.image_raw
-        return "https:" + image if image and image.startswith("//") else image
-
-    @property
-    def image_full(self):
-        return get_full_image_url(self.image)
+        if image and image.startswith("//"):
+            image = "https:" + image
+        return create_image_urls(image)
 
     @property
     def category(self):
@@ -75,6 +74,12 @@ class IndexPage(Page):
     BASE_CSS_SELECTOR = "article.pg-rail-tall "
     MAIN_CSS_SELECTOR = BASE_CSS_SELECTOR + "div.pg-side-of-rail "
 
+    category_raw = Element(
+        Locators.CSS_SELECTOR,
+        BASE_CSS_SELECTOR + "meta[itemprop='articleSection']",
+        value=lambda el: el.get_attribute("content"),
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
+    )
     title = Element(
         Locators.CSS_SELECTOR,
         BASE_CSS_SELECTOR + "h1.pg-headline",
@@ -83,7 +88,7 @@ class IndexPage(Page):
     )
     author_raw = Elements(
         Locators.CSS_SELECTOR,
-        BASE_CSS_SELECTOR + "div.metadata p.metadata__byline a",
+        BASE_CSS_SELECTOR + "p.metadata__byline span",
         value=lambda el: el.text,
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
@@ -107,17 +112,25 @@ class IndexPage(Page):
     )
 
     @property
-    def image(self):
-        image = self.image_raw
-        return "https:" + image if image and image.startswith("//") else image
+    def category(self):
+        return category_mapping(self.category_raw)
 
     @property
-    def image_full(self):
-        return get_full_image_url(self.image)
+    def image(self):
+        image = self.image_raw
+        if image and image.startswith("//"):
+            image = "https:" + image
+        return create_image_urls(image)
 
     @property
     def author(self):
-        return ", ".join(self.author_raw)
+        author = self.author_raw
+        if author:
+            if author.lower().startswith("by "):
+                return author[3:]
+            elif author.lower().contains(" by "):
+                return author.split(" by ")[-1]
+        return None
 
     @property
     def datetime_created(self):

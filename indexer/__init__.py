@@ -52,7 +52,10 @@ class Indexer:
         time.sleep(self.WAIT_FOR_PAGE_READY)
 
     def get_candidates(self):
-        return self.news_db.get_non_indexed_news_by_source_id(source_id = self.SOURCE_ID, max_count=8)
+        return self.news_db.get_non_indexed_news_by_source_id(source_id = self.SOURCE_ID, max_count=10)
+
+    def does_image_already_exist(self, images, existing_images):
+        return any([img in existing_images for img in images])
 
     def process_category(self, record_indexing, news_id):
         categories_indexing = record_indexing.pop("categories", [])
@@ -75,14 +78,16 @@ class Indexer:
             images_indexing.append(record_indexing.pop("image"))
         image_existing = self.image_db.get_image_url_by_news_id(news_id)
         all_images = self.image_db.get_additional_image_url_by_news_id(news_id)
-        for img in images_indexing:
-            if img and img not in all_images:
-                img_id = self.image_db.add_image(img, generate_thumbnail=not image_existing)
-                if img_id:
-                    if not image_existing:
-                        self.news_db.update_news_by_id(id=news_id, record=dict(image_id=img_id))
-                    self.news_image_db.add_news_image(news_id=news_id, image_id=img_id)
-                    all_images.append(img)
+        for img_urls in images_indexing:
+            if img_urls and not self.does_image_already_exist(img_urls, all_images):
+                for url in img_urls:
+                    img_id = self.image_db.add_image(url, generate_thumbnail=not image_existing)
+                    if img_id:
+                        if not image_existing:
+                            self.news_db.update_news_by_id(id=news_id, record=dict(image_id=img_id))
+                        self.news_image_db.add_news_image(news_id=news_id, image_id=img_id)
+                        all_images.append(url)
+                        break
 
     def process_text(self, record_indexing, record_existing):
         news_id = record_existing.get("id")
@@ -92,10 +97,8 @@ class Indexer:
         snippet_indexing = snippet_existing if snippet_existing else \
             content_indexing.split("\n")[0][:512] if content_indexing else None
         text_helper = TextHelper(text=content_indexing)
-        self.logger.info("TIME STAMP BEFORE TRANSLATION")
         translation_id = self.translation_db.add_translation(text_helper=text_helper, title=title_indexing,
             snippet=snippet_indexing, content=content_indexing) if not record_existing.get("translation_id", None) else 0
-        self.logger.info("TIME STAMP AFTER TRANSLATION")
         content_indexing = text_helper.save() if not record_existing.get("content", None) else None
         record = dict()
         if title_indexing != record_existing.get("title"):
