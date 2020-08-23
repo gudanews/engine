@@ -148,6 +148,7 @@ class TextHelper:
 
     def set_path(self, path):
         self._path = path
+        self._translation_path = None
 
     def set_translation_path(self, path):
         self._translation_path = path
