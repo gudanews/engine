@@ -31,20 +31,11 @@ class TranslationDB(DataBase):
             column = self.SELECT_COLUMN_CONSTRAINT
         return self.fetch_record(column=column, condition=["id = %d" % id], record_as_dict=record_as_dict)
 
-    def add_translation(self, text_helper, title=None, snippet=None, content=None, language="zh-CN"):
-        # type: (Any, Optional[str], Optional[str], Optional[str], Optional[int]) -> int
+    def add_translation(self, title=None, snippet=None, content=None, language_id=0):
+        # type: (Optional[str], Optional[str], Optional[str], Optional[int]) -> int
         translation_id = 0
-        if not isinstance(text_helper, TextHelper):
-            logger.warning("Must provide a TextHelper to use TranslationDB")
-            return translation_id
         if title or snippet or content:
-            text_helper.set_text(text=content)
-            text_helper.set_language(language=language)
-            title = text_helper.translate(text=title, language=language)
-            snippet = text_helper.translate(text=snippet, language=language)
-            content = text_helper.save_translation(language=language)
-            logger.info("Translted content\n\t[%s]" % content)
-            translation_id = self.add_translation_db(title=title, snippet=snippet, content=content, language_id=1)
+            translation_id = self.add_translation_db(title=title, snippet=snippet, content=content, language_id=language_id)
             logger.info("Added translation [ID=%d]" % translation_id)
         return translation_id
 
@@ -59,6 +50,15 @@ class TranslationDB(DataBase):
         if self.insert_record(record=record):
             return self._db._cursor.lastrowid
         return 0
+
+    def update_translation_by_id(self, id, title=None, snippet=None, content=None, language_id=0):
+        # type: (int, Optional[str], Optional[str], Optional[str], Optional[int]) -> None
+        record = dict()
+        record.update({"language_id": language_id}) if language_id else None
+        record.update({"title": title}) if title else None
+        record.update({"snippet": snippet}) if snippet else None
+        record.update({"content": content}) if content else None
+        self.update_record(record=record, condition=["id=%d" % id])
 
 
 from util.config_util import Configure
