@@ -65,5 +65,5 @@ class GoogleTranslationPage(Page):
     def input_text(self, text):
         script = "arguments[0].value=arguments[1];"
         self.driver.execute_script(script, self.input, text)
-        time.sleep(5.0)
+        time.sleep(3.0)
 

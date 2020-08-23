@@ -88,7 +88,6 @@ class Translation(metaclass=MetaClassSingleton):
         if language:
             paragraphs = self.split_into_paragraphs(text)
             translation = ""
-            logger.info("Find [%d] paragraphs" % len(paragraphs))
             for p in paragraphs:
                 if translation and self.last and (datetime.now() - self.last < timedelta(seconds=2)):
                     logger.info("Sleeping 2 seconds")
@@ -100,7 +99,7 @@ class Translation(metaclass=MetaClassSingleton):
                 translation += self.page.output
                 if p.endswith("\n"):
                     translation += "\n"
-                logger.info("Translated text:\t%s" % translation)
+            logger.info("Translated text:\t%s" % translation)
             return translation
         return text
 
