@@ -6,6 +6,7 @@ from furl import furl
 from database.category import category_mapping
 from webpage import WAIT_FOR_ELEMENT_TIMEOUT, WAIT_FOR_SECTION_TIMEOUT, WAIT_FOR_MINIMUM_TIMEOUT
 import re
+import time
 
 
 # Updated 11:48 AM ET, Sat August 8, 2020
@@ -16,7 +17,7 @@ def create_image_urls(url):
     # Full Image URL cdn.cnn.com/cnnnext/dam/assets/200806183042-02-trump-0806.jpg
     # Normalized Image URL cdn.cnn.com/cnnnext/dam/assets/200806183042-02-trump-0806.jpg
     if url:
-        m = re.match(r'(.*)\-full\-\d{2,4}.jpg$', url, re.IGNORECASE)
+        m = re.match(r'(.*)\-\w+\-\d{2,4}.jpg$', url, re.IGNORECASE)
         if m:
             return [m.group(1) + ".jpg", url]
         return [url]
@@ -39,7 +40,7 @@ class News(Sections):
     image_raw = Element(
         Locators.CSS_SELECTOR,
         "div.media a img",
-        value=lambda el: el.get_attribute('data-src-full16x9'),
+        value=lambda el: el.get_attribute('data-src-full16x9') or el.get_attribute("src"),
         only_if=VISIBLE(),
         timeout=WAIT_FOR_MINIMUM_TIMEOUT
     )
@@ -71,8 +72,8 @@ class CrawlPage(Page):
 
 class IndexPage(Page):
 
-    BASE_CSS_SELECTOR = "article.pg-rail-tall "
-    MAIN_CSS_SELECTOR = BASE_CSS_SELECTOR + "div.pg-side-of-rail "
+    BASE_CSS_SELECTOR = "article[class*='pg-rail'] "
+    MAIN_CSS_SELECTOR = BASE_CSS_SELECTOR + "section.zn-body "
 
     category_raw = Element(
         Locators.CSS_SELECTOR,
@@ -86,10 +87,10 @@ class IndexPage(Page):
         value=lambda el: el.text,
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
-    author_raw = Elements(
+    author = Element(
         Locators.CSS_SELECTOR,
-        BASE_CSS_SELECTOR + "p.metadata__byline span",
-        value=lambda el: el.text,
+        BASE_CSS_SELECTOR + "meta[itemprop='author']",
+        value=lambda el: el.get_attribute("content"),
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     datetime_raw = Element(
@@ -98,15 +99,22 @@ class IndexPage(Page):
         value=lambda el: el.text,
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
-    image_raw = Element(
+    images_wrapper = Elements(
         Locators.CSS_SELECTOR,
-        MAIN_CSS_SELECTOR + ".pg-rail-tall__head div.l-container img[data-src-full16x9]",
-        value=lambda el: el.get_attribute("data-src-full16x9"),
+        MAIN_CSS_SELECTOR + "div.l-container > img.media__image, "
+        + MAIN_CSS_SELECTOR + "div:not([class]) > img.media__image",
+        timeout=WAIT_FOR_MINIMUM_TIMEOUT
+    )
+    images_raw = Elements(
+        Locators.CSS_SELECTOR,
+        MAIN_CSS_SELECTOR + "div.l-container > img.media__image, "
+        + MAIN_CSS_SELECTOR + "div:not([class]) > img.media__image",
+        value=lambda el: el.get_attribute("data-src-full16x9") or el.get_attribute("src"),
         timeout=WAIT_FOR_MINIMUM_TIMEOUT
     )
     content_raw = Elements(
         Locators.CSS_SELECTOR,
-        MAIN_CSS_SELECTOR + ".pg-rail-tall__body .zn-body__paragraph",
+        MAIN_CSS_SELECTOR + ".zn-body__paragraph",
         value=lambda el: el.text,
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
@@ -116,21 +124,24 @@ class IndexPage(Page):
         return category_mapping(self.category_raw)
 
     @property
-    def image(self):
-        image = self.image_raw
-        if image and image.startswith("//"):
-            image = "https:" + image
-        return create_image_urls(image)
-
-    @property
-    def author(self):
-        author = self.author_raw
-        if author:
-            if author.lower().startswith("by "):
-                return author[3:]
-            elif author.lower().contains(" by "):
-                return author.split(" by ")[-1]
-        return None
+    def images(self):
+        # Invalid image urls:
+        #https://www.i.cdn.cnn.com/.a/2.232.2/assets/video_pinned_white_bg.jpg
+        all_images = []
+        for wrapper in self.images_wrapper:
+            wrapper.scroll_to()
+            time.sleep(WAIT_FOR_MINIMUM_TIMEOUT)
+        time.sleep(WAIT_FOR_ELEMENT_TIMEOUT)
+        images = self.images_raw
+        for img in images:
+            if img and img.startswith("//"):
+                img = "https:" + img
+            f = furl(img)
+            if not f.path.segments[-1] in ("video_pinned_white_bg.jpg"):
+                urls = create_image_urls(img)
+                if urls and not urls in all_images:
+                    all_images.append(urls)
+        return all_images
 
     @property
     def datetime_created(self):
