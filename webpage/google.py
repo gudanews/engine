@@ -67,3 +67,5 @@ class GoogleTranslationPage(Page):
         self.driver.execute_script(script, self.input, text)
         time.sleep(3.0)
 
+    def output_text(self):
+        return self.output

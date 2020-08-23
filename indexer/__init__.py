@@ -91,21 +91,35 @@ class Indexer:
 
     def process_text(self, record_indexing, record_existing):
         news_id = record_existing.get("id")
-        title_indexing = record_indexing.pop("title")
+        title_indexing = record_indexing.pop("title", "")
         content_indexing = record_indexing.pop("content", "")
-        snippet_existing = record_existing.get("snippet", None)
-        snippet_indexing = snippet_existing if snippet_existing else \
-            content_indexing.split("\n")[0][:512] if content_indexing else None
+        content_existing = record_existing.get("content")
+        snippet_existing = record_existing.get("snippet")
+        snippet_indexing = snippet_existing or content_indexing.split("\n")[0][:512] or None
         text_helper = TextHelper(text=content_indexing)
-        translation_id = self.translation_db.add_translation(text_helper=text_helper, title=title_indexing,
-            snippet=snippet_indexing, content=content_indexing) if not record_existing.get("translation_id", None) else 0
-        content_indexing = text_helper.save() if not record_existing.get("content", None) else None
+        text_helper.add_additional_text(text=title_indexing)
+        text_helper.add_additional_text(text=snippet_indexing)
+        text_helper.translate()
+        if content_existing:
+            text_helper.set_path(content_existing)
+        content_indexing = text_helper.save_to_file()
+        title_translation, snippet_translation = text_helper.get_additional_translation()
+        translation_id_existing = record_existing.get("translation_id")
+        if translation_id_existing:
+            translation_content_existing = self.translation_db.get_translation_by_id(
+                id=translation_id_existing, column=["content"])
+            self.translation_db.update_translation_by_id(id=translation_id_existing, title=title_translation,
+                                                         snippet=snippet_translation)
+            text_helper.set_translation_path(translation_content_existing)
+        content_translation = text_helper.save_translation_to_file()
+        translation_id = self.translation_db.add_translation(title=title_translation,
+            snippet=snippet_translation, content=content_translation) if not translation_id_existing else 0
         record = dict()
         if title_indexing != record_existing.get("title"):
             record["title"] = title_indexing
         if snippet_indexing != snippet_existing:
             record["snippet"] = snippet_indexing
-        if content_indexing:
+        if content_indexing != content_existing:
             record["content"] = content_indexing
         if translation_id:
             record["translation_id"]= translation_id
