@@ -31,19 +31,18 @@ class TranslationDB(DataBase):
             column = self.SELECT_COLUMN_CONSTRAINT
         return self.fetch_record(column=column, condition=["id = %d" % id], record_as_dict=record_as_dict)
 
-    def add_translation(self, title=None, snippet=None, content=None, language_id=0):
+    def add_translation(self, language_id=1, title=None, snippet=None, content=None):
         # type: (Optional[str], Optional[str], Optional[str], Optional[int]) -> int
         translation_id = 0
         if title or snippet or content:
-            translation_id = self.add_translation_db(title=title, snippet=snippet, content=content, language_id=language_id)
+            translation_id = self.add_translation_db(language_id=language_id, title=title, snippet=snippet, content=content)
             logger.info("Added translation [ID=%d]" % translation_id)
         return translation_id
 
 
-    def add_translation_db(self, title=None, snippet=None, content=None, language_id=0):
+    def add_translation_db(self, language_id=1, title=None, snippet=None, content=None, ):
         # type: (Optional[str], Optional[str], Optional[str], Optional[int]) -> int
-        record = dict()
-        record.update({"language_id": language_id}) if language_id else None
+        record = dict(language_id=language_id)
         record.update({"title": title}) if title else None
         record.update({"snippet": snippet}) if snippet else None
         record.update({"content": content}) if content else None
@@ -51,7 +50,7 @@ class TranslationDB(DataBase):
             return self._db._cursor.lastrowid
         return 0
 
-    def update_translation_by_id(self, id, title=None, snippet=None, content=None, language_id=0):
+    def update_translation_by_id(self, id, language_id=0, title=None, snippet=None, content=None):
         # type: (int, Optional[str], Optional[str], Optional[str], Optional[int]) -> None
         record = dict()
         record.update({"language_id": language_id}) if language_id else None

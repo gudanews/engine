@@ -106,13 +106,14 @@ class Indexer:
         title_translation, snippet_translation = text_helper.get_additional_translation()
         translation_id_existing = record_existing.get("translation_id")
         if translation_id_existing:
-            translation_content_existing = self.translation_db.get_translation_by_id(
+            content_translation_existing, = self.translation_db.get_translation_by_id(
                 id=translation_id_existing, column=["content"])
             self.translation_db.update_translation_by_id(id=translation_id_existing, title=title_translation,
                                                          snippet=snippet_translation)
-            text_helper.set_translation_path(translation_content_existing)
+            text_helper.set_translation_path(content_translation_existing)
         content_translation = text_helper.save_translation_to_file()
-        translation_id = self.translation_db.add_translation(title=title_translation,
+        self.logger.info("Added translation content to file [%s]" % content_translation)
+        translation_id = self.translation_db.add_translation(language_id=1, title=title_translation,
             snippet=snippet_translation, content=content_translation) if not translation_id_existing else 0
         record = dict()
         if title_indexing != record_existing.get("title"):

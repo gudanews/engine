@@ -1,7 +1,7 @@
 from holmium.core import Element, Elements, ElementMap, Locators, Section, Sections
 from holmium.core import Page
 from holmium.core.conditions import VISIBLE
-from webpage import WAIT_FOR_ELEMENT_TIMEOUT, WAIT_FOR_SECTION_TIMEOUT, WAIT_FOR_MINIMUM_TIMEOUT, WAIT_FOR_PAGE_LOADING
+from webpage import WAIT_FOR_ELEMENT_TIMEOUT, WAIT_FOR_SECTION_TIMEOUT, WAIT_FOR_MINIMUM_TIMEOUT, WAIT_FOR_PAGE_POPUPS
 import time
 
 
@@ -37,7 +37,7 @@ class DeepLTranslationPage(Page):
         Locators.CSS_SELECTOR,
         "div[dl-test='translator-progress-popup']",
         only_if=VISIBLE(),
-        timeout=WAIT_FOR_PAGE_LOADING
+        timeout=WAIT_FOR_PAGE_POPUPS
     )
 
     def build_translation_url(self, language="ZH"):
@@ -58,7 +58,7 @@ class DeepLTranslationPage(Page):
         self.target_language_list[language].click()
         time.sleep(WAIT_FOR_ELEMENT_TIMEOUT)
         self.input.scroll_to()
-        time.sleep(WAIT_FOR_MINIMUM_TIMEOUT)
+        time.sleep(WAIT_FOR_PAGE_POPUPS)
         wait_cycle_remains = 10
         while self.translate_progress_popup and wait_cycle_remains > 0:
             wait_cycle_remains -= 1
