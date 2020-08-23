@@ -8,15 +8,18 @@ import re
 import time
 
 
-def get_full_image_url(url):
+def create_image_urls(url):
     # Expected https://storage.googleapis.com/afs-prod/media/8814cee91eef4fce825bfc90e6ddccf8/400.jpeg
     # Image Full https://storage.googleapis.com/afs-prod/media/8814cee91eef4fce825bfc90e6ddccf8/800.jpeg
+    # Normalized https://storage.googleapis.com/afs-prod/media/8814cee91eef4fce825bfc90e6ddccf8/800.jpeg
     if url:
         f = furl(url)
-        pixel = f.path.segments[-1]
-        f.path.segments[-1] = "800.jpeg" if re.search(r"^\d{3,4}.jpeg", pixel) else pixel
-        return f.url
-    return url
+        file_name = f.path.segments[-1]
+        if re.search(r"^\d{3,4}.jpeg", file_name):
+            f.path.segments[-1] = "800.jpeg"
+            return [f.url, url]
+        return [url]
+    return None
 
 class Cards(Sections):
 
@@ -44,7 +47,7 @@ class Cards(Sections):
         value=lambda el: el.text,
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
-    image = Element(
+    image_raw = Element(
         Locators.CSS_SELECTOR,
         "a img",
         value=lambda el: el.get_attribute("src"),
@@ -68,8 +71,9 @@ class Cards(Sections):
         return datetime_util.str2datetime(self.datetime_raw)
 
     @property
-    def image_full(self):
-        return get_full_image_url(self.image)
+    def image(self):
+        image = self.image_raw
+        return create_image_urls(image)
 
     @property
     def author(self):
@@ -186,14 +190,14 @@ class IndexPage(Page):
     @property
     def images(self):
         self.dismiss_popup(wait=False)
-        _images = []
+        all_images = []
         images = self.images_raw
         for img in images:
-            image = get_full_image_url(img)
-            if not image in _images:
-                _images.append(image)
-        if self.image_gallery_open:
-            try:
+            urls = create_image_urls(img)
+            if urls and not urls in all_images:
+                all_images.append(urls)
+        try:
+            if self.image_gallery_open:
                 self.image_gallery_open.click()
                 time.sleep(WAIT_FOR_PAGE_LOADING)
                 clicks_remains = 20
@@ -201,18 +205,19 @@ class IndexPage(Page):
                     time.sleep(WAIT_FOR_MINIMUM_TIMEOUT)
                     images = self.images_raw
                     for img in images:
-                        image = get_full_image_url(img)
-                        if not image in _images:
-                            _images.append(image)
+                        urls = create_image_urls(img)
+                        if urls and not urls in all_images:
+                            all_images.append(urls)
                     if self.image_gallery_next:
-                        clicks_remains -= 1
                         self.image_gallery_next.click()
+                        clicks_remains -= 1
                     else:
                         clicks_remains = 0
-                self.image_gallery_close.click()
-            except:
-                pass
-        return _images
+                if self.image_gallery_close:
+                    self.image_gallery_close.click()
+        except:
+            pass
+        return all_images
 
     @property
     def content(self):

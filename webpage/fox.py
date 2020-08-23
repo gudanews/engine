@@ -9,17 +9,19 @@ from webpage import WAIT_FOR_ELEMENT_TIMEOUT, WAIT_FOR_SECTION_TIMEOUT, WAIT_FOR
 import re
 
 
-def get_full_image_url(url):
+def create_image_urls(url):
     # Expected https://a57.foxnews.com/static.foxnews.com/foxnews.com/content/uploads/2020/07/640/360/jasmine-Daniels-.jpg?tl=1&ve=1
     # Full Image URL https://a57.foxnews.com/static.foxnews.com/foxnews.com/content/uploads/2020/07/648/365/jasmine-Daniels-.jpg
+    # Normalized URL https://a57.foxnews.com/static.foxnews.com/foxnews.com/content/uploads/2020/07/648/365/jasmine-Daniels-.jpg
     if url:
         f = furl(url)
-        width, height = f.path.segments[-3:-1]
         f.args = None
-        f.path.segments[-3:-1] = (IMAGE_WIDTH, IMAGE_HEIGHT) \
-            if re.search(r"^\d{3,4}$", width) and re.search(r"^\d{3,4}$", height) else (width, height)
-        return f.url
-    return url
+        width, height = f.path.segments[-3:-1]
+        if re.search(r"^\d{3,4}$", width) and re.search(r"^\d{3,4}$", height):
+            f.path.segments[-3:-1] = (IMAGE_WIDTH, IMAGE_HEIGHT)
+            return [f.url, url]
+        return [url]
+    return None
 
 class Articles(Sections):
 
@@ -41,7 +43,7 @@ class Articles(Sections):
         value=lambda el: el.get_attribute("href"),
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
-    image = Element(
+    image_raw = Element(
         Locators.CSS_SELECTOR,
         "div.m img[src]",
         value=lambda el: el.get_attribute("src"),
@@ -59,8 +61,9 @@ class Articles(Sections):
         return datetime_util.str2datetime(self.datetime_raw)
 
     @property
-    def image_full(self):
-        return get_full_image_url(self.image)
+    def image(self):
+        image = self.image_raw
+        return create_image_urls(image)
 
     @property
     def category(self):

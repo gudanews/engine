@@ -10,6 +10,25 @@ import time
 # Aug. 21, 2020 / 2:59 PM
 DATETIME_PATTERN = r'^(?P<month>%s)(\.{0,1})(\s|)(?P<day>\d{1,2})(\,{0,1})(\s|)(?P<year>\d{2,4})(\s|)/(\s|)(?P<hour>\d{1,2}):(?P<minute>\d{2})(\s|)(?P<period>AM|PM)' % datetime_util.ANY_MONTHS_3L
 
+# Expected https://cdnph.upi.com/svc/sv/upi_com/3091597322027/2020/1/faba460183d5f0389d1582436ca9c5b1/British-officials-plan-to-block-migrants-after-10th-day-of-arrivals.jpg
+# Full image URL None
+# Normalized URL https://cdnph.upi.com/3091597322027/faba460183d5f0389d1582436ca9c5b1/British-officials-plan-to-block-migrants-after-10th-day-of-arrivals.jpg
+
+def create_image_urls(url):
+    if url:
+        return [url]
+    return None
+
+def normalize_image_url(url):
+    if url:
+        f = furl(url)
+        segments = list(f.path.segments)
+        for seg in segments:
+            if len(seg) < 10 or seg.isdigit():
+                f.path.segments.remove(seg)
+        return f.url
+    return None
+
 class Rows(Sections):
 
     title = Element(
@@ -42,7 +61,7 @@ class Rows(Sections):
         value=lambda el: el.text,
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
-    image = Element(
+    image_raw = Element(
         Locators.CSS_SELECTOR,
         "div > img[src]",
         value=lambda el: el.get_attribute('src'),
@@ -61,6 +80,11 @@ class Rows(Sections):
     @property
     def category(self):
         return category_mapping(self.category_raw)
+
+    @property
+    def image(self):
+        image = self.image_raw
+        return create_image_urls(image)
 
 
 class CrawlPage(Page):
@@ -146,14 +170,16 @@ class IndexPage(Page):
 
     @property
     def images(self):
-        imgs = self.images_raw
-        results = []
-        for img in imgs:
+        images = self.images_raw
+        all_images = []
+        for img in images:
             f = furl(img)
             # Invalid image urls: /img/expand_gallery.svg
             if not f.path.segments[-1] in ("expand_gallery.svg"):
-                results.append(img)
-        return results
+                urls = create_image_urls(img)
+                if urls and not urls in all_images:
+                    all_images.append(urls)
+        return all_images
 
     @property
     def content(self):

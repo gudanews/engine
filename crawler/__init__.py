@@ -58,16 +58,17 @@ class Crawler:
         return True
 
     def process_image(self, record):
-        for image_url in (record.get("image_full", None), record.get("image", None)):
-            if image_url:
-                self.logger.info("Add Image into ImageDB [%s]" % image_url)
-                image_id = self.image_db.add_image(image_url, generate_thumbnail=True)
+        image_urls = record.get("image", None)
+        if image_urls:
+            for url in image_urls:
+                self.logger.info("Add Image into ImageDB [%s]" % url)
+                image_id = self.image_db.add_image(url, generate_thumbnail=True)
                 if image_id > 0:
                     return image_id
         return 0
 
     def update_record_with_page_element(self, record, element):
-        for el in ("title", "datetime_created", "snippet", "image", "image_full", "category", "author"): # No need to insert url again
+        for el in ("title", "datetime_created", "snippet", "image", "category", "author"): # No need to insert url again
             if el in dir(element):
                 record[el] = eval("element." + el)
                 if not record[el]:
