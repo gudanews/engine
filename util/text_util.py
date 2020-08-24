@@ -40,11 +40,14 @@ def checksimilarity(a, b):
     n = float(s) / float(len(wb))
     return n
 
+LANGUAGE_SELECTION = {
+    "zh": "zh-CN",
+}
 class Translator(metaclass=MetaClassSingleton):
 
     __metaclass__ = MetaClassSingleton
 
-    def __init__(self, text=None, page_class=None, driver=None, language="zh-CN"):
+    def __init__(self, text=None, page_class=None, driver=None, language="zh"):
         self.page_class = page_class
         self.driver = driver
         self.page = None
@@ -73,7 +76,7 @@ class Translator(metaclass=MetaClassSingleton):
             if self.last_use and (datetime.now() - self.last_use < timedelta(seconds=2)):
                 time.sleep(2.0)
             self.last_use = datetime.now()
-            return translator.translate(text=text, dest=language).text
+            return translator.translate(text=text, dest=LANGUAGE_SELECTION[language]).text
         return text
 
     def translate_use_website(self, text=None, language=None):
@@ -116,18 +119,18 @@ class Translator(metaclass=MetaClassSingleton):
 
 class GoogleTranslator(Translator):
 
-    def __init__(self, text=None, page_class=GoogleTranslationPage, language="zh-CN"):
+    def __init__(self, text=None, page_class=GoogleTranslationPage, language="zh"):
         super(GoogleTranslator, self).__init__(page_class=page_class, language=language)
 
 class DeepLTranslator(Translator):
 
-    def __init__(self, text=None, page_class=DeepLTranslationPage, language="ZH"):
+    def __init__(self, text=None, page_class=DeepLTranslationPage, language="zh"):
         super(DeepLTranslator, self).__init__(page_class=page_class, language=language)
 
 
 class TextHelper:
 
-    def __init__(self, text="", path=None, language="ZH"):
+    def __init__(self, text="", path=None, language="zh"):
         self.text = text
         self.translation_text = None
         self._texts = []

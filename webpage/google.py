@@ -4,6 +4,9 @@ from holmium.core.conditions import VISIBLE
 from util import datetime_util
 import time
 
+LANGUAGE_SELECTION = {
+    "zh": "zh-CN",
+}
 class Stories(Sections):
     title = Element(
         Locators.CSS_SELECTOR,
@@ -59,8 +62,8 @@ class GoogleTranslationPage(Page):
         timeout=10
     )
 
-    def build_translation_url(self, language="zh-CN"):
-        return "https://translate.google.com/#view=home&op=translate&sl=en&tl=%s" % language
+    def build_translation_url(self, language="zh"):
+        return "https://translate.google.com/#view=home&op=translate&sl=en&tl=%s" % LANGUAGE_SELECTION[language]
 
     def input_text(self, text):
         script = "arguments[0].value=arguments[1];"

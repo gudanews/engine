@@ -5,6 +5,9 @@ from webpage import WAIT_FOR_ELEMENT_TIMEOUT, WAIT_FOR_SECTION_TIMEOUT, WAIT_FOR
 import time
 
 
+LANGUAGE_SELECTION = {
+    "zh": "Chinese (simplified)",
+}
 class DeepLTranslationPage(Page):
     input = Element(
         Locators.CSS_SELECTOR,
@@ -25,7 +28,7 @@ class DeepLTranslationPage(Page):
     target_language_list = ElementMap(
         Locators.CSS_SELECTOR,
         "div[dl-test='translator-target-lang-list'] button",
-        key=lambda el:el.get_attribute("dl-lang"),
+        key=lambda el:el.text,
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     accept_cookies = Element(
@@ -40,7 +43,7 @@ class DeepLTranslationPage(Page):
         timeout=WAIT_FOR_PAGE_POPUPS
     )
 
-    def build_translation_url(self, language="ZH"):
+    def build_translation_url(self, language="zh"):
         self.language = language
         return "https://www.deepl.com/translator"
 
@@ -53,9 +56,9 @@ class DeepLTranslationPage(Page):
         # if self.accept_cookies:
         #     self.accept_cookies.click()
         self.target_language_button.click()
-        self.target_language_list[language].scroll_to()
+        self.target_language_list[LANGUAGE_SELECTION[language]].scroll_to()
         time.sleep(WAIT_FOR_MINIMUM_TIMEOUT)
-        self.target_language_list[language].click()
+        self.target_language_list[LANGUAGE_SELECTION[language]].click()
         time.sleep(WAIT_FOR_ELEMENT_TIMEOUT)
         self.input.scroll_to()
         time.sleep(WAIT_FOR_PAGE_POPUPS)
