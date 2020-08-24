@@ -5,8 +5,9 @@ from datetime import datetime
 from furl import furl
 from util.image_util import IMAGE_HEIGHT, IMAGE_WIDTH
 from database.category import category_mapping
-from webpage import WAIT_FOR_ELEMENT_TIMEOUT, WAIT_FOR_SECTION_TIMEOUT, WAIT_FOR_MINIMUM_TIMEOUT
+from webpage import WAIT_FOR_ELEMENT_TIMEOUT, WAIT_FOR_SECTION_TIMEOUT, WAIT_FOR_MINIMUM_TIMEOUT, WAIT_FOR_PAGE_POPUPS
 import re
+import time
 
 
 def create_image_urls(url):
@@ -81,40 +82,86 @@ class CrawlPage(Page):
 class IndexPage(Page):
 
     BASE_CSS_SELECTOR = "main.main-content article "
+    HEADER_CSS_SELECTOR = BASE_CSS_SELECTOR + "header.article-header "
+    BODY_CSS_SELECTOR = BASE_CSS_SELECTOR + "div.article-content "
 
     title = Element(
         Locators.CSS_SELECTOR,
-        BASE_CSS_SELECTOR + "h1.headline",
+        HEADER_CSS_SELECTOR + "h1.headline",
         value=lambda el: el.text,
-        timeout=WAIT_FOR_ELEMENT_TIMEOUT
-    )
-    content_raw = Elements(
-        Locators.CSS_SELECTOR,
-        BASE_CSS_SELECTOR + "div.article-content > div.article-body > p",
-        value=lambda el:el.text,
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     author_raw = Element(
         Locators.CSS_SELECTOR,
-        BASE_CSS_SELECTOR + "div.author-byline > span",
+        HEADER_CSS_SELECTOR + "div.author-byline > span",
         value=lambda el: el.text,
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     datetime_raw = Element(
         Locators.CSS_SELECTOR,
-        BASE_CSS_SELECTOR + "div.article-date > time",
+        HEADER_CSS_SELECTOR + "div.article-date > time",
         value=lambda el: el.text,
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
+    )
+    category_link = Element(
+        Locators.CSS_SELECTOR,
+        HEADER_CSS_SELECTOR + "div.eyebrow a",
+        value=lambda el:el.get_attribute("href"),
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
+    )
+    category_name = Element(
+        Locators.CSS_SELECTOR,
+        HEADER_CSS_SELECTOR + "div.eyebrow a",
+        value=lambda el:el.text,
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
+    )
+    images_raw = Elements(
+        Locators.CSS_SELECTOR,
+        BODY_CSS_SELECTOR + "div.embed-media img, "
+        + BODY_CSS_SELECTOR + "div > picture img",
+        value=lambda el: el.get_attribute("src"),
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
+    )
+    image_iframe = Element(
+        Locators.CSS_SELECTOR,
+        BODY_CSS_SELECTOR + "div.featured iframe",
+        timeout=WAIT_FOR_MINIMUM_TIMEOUT
+    )
+    image_player = Element(
+        Locators.CSS_SELECTOR,
+        "div#player img",
+        value=lambda el: el.get_attribute("src"),
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
+    )
+    media_links = Elements(
+        Locators.CSS_SELECTOR,
+        BODY_CSS_SELECTOR + "div.embed-media a",
+        value=lambda el: el.get_attribute("href"),
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
+    )
+    media_iframes = Elements(
+        Locators.CSS_SELECTOR,
+        BODY_CSS_SELECTOR + "div.embed-media iframe",
+        value=lambda el: el.get_attribute("src"),
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
+    )
+    content_raw = Elements(
+        Locators.XPATH,
+        "//div[@class='article-body']/p[not(.//strong)]",
+        value=lambda el:el.text,
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
 
     @property
     def author(self):
         author = self.author_raw
-        if author:
-            m = re.match(r'By (.*)( \| Fox News)', author)
-            if m:
-                return m.group(1)
-        return None
+        if author and author.startswith("By "):
+            return author[3:]
+
+    @property
+    def category(self):
+        category = category_mapping(self.category_link)
+        return category if category else category_mapping(self.category_name)
 
     @property
     def datetime_created(self):
@@ -123,3 +170,37 @@ class IndexPage(Page):
     @property
     def content(self):
         return "\n".join(self.content_raw)
+
+    @property
+    def images(self):
+        images = self.images_raw
+        all_images = []
+        for img in images:
+            all_images.append(create_image_urls(img))
+        if self.image_iframe:
+            self.driver.switch_to.frame(self.image_iframe)
+            if self.image_player:
+                all_images.append(create_image_urls(self.image_player))
+            self.driver.switch_to.default_content()
+        return all_images
+
+    @property
+    def media(self):
+        all_media = []
+        for m in self.media_links + self.media_iframes:
+            all_media.append(m)
+        return all_media
+
+    # If the indexing is running via Chrome, we will see the popup, but no pop up during HEADLESS CHROME run.
+    # def dismiss_popup(self, wait=True):
+    #     if wait:
+    #         time.sleep(WAIT_FOR_PAGE_POPUPS)
+    #     if self.popup:
+    #         try:
+    #             self.driver.switch_to.frame(self.driver.find_element_by_css_selector("div.tp-modal iframe"))
+    #             if self.close_popup:
+    #                 self.close_popup.click()
+    #         except:
+    #             pass
+    #         finally:
+    #             self.driver.switch_to.default_content()
