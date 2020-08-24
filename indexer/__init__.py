@@ -176,10 +176,12 @@ class Indexer:
         self.indexing_news = self.get_candidates()
         for record_existing in self.indexing_news:
             news_id = record_existing.get("id")
+            self.total_record += 1
             try:
                 if self.is_valid_news_url(record_existing.get("url")):
                     self.go_to_page(record_existing.get("url"))
-                    self.logger.info("LOADING PAGE [%s]" % record_existing.get("url"))
+                    self.logger.info("LOADING PAGE (%d/%d) [%s]" % (
+                        self.total_record, len(self.indexing_news), record_existing.get("url")))
                     record_indexing = self.create_record_with_page_element()
                     if self.is_valid_indexing_record(record_indexing, record_existing):
                         if not DEBUGGING_TEST:
@@ -200,8 +202,6 @@ class Indexer:
                 self.logger.warning("Error when indexing record[%d], skip to the next record......" % news_id)
                 if not DEBUGGING_TEST and self.news_db.update_news_by_id(id=news_id, record=dict(debug=True)):
                     self.logger.warning("Mark <news> [ID=%s] as debug" % news_id)
-            finally:
-                self.total_record += 1
 
         self.logger.info("-------------  Total [%d/%d/%d] (indexed/invalid/total) Records  -----------" %
                          (self.total_indexed, self.total_invalid, self.total_record))
