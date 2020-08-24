@@ -165,7 +165,10 @@ class IndexPage(Page):
 
     @property
     def datetime_created(self):
-        return datetime_util.str2datetime(self.datetime_raw)
+        dt = self.datetime_raw
+        if dt and dt.startswith("Published "):
+            dt = dt[10:]
+        return datetime_util.str2datetime(dt)
 
     @property
     def content(self):
