@@ -52,7 +52,7 @@ class Indexer:
         time.sleep(self.WAIT_FOR_PAGE_READY)
 
     def get_candidates(self):
-        return self.news_db.get_non_indexed_news_by_source_id(source_id = self.SOURCE_ID, max_count=10)
+        return self.news_db.get_non_indexed_news_by_source_id(source_id = self.SOURCE_ID, max_count=5)
 
     def does_image_already_exist(self, images, existing_images):
         return any([img in existing_images for img in images])
