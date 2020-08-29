@@ -106,6 +106,8 @@ def get_datetime_use_pattern(pattern, p_time):
         if "period" in ic_time:  # Adjust PM to 24 hour format
             if ic_time["period"].upper() == "PM" and ic_time["hour"] != 12:  # 3PM -> 15, but 12PM -> 12
                 adj_hour += 12
+            elif ic_time["period"].upper() == "AM" and ic_time["hour"] == 12: # 12AM -> 0
+                adj_hour -= 12
             del ic_time["period"]
         if "ago" in ic_time:  # Adjust time deltas
             if "ago_day" in ic_time:

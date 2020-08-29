@@ -8,6 +8,7 @@ class APIndexer(BaseIndexer):
 
     SOURCE_ID = 2
     logger = logging.getLogger("Indexer.AP")
+    MAX_RECORD_COUNT = 3
 
     def __init__(self, driver):
         page = APPage(driver)
