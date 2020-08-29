@@ -38,6 +38,7 @@ class ChromeDriver(webdriver.Chrome):
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('--incognito')
         chrome_options.add_argument("--no-first-run")
+        chrome_options.add_argument("--disable-logging")
         chrome_options.add_argument("--disable-extensions")
         chrome_options.add_argument("--suppress-message-center-popups")
         chrome_options.add_argument("--disable-popup-blocking")
