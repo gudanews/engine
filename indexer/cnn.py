@@ -8,6 +8,7 @@ class CNNIndexer(BaseIndexer):
 
     SOURCE_ID = 101
     logger = logging.getLogger("Indexer.CNN")
+    MAX_RECORD_COUNT = 3
 
     def __init__(self, driver):
         page = CNNPage(driver)

@@ -9,6 +9,7 @@ class UPIIndexer(BaseIndexer):
 
     SOURCE_ID = 3
     logger = logging.getLogger("Indexer.UPI")
+    MAX_RECORD_COUNT = 2
 
     def __init__(self, driver):
         page = UPIPage(driver)

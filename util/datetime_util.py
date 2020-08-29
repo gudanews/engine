@@ -43,7 +43,7 @@ TIME_ZONE = dict(UTC=0, GMT=0, Z=0, EDT=-4, EST=-5, ET=-5+IS_DST, CDT=-5, CST=-6
 
 def _convert_month_to_number(month):
     MONTH_3L = dict(JAN=1,FEB=2,MAR=3,APR=4,MAY=5,JUN=6,JUL=7,AUG=8,SEP=9,OCT=10,NOV=11,DEC=12)
-    MONTH = dict(JANUARY=1,FEBURARY=2,MARCH=3,APRIL=4,MAY=5,JUNE=6,JULY=7,AUGUST=8,SEPTEMBER=9,OCTOBER=10,NOVEMBER=11,DECEMBER=12)
+    MONTH = dict(JANUARY=1,FEBRUARY=2,MARCH=3,APRIL=4,MAY=5,JUNE=6,JULY=7,AUGUST=8,SEPTEMBER=9,OCTOBER=10,NOVEMBER=11,DECEMBER=12)
     if not month:
         return None
     if month.upper() in MONTH.keys():
@@ -106,6 +106,8 @@ def get_datetime_use_pattern(pattern, p_time):
         if "period" in ic_time:  # Adjust PM to 24 hour format
             if ic_time["period"].upper() == "PM" and ic_time["hour"] != 12:  # 3PM -> 15, but 12PM -> 12
                 adj_hour += 12
+            elif ic_time["period"].upper() == "AM" and ic_time["hour"] == 12: # 12AM -> 0
+                adj_hour -= 12
             del ic_time["period"]
         if "ago" in ic_time:  # Adjust time deltas
             if "ago_day" in ic_time:
