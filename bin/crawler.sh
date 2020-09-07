@@ -13,7 +13,7 @@ if [[ "$?" != "0" ]]; then
 	/usr/bin/git checkout master
 	/usr/bin/git pull
 	/usr/bin/pip3 install -r $ENGINEPATH/requirements.txt
-	if [ `ls -lad "$LOGPATH/gudanews_crawler.log" | awk '{print $5}'` -gt 10000000 ]; then mv "$LOGPATH/gudanews_crawler.log" "$LOGPATH/gudanews_crawler_`date '+%Y-%m-%d_%H-%M'`.log"; fi
+	if [ `ls -lad "$LOGPATH/gudanews_crawler.log" | awk '{print $5}'` -gt 20000000 ]; then mv "$LOGPATH/gudanews_crawler.log" "$LOGPATH/gudanews_crawler_`date '+%Y-%m-%d_%H-%M'`.log"; fi
 	killall chromedriver > /dev/null 2>&1
 	killall chromium > /dev/null 2>&1
 	killall chromium-browser-v7 > /dev/null 2>&1
