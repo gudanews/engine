@@ -23,6 +23,7 @@ class Indexer:
     WAIT_FOR_PAGE_READY = 2.0
     SOURCE_ID = None
     logger = logging.getLogger("Indexer")
+    MAX_RECORD_COUNT = 6
 
     def __init__(self, driver, page):
         self.driver = driver
@@ -52,7 +53,7 @@ class Indexer:
         time.sleep(self.WAIT_FOR_PAGE_READY)
 
     def get_candidates(self):
-        return self.news_db.get_non_indexed_news_by_source_id(source_id = self.SOURCE_ID, max_count=5)
+        return self.news_db.get_non_indexed_news_by_source_id(source_id = self.SOURCE_ID, max_count=self.MAX_RECORD_COUNT)
 
     def does_image_already_exist(self, images, existing_images):
         return any([img in existing_images for img in images])

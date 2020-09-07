@@ -8,6 +8,7 @@ class FoxIndexer(BaseIndexer):
 
     SOURCE_ID = 104
     logger = logging.getLogger("Indexer.Fox")
+    MAX_RECORD_COUNT = 10
 
     def __init__(self, driver):
         page = FoxPage(driver)
