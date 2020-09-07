@@ -7,7 +7,7 @@ from database.source import SourceDB
 from database.category import CategoryDB, NewsCategoryDB
 from datetime import datetime, timedelta
 
-DEBUGGING_TEST = False
+DEBUGGING_TEST = True
 
 START_TIME = datetime.now()
 logger = logging.getLogger("Crawler")
