@@ -1,15 +1,8 @@
 from util.webdriver_util import ChromeDriver
 import time
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-import string
 from webpage.google import GoogleNewsPage
 from database import headline
 from database import news
-from util.common import LoggedTestCase
-import random
 from datetime import datetime
 
 

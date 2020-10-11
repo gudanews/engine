@@ -62,11 +62,11 @@ class NewsDB(DataBase):
         conditions = ["uuid = '%s'" % uuid]
         return self.fetch_record(column=column, condition=conditions, record_as_dict=record_as_dict)
 
-    def get_latest_news(self, column=None, condition=None, max_count=0, record_as_dict=False):
-        # type: (Optional[List], Optional[List], Optional[int], Optional[bool]) -> List
+    def get_latest_news(self, column=None, condition=None, max_count=0, record_as_dict=False, number_of_days=14):
+        # type: (Optional[List], Optional[List], Optional[int], Optional[bool], Optional[int]) -> List
         if not column:
             column = self.SELECT_COLUMN_CONSTRAINT
-        conditions = ["datetime_created > '%s'" % (datetime.strftime(datetime.now() - timedelta(days=14), "%Y-%m-%d %H:%M:%S"))]
+        conditions = ["datetime_created > '%s'" % (datetime.strftime(datetime.now() - timedelta(days=number_of_days), "%Y-%m-%d %H:%M:%S"))]
         if condition:
             conditions.extend(condition)
         return self.fetch_records(column=column, condition=conditions, limit=max_count, record_as_dict=record_as_dict)
