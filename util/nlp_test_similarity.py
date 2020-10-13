@@ -97,18 +97,31 @@ def find_similarity(a, b):
     similarity_index = numpy.mean(final)
     similarity_index = round(similarity_index, 4)
     return similarity_index
+import time
+from gensim.matutils import softcossim
+from gensim import corpora
+import gensim.downloader as api
+from gensim.models import KeyedVectors
+import numpy as np
+from gensim.test.utils import common_texts, get_tmpfile
+from gensim.models import Word2Vec
 
-from gensim import corpora, models, similarities
-import jieba
-texts = ['I love reading Japanese novels. My favorite Japanese writer is Tanizaki Junichiro.', 'Natsume Soseki is a well-known Japanese novelist and his Kokoro is a masterpiece.', 'American modern poetry is good. ']
-keyword = 'Japan has some great novelists. Who is your favorite Japanese writer?'
-texts = [jieba.lcut(text) for text in texts]
-dictionary = corpora.Dictionary(texts)
-feature_cnt = len(dictionary.token2id)
-corpus = [dictionary.doc2bow(text) for text in texts]
-tfidf = models.TfidfModel(corpus)
-kw_vector = dictionary.doc2bow(jieba.lcut(keyword))
-index = similarities.SparseMatrixSimilarity(tfidf[corpus], num_features = feature_cnt)
-sim = index[tfidf[kw_vector]]
-for i in range(len(sim)):
-    print('keyword is similar to text%d: %.2f' % (i + 1, sim[i]))
+start = time.time()
+model = Word2Vec.load("word2vec.model")
+word_vectors = model.wv
+def avg_feature_vector(sentence, model, num_features, index2word_set):
+    words = sentence.split()
+    feature_vec = np.zeros((num_features, ), dtype='float32')
+    n_words = 0
+    for word in words:
+        if word in index2word_set:
+            n_words += 1
+            feature_vec = np.add(feature_vec, model[word])
+    if (n_words > 0):
+        feature_vec = np.divide(feature_vec, n_words)
+    return feature_vec
+
+def gensim_similarity(a,b):
+    similarity = model.similarity(a,b)
+    return similarity
+print(gensim_similarity('world','hello'))

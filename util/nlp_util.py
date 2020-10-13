@@ -59,11 +59,10 @@ def similar(a, b):
         c += l1[i] * l2[i]
     cosine = c / float((sum(l1) * sum(l2)) ** 0.5)
     return cosine
-
 if __name__ == '__main__':
     from util.nlp_test_similarity import find_similarity
     from database.news import NewsDB
-
+    from util.nlp_test_similarity import gensim_similarity
     if __name__ == '__main__':
         column = ["title"]
         existing = NewsDB().get_latest_news(column=column, record_as_dict=True)
@@ -73,13 +72,13 @@ if __name__ == '__main__':
             for j in existing:
                 item_1 = i['title']
                 item_2 = j['title']
-                number =float(similarity(item_1, item_2))
+                number = gensim_similarity(item_1,item_2)
                 if (number>= 0.75 or similar(item_1, item_2) >= 0.7 or find_similarity(item_1,item_2)>=0.75) and item_1 != item_2 :
                     print(item_1)
                     print(item_2)
                     print('\n')
                     print('cosine : ' + str(similar(item_1, item_2)))
                     print('\n')
-                    print('tensorflow : ' + str(number))
+                    print('gensim: ' + str(number))
                     print('\n')
                     print('nltk : '+str(find_similarity(item_1,item_2)))
