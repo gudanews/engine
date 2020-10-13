@@ -6,10 +6,11 @@ from furl import furl
 from database.category import category_mapping
 from webpage import WAIT_FOR_ELEMENT_TIMEOUT, WAIT_FOR_SECTION_TIMEOUT, WAIT_FOR_MINIMUM_TIMEOUT, WAIT_FOR_PAGE_LOADING
 import time
+import re
 
 
 # JULY 31, 2020 / 4:03 AM / 8 DAYS AGO
-DATETIME_PATTERN = r'^(?P<month>%s) (?P<day>\d{1,2})(\,{0,1}) (?P<year>\d{2,4}) / (?P<hour>\d{1,2}):(?P<minute>\d{2}) (?P<period>AM|PM)' % datetime_util.ANY_MONTHS
+DATETIME_PATTERN = r'^(?P<month>%s) (?P<day>\d{1,2})(\,{0,1}) (?P<year>\d{2,4})(( \/ ){0,1})(?P<hour>\d{1,2}):(?P<minute>\d{2}) (?P<period>AM|PM)' % datetime_util.ANY_MONTHS
 
 def create_image_urls(url):
     # Expected https://s4.reutersmedia.net/resources/r/?m=02&d=20200728&t=2&i=1527461013&w=370&fh=&fw=&ll=&pl=&sq=&r=LYNXNPEG6R1MZ
@@ -17,7 +18,7 @@ def create_image_urls(url):
     # Normalized URL https://s4.reutersmedia.net/resources/r/?m=02&d=20200728&t=2&i=1527461013&w=800&r=LYNXNPEG6R1MZ
     if url:
         f = furl(url)
-        if "reutersmedia.net" in f.host:
+        if any(s in f.host for s in ("reutersmedia.net", "static.reuters.com")):
             parameters = dict(f.args)
             parameters["w"] = "800"
             keys = sorted(parameters.keys())
@@ -94,63 +95,64 @@ class CrawlPage(Page):
 
 class IndexPage(Page):
 
-    HEADER_CSS_SELECTOR = "div.ArticleHeader_container "
-    BODY_CSS_SELECTOR = "div.StandardArticleBody_container "
-    LIGHTBOX_CSS_SELECTOR = "div.Lightbox_container "
+    HEADER_CSS_SELECTOR = "div[class*='ArticlePage-article-header'] "
+    BODY_CSS_SELECTOR = "article[class*='ArticlePage-article-body'] "
+    LIGHTBOX_CSS_SELECTOR = "div[class*='Slideshow-overlay'] "
 
     category_raw = Element(
         Locators.CSS_SELECTOR,
-        HEADER_CSS_SELECTOR + "div.ArticleHeader_channel",
+        HEADER_CSS_SELECTOR + "a[class*='ArticleHeader-channel']",
         value=lambda el: el.text,
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     title = Element(
         Locators.CSS_SELECTOR,
-        HEADER_CSS_SELECTOR + "h1.ArticleHeader_headline",
+        HEADER_CSS_SELECTOR + "h1[class*='Headline-headline']",
         value=lambda el: el.text,
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     datetime_raw = Element(
         Locators.CSS_SELECTOR,
-        HEADER_CSS_SELECTOR + "div.ArticleHeader_date",
+        HEADER_CSS_SELECTOR + "div[class*='ArticleHeader-date']",
         value=lambda el: el.text,
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     image_expand_button = Element(
         Locators.CSS_SELECTOR,
-        BODY_CSS_SELECTOR + "div.Image_expand-button[role='button']",
+        BODY_CSS_SELECTOR + "div[class*='Slideshow-expand-button']",
         timeout=WAIT_FOR_MINIMUM_TIMEOUT
     )
     image_close_button = Element(
         Locators.CSS_SELECTOR,
-        LIGHTBOX_CSS_SELECTOR + "button.SlideshowLightbox_back-button, "
-        + LIGHTBOX_CSS_SELECTOR + "button.SlideshowLightbox_close-button",
+        LIGHTBOX_CSS_SELECTOR + "button[class*='Slideshow-close-button']",
+        timeout=WAIT_FOR_ELEMENT_TIMEOUT
+    )
+    image_thumbnail_list = Element(
+        Locators.CSS_SELECTOR,
+        LIGHTBOX_CSS_SELECTOR + "div[class*='ThumbnailList-thumbnail-list']",
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
     images_raw = Elements(
         Locators.CSS_SELECTOR,
-        BODY_CSS_SELECTOR + "div.Image_container img, "
-        + BODY_CSS_SELECTOR + "div.Graphic_container img, "
-        + LIGHTBOX_CSS_SELECTOR + "div.Carousel_container img",
-        value=lambda el: el.get_attribute('src'),
+        LIGHTBOX_CSS_SELECTOR + "nav div[class*='Thumbnail-image'][role='img']",
+        value=lambda el: el.get_attribute('style'),
         timeout=WAIT_FOR_MINIMUM_TIMEOUT
     )
     media_raw = Elements(
         Locators.CSS_SELECTOR,
-        BODY_CSS_SELECTOR + "div.Video_container iframe[src]",
+        BODY_CSS_SELECTOR + "div[class*='VideoPlayer__video'] iframe[src]",
         value=lambda el: el.get_attribute('src'),
         timeout=WAIT_FOR_MINIMUM_TIMEOUT
     )
     content_raw = Elements(
         Locators.CSS_SELECTOR,
-        BODY_CSS_SELECTOR + "div.StandardArticleBody_body > p",
+        BODY_CSS_SELECTOR + "p[class*='Paragraph-paragraph']",
         value=lambda el:el.text,
         timeout=WAIT_FOR_ELEMENT_TIMEOUT
     )
-    author = Element(
+    author_raw = Element(
         Locators.CSS_SELECTOR,
-        HEADER_CSS_SELECTOR + "div.BylineBar_byline, "
-        + HEADER_CSS_SELECTOR + "Attribution_attribution > p",
+        BODY_CSS_SELECTOR + "[class*='Byline-byline']",
         value=lambda el:el.text,
         timeout=WAIT_FOR_MINIMUM_TIMEOUT
     )
@@ -161,6 +163,12 @@ class IndexPage(Page):
     @property
     def category(self):
         return category_mapping(self.category_raw)
+
+    @property
+    def author(self):
+        author = self.author_raw
+        if author and author.startswith("By "):
+            return author[3:]
 
     @property
     def content(self):
@@ -176,8 +184,15 @@ class IndexPage(Page):
         if self.image_expand_button:
             self.image_expand_button.click()
             time.sleep(WAIT_FOR_PAGE_LOADING)
+            try:
+                self.image_thumbnail_list.hover()
+                time.sleep(WAIT_FOR_MINIMUM_TIMEOUT)
+            except:
+                pass
         images = self.images_raw
         for img in images:
+            img = re.sub(r'background-image: url', '', img)
+            img = img.strip("()\;\"'")
             urls = create_image_urls(img)
             if urls and not urls in all_images:
                 all_images.append(urls)

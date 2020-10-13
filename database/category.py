@@ -3,6 +3,7 @@ import unittest
 import logging
 from database import MANDATORY, OPTIONAL
 from typing import List, Dict, Tuple, Optional, Any
+import re
 
 
 logger = logging.getLogger("DataBase.Category")
@@ -11,29 +12,34 @@ logger = logging.getLogger("DataBase.Category")
 CATEGORY_MAPPING = {
     "top": ["top", "hot", "trend"],
     "local": ["local", "city", "town"],
-    "national": ["us", "u.s.", "nation", "state"],
-    "world": ["world", "international", "asia", "europe", "africa", "australia", "america",
+    "national": ["us", "nation", "state"],
+    "world": ["world", "international", "asia", "europe", "africa", "australia", "amer",
               "east", "west", "south", "north", "china", "japan", "korea", "india", "uk", "england",
-              "france", "german", "spain", "italy", "russia", "australia", "canada", "mexico"],
+              "france", "german", "spain", "italy", "russia", "australia", "canada", "mexico", "apac",
+              "emerg"],
     "opinion": ["opinion"],
     "politics": ["politic", "law", "religion", "court", "defense"],
-    "business": ["business", "trade", "legal", "deal", "car", "money", "financ"],
-    "technology & science": ["tech", "environ", "cyber", "science"],
+    "business": ["business", "trade", "legal", "deal", "money", "financ", "market",
+                 "industr", "utilit"],
+    "technology & science": ["tech", "environ", "cyber", "science", "telecom"],
     "entertainment & art": ["entertain", "art", "movie", "music", "tv"],
     "health": ["health", "fitness", "well"],
     "sport": ["sport", "mlb", "nfl", "nba", "race", "ball"],
     "weather": ["climate", "weather"],
-    "lifestyle & culture": ["animal","relationship", "fashion", "culture", "life", "style", "architecture",
-                            "beauty", "design", "food", "drink", "travel", "person"],
+    "lifestyle & culture": ["animal","relationship", "car", "fashion", "culture", "life",
+                            "style", "architecture", "beauty", "design", "food", "drink",
+                            "travel", "person"],
     "multimedia": ["video", "audio", "twitter", "facebook"],
     "ads": ["sponsor"],
 }
 
 def category_mapping(phrase):
     if phrase:
-        for (k, v) in CATEGORY_MAPPING.items():
-            if phrase and any(c in phrase.lower() for c in v):
-                return k
+        phrase = re.sub('[^a-zA-Z\s]+', '', phrase)
+        for p in phrase.split():
+            for (k, v) in CATEGORY_MAPPING.items():
+                if p and any(p.lower().startswith(c) for c in v):
+                    return k
     return None
 
 class CategoryDB(DataBase):
