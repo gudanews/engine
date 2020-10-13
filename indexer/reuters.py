@@ -8,6 +8,7 @@ class ReutersIndexer(BaseIndexer):
 
     SOURCE_ID = 1
     logger = logging.getLogger("Indexer.REU")
+    MAX_RECORD_COUNT = 12
 
     def __init__(self, driver):
         page = ReutersPage(driver)
