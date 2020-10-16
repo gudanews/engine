@@ -27,7 +27,7 @@ class GroupingProcessor():
     def _get_all_entries(self):
         column = ["title", "id", "duplicate_id", "source_id", "is_valid", "is_valid", "category_id",
                   "datetime_created", "datetime_updated", "topic_id"]
-        existing = NewsDB().get_latest_news(column=column, record_as_dict=True, number_of_days=10000)
+        existing = NewsDB().get_latest_news(column=column, record_as_dict=True, number_of_days=14)
         return existing
 
     def _find_matching(self):
